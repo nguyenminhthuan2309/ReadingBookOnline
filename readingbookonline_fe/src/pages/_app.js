@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../styles/output.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,13 +17,5 @@ export const metadata = {
 };
 
 export default function MyApp({ Component, pageProps }) {
-  return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {<Component {...pageProps} />}
-      </body>
-    </html>
-  );
+  return <Component {...pageProps} />;
 }

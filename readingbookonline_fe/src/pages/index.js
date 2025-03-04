@@ -1,9 +1,12 @@
-import HomePage from "@/components/Home";
+import Home from "@/components/Home";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <>
-      <HomePage />
+    <head>
+      <title>Tiệm sách của Haru</title>
+    </head>
+      <Home />
     </>
   );
 }
