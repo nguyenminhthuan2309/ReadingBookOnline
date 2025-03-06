@@ -1,4 +1,3 @@
-"use client";
 
 import NoticesSection from "./NoticesSection";
 import ForumDiscussion from "./ForumDiscussion";
@@ -10,7 +9,7 @@ import Header from "@/layouts/Header";
 const HomePage = () => {
   return (
     <main className="rounded-none">
-      <div className="flex flex-col items-center w-full bg-red-100 max-md:max-w-full">
+      <div className="flex flex-col items-center w-full bg-[#F6E8DF] max-md:max-w-full">
         <Header />
 
         <div className="mt-16 w-full max-w-[1521px] max-md:mt-10 max-md:max-w-full">

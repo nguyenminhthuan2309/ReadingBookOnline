@@ -1,4 +1,3 @@
-"use client";
 import React from "react";
 import BookGrid from "./BookGrid";
 import FilterSection from "./FilterSection";

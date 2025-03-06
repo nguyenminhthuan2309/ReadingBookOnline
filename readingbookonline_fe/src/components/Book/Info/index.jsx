@@ -1,4 +1,3 @@
-"use client";
 import React from "react";
 import BookDetails from "./BookDetails";
 import ChaptersList from "./ChaptersList";
