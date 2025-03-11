@@ -44,7 +44,7 @@ const NoticesTable = () => {
     <div className="w-full max-md:overflow-x-auto">
       <SearchInput />
 
-      <div className="grid pt-8 gap-5 px-5 py-0 mb-6 grid-cols-[175px_1fr_150px_118px] max-md:grid-cols-[150px_1fr_100px_100px] max-sm:text-sm max-sm:grid-cols-[100px_1fr_80px_80px]">
+      <div className="grid pt-8 gap-5 px-5 py-0 mb-6 grid-cols-[1fr_1fr_1fr_1fr] max-md:grid-cols-[1fr_1fr_1fr_1fr] max-sm:text-sm max-sm:grid-cols-[1fr_1fr_1fr_1fr]">
         <h2 className="text-2xl font-medium text-black">User</h2>
         <h2 className="text-2xl font-medium text-black">Notices</h2>
         <h2 className="text-2xl font-medium text-black">Public status</h2>

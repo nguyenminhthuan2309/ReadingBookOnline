@@ -1,10 +1,22 @@
-const BookTile = ({ image, title, author, rating, chapters, isHot }) => {
+
+import React from "react";
+
+const BookTile = ({
+  imageUrl,
+  title,
+  author,
+  isHot = false,
+  chapters = [],
+  date,
+  isNew = false,
+  className = "",
+}) => {
   return (
-    <article className="flex flex-col rounded-none w-[222px]">
+    <article className={`flex flex-col rounded-none ${className}`}>
       <img
-        src={image}
+        src={imageUrl}
+        alt={`${title} cover`}
         className="object-contain w-full aspect-[0.76]"
-        alt={title}
       />
       <div className="flex z-10 gap-1 mt-2">
         {isHot && (
@@ -13,31 +25,25 @@ const BookTile = ({ image, title, author, rating, chapters, isHot }) => {
           </span>
         )}
         <div className="text-2xl text-black">
-          <span className="text-black">{title}</span>
-          <br />
-          <span className="text-base leading-[30px] text-black">{author}</span>
+          <h3>{title}</h3>
+          <p className="text-base leading-[30px]">{author}</p>
         </div>
       </div>
-      <img
-        src={rating}
-        className="object-contain self-center max-w-full aspect-[5] w-[125px]"
-        alt="Rating"
-      />
       {chapters.map((chapter, index) => (
-        <div key={index} className="mt-2">
-          <div className="px-2.5 py-1 text-sm text-black rounded-md bg-zinc-300">
-            {chapter.title}
+        <React.Fragment key={index}>
+          <div className="px-2.5 py-1 mt-2 text-sm text-black rounded-md bg-zinc-300">
+            {chapter}
           </div>
-          {chapter.isNew && (
-            <div className="self-end mt-2.5 mr-5 text-sm font-extrabold text-red-500">
+          {isNew && index === 0 && (
+            <span className="self-end mt-2.5 mr-5 text-sm font-extrabold text-red-500">
               New
-            </div>
+            </span>
           )}
-          <time className="block self-center mt-2 text-sm text-stone-600">
-            {chapter.date}
-          </time>
-        </div>
+        </React.Fragment>
       ))}
+      {date && (
+        <time className="self-center mt-2 text-sm text-stone-600">{date}</time>
+      )}
     </article>
   );
 };

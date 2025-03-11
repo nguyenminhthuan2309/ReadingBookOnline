@@ -1,20 +1,20 @@
 const Pagination = () => {
+  const pages = [1, 2, 3, 4, 5, "...", 10];
+
   return (
-    <nav className="flex gap-5 justify-between items-center self-end mt-24 max-w-full text-2xl text-black whitespace-nowrap w-[836px] max-md:mt-10">
-      {[1, 2, 3, 4, 5].map((page) => (
+    <nav className="flex flex-wrap gap-9 items-center self-end text-1xl text-black whitespace-nowrap pt-9">
+      {pages.map((page, index) => (
         <button
-          key={page}
-          className="self-stretch px-8 pt-3.5 pb-6 my-auto bg-white max-md:px-5"
+          key={index}
+          className={`self-stretch ${
+            page === "..."
+              ? "text-3xl text-black "
+              : " bg-white h-[30px] w-[30px]"
+          }`}
         >
           {page}
         </button>
       ))}
-      <span className="self-stretch text-7xl text-white max-md:text-4xl">
-        ...
-      </span>
-      <button className="self-stretch px-7 pt-3.5 pb-6 my-auto bg-white max-md:pr-5">
-        10
-      </button>
     </nav>
   );
 };
