@@ -1,80 +1,83 @@
 "use client";
-import { useState } from "react";
-import InputField from "./InputField";
-import TemporaryPasswordSection from "./TemporaryPassword";
+import React, { useState } from "react";
+import FormInput from "./FormInput";
+import ActionButtons from "./ActionButton";
 
-const RegistrationForm = () => {
+const SignUpForm = () => {
   const [formData, setFormData] = useState({
     email: "",
+    username: "",
     password: "",
     confirmPassword: "",
-    temporaryPassword: "",
   });
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSignUp = (e) => {
     e.preventDefault();
-    // Handle form submission
+    // Handle sign up logic here
+  };
+
+  const handleCancel = () => {
+    // Handle cancel logic here
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-auto">
-      <h2 className="text-3xl">SIGN UP</h2>
-      <div
-        className="shrink-0 h-px border border-black border-solid"
-        style={{ width: "122px", marginBottom: "1.25rem" }}
-      />
-
-      <InputField
-        label="EMAIL"
-        type="email"
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-      />
-
-      <InputField
-        label="PASSWORD"
-        type="password"
-        value={formData.password}
-        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-      />
-
-      <InputField
-        label="CONFIRMED PASSWORD"
-        type="password"
-        value={formData.confirmPassword}
-        onChange={(e) =>
-          setFormData({ ...formData, confirmPassword: e.target.value })
-        }
-      />
-
-      <InputField
-        label="TEMPORARY PASSWORD"
-        type="password"
-        value={formData.temporaryPassword}
-        onChange={(e) =>
-          setFormData({ ...formData, temporaryPassword: e.target.value })
-        }
-      />
-
-      <div style={{display: "flex", justifyContent: "center"}}>
-        <TemporaryPasswordSection />
+    <form onSubmit={handleSignUp} className="mx-auto mt-20 max-w-[730px]">
+      <div className="flex flex-col gap-4">
+        <FormInput
+          label="EMAIL"
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="USERNAME"
+          type="text"
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="PASSWORD"
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        <FormInput
+          label="CONFIRMED PASSWORD"
+          type="password"
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          required
+        />
       </div>
 
-      <p className="mt-4 ml-32 text-xl font-semibold text-amber-600 max-md:ml-2.5">
-        Aldready have an account?
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/b4e8dcbe93344886384bae2bb8c3ac7eecde8eb7"
+        alt="Decorative element"
+        className="mx-auto mt-[35px] w-[421px] h-[105px] pt-6"
+      />
+
+      <p className="mt-7 text-xl font-semibold text-amber-600">
+        Already have an account?
       </p>
 
-      <div className="flex justify-center">
-        <button
-          type="submit"
-          className=" px-16 pt-1.5 pb-3 mt-3 ml-3.5 max-w-full text-xl text-white bg-amber-600 rounded-xl"
-          style={{ width: "231px" }}
-        >
-          Sign up
-        </button>
-      </div>
+      <ActionButtons onSignUp={handleSignUp} onCancel={handleCancel} />
     </form>
   );
 };
 
-export default RegistrationForm;
+export default SignUpForm;

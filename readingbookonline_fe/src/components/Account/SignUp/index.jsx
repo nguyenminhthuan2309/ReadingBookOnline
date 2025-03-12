@@ -1,30 +1,20 @@
 "use client";
-import RegistrationForm from "./SignUpForm";
+import React from "react";
+import Header from "./Header";
+import SignUpForm from "./SignUpForm";
 
-const RegisterPage = () => {
+const SignUpPage = () => {
   return (
-    <div className="text-white rounded-none">
-      <div class="flex flex-col w-full" style={{ backgroundColor: "#F6E8DF" }}>
-        <div
-          className="flex flex-col self-center text-base text-black bg-white rounded-xl"
-          style={{
-            minWidth: "1052px",
-            paddingTop: "2.5rem",
-            paddingBottom: "1.75rem",
-            paddingLeft: "1.25rem",
-            paddingRight: "3.125rem",
-            marginTop: "3.5rem",
-            marginBottom: "3.5rem",
-            fontSize: "1rem",
-            backgroundColor: "#FFFFFF",
-            borderRadius: "0.625rem",
-          }}
-        >
-          <RegistrationForm />
+    <main className="flex flex-col bg-red-100 min-h-[screen]">
+      <Header />
+      <section className="flex justify-center px-5 py-20">
+        <div className="p-9 w-full bg-white rounded-xl max-w-[1052px]">
+          <h1 className="text-3xl">SIGN UP</h1>
+          <SignUpForm />
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
-export default RegisterPage;
+export default SignUpPage;

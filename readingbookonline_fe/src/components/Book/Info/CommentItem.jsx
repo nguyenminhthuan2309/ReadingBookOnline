@@ -16,10 +16,10 @@ function CommentItem({ user, rating, comment }) {
         </div>
       </div>
       <div className="flex gap-8 self-start mt-2.5 ml-16 font-bold whitespace-nowrap max-md:ml-2.5">
-        <span className="text-xl">0</span>
+        <span className="text-xl">^0</span>
         <div className="flex gap-1.5">
           <span className="my-auto text-sm">|</span>
-          <span className="text-xl">0</span>
+          <span className="text-xl">v0</span>
         </div>
       </div>
     </article>

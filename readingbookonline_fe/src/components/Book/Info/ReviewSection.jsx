@@ -96,7 +96,7 @@ function ReviewSection() {
         </div>
       </div>
 
-      <div className="flex gap-5 justify-baseline gap-10 mt-11 text-lg max-md:mt-10">
+      <div className="flex gap-5 justify-baseline mt-11 text-lg max-md:mt-10">
         <button className="text-amber-400 underline">Upvote</button>
         <button className="text-stone-400">Newest</button>
         <button className="text-stone-400">Oldest</button>

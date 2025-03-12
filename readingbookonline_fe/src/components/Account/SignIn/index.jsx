@@ -1,12 +1,16 @@
-import LoginForm from "./LoginForm";
+"use client";
+import React from "react";
+import { Header } from "./Header";
+import { LoginForm } from "./LoginForm";
 
 const LoginPage = () => {
   return (
-    <div className="text-white rounded-none">
-      <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
+    <main className="rounded-none">
+      <div className="flex flex-col pb-16 w-full bg-red-100 max-md:max-w-full">
+        <Header />
         <LoginForm />
       </div>
-    </div>
+    </main>
   );
 };
 

@@ -1,6 +1,6 @@
 import React from "react";
 import BookTile from "./BookTile";
-import { Pagination } from "./Pagination";
+import  Pagination  from "./Pagination";
 
 export const LatestUpdates = () => {
   const books = [
@@ -144,7 +144,7 @@ export const LatestUpdates = () => {
         </div>
         <hr className="flex z-10 shrink-0 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
       </header>
-      <div className="flex flex-wrap gap-14 justify-between items-start mt-12 max-w-full w-[1049px] max-md:mt-10">
+      <div className="flex flex-wrap gap-10 justify-between items-start mt-12 max-w-full w-[1049px] max-md:mt-10">
         {books.map((book, index) => (
           <BookTile
             key={index}
