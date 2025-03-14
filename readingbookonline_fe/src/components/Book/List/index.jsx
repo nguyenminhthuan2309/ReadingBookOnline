@@ -1,12 +1,11 @@
 "use client";
 import React from "react";
-import Header from "./Header";
-import NavigationMenu from "./NavigationMenu";
+import { Header } from "@/layouts/Header";
+import { Footer } from "@/layouts/Footer";
 import SearchBar from "./SearchBar";
 import FilterBar from "./FilterBar";
 import BookTile from "./BookTile";
 import Pagination from "./Pagination";
-import Footer from "./Footer";
 
 const BookListPage = () => {
   // Sample data for manga tiles
@@ -25,7 +24,6 @@ const BookListPage = () => {
     <main className="pb-1.5 rounded-none">
       <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
         <Header />
-        <NavigationMenu />
 
         <section className="flex flex-col self-center mt-11 w-full max-w-[1523px] max-md:mt-10 max-md:max-w-full">
           <SearchBar />

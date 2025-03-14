@@ -1,6 +1,6 @@
 import React from "react";
 import BookTile from "./BookTile";
-import  Pagination  from "./Pagination";
+import  Pagination  from "@/app/common/Pagination";
 
 export const LatestUpdates = () => {
   const books = [

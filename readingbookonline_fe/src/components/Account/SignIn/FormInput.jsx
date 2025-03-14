@@ -6,7 +6,7 @@ export const FormInput = ({ label, type = "text", ...props }) => {
       <label className="self-start text-base">{label}</label>
       <input
         type={type}
-        className="flex shrink-0 w-full mt-4 h-[47px] bg-white rounded-xl border border-black border-solid"
+        className="flex shrink-0 w-full mt-4 px-2 h-[47px] bg-white rounded-xl border border-black border-solid"
         {...props}
       />
     </div>

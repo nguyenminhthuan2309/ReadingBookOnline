@@ -1,7 +1,10 @@
 "use client";
 import React, { useState } from "react";
+import Router from "next/router";
+
 import { FormInput } from "./FormInput";
 import { ActionButton } from "./ActionButton";
+import { Button } from "@mui/material";
 
 export const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -58,9 +61,16 @@ export const LoginForm = () => {
         className="object-contain self-center mt-6 max-w-full aspect-[4.02] w-[421px]"
       />
 
-      <p className="self-start mt-2 ml-32 font-semibold text-amber-600 max-md:ml-2.5">
-        Need an account?
-      </p>
+      <div className="flex w-full px-32">
+        <Button
+          sx={{ textTransform: "none" }}
+          onClick={() => Router.push("/account/sign_up")}
+        >
+          <p className="self-start mt-2 text-xl font-semibold text-amber-600 border-b-2 border-transparent hover:border-amber-600">
+            Need an account?
+          </p>
+        </Button>
+      </div>
 
       <div className="flex flex-col items-center gap-3 mt-10">
         <ActionButton type="submit">Sign in</ActionButton>
