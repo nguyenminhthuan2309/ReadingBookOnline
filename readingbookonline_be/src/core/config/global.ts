@@ -4,7 +4,6 @@ import { DataSourceOptions } from 'typeorm';
 
 config({ path: path.join(process.cwd(), 'src', '.env') });
 
-
 export const redisConfig = {
     host: 'redis://localhost',
     port: 6379,
@@ -13,7 +12,12 @@ export const redisConfig = {
 
 export const postgresConfig: DataSourceOptions = {
     type: 'postgres',
-    url: 'postgresql://postgres:1234@localhost:5431',
-    synchronize: true,
+    host: 'localhost',
+    port: 5431,
+    username: 'postgres',
+    password: '1234',
+    database: 'postgres',
+    schema: "readingbookonline",
     logging: true,
+    synchronize: true,
 };

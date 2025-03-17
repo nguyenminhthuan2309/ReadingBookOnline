@@ -7,19 +7,22 @@ import { DatabaseModule } from '@database/database.module';
 import { CacheModule } from '@core/cache/cache.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UserModule } from '@features/user/user.module';
+import { BookModule } from '@features/book/book.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule, // PostgreSQL
     CacheModule, // Redis Cache
-
+    UserModule,
+    BookModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerMiddleware, RateLimitMiddleware).forRoutes('*');
+    // consumer.apply(LoggerMiddleware, RateLimitMiddleware).forRoutes('*');
   }
 }

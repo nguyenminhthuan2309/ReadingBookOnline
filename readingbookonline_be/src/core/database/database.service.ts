@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource, ObjectLiteral, DeepPartial, SelectQueryBuilder } from 'typeorm';
+import { FindOptionsDto } from '@shared/dto/common.dto/database.dto';
+import { Repository, DataSource, ObjectLiteral, DeepPartial, SelectQueryBuilder, FindOneOptions, FindManyOptions } from 'typeorm';
 
 @Injectable()
 export class DatabaseService {
@@ -14,15 +15,32 @@ export class DatabaseService {
         return await entity.save(Array.isArray(newData) ? newData[0] : newData); // Kiểm tra nếu là mảng thì lấy phần tử đầu tiên
     }
 
-
     //2. Lấy một bản ghi theo ID
-    async findOne<T extends ObjectLiteral>(entity: Repository<T>, id: number): Promise<T | null> {
-        return await entity.findOne({ where: { id } as any });
+    async findOne<T extends ObjectLiteral>(entity: Repository<T>, options?: FindOptionsDto<T>): Promise<T | null> {
+        const findOneOptions: FindOneOptions<T> = {
+            where: options?.where,
+            select: options?.select,
+            relations: options?.relations,
+            order: options?.order,
+            withDeleted: options?.withDeleted
+        };
+
+        return await entity.findOne(findOneOptions);
     }
 
     //3. Lấy tất cả bản ghi
-    async findAll<T extends ObjectLiteral>(entity: Repository<T>, options?: object): Promise<T[]> {
-        return await entity.find(options);
+    async findAll<T extends ObjectLiteral>(entity: Repository<T>, options?: FindOptionsDto<T>): Promise<T[]> {
+        const findManyOptions: FindManyOptions<T> = {
+            where: options?.where,
+            select: options?.select,
+            relations: options?.relations,
+            order: options?.order,
+            skip: options?.skip,
+            take: options?.take,
+            withDeleted: options?.withDeleted
+        };
+
+        return await entity.find(findManyOptions);
     }
 
     //4. Cập nhật bản ghi theo ID
