@@ -7,13 +7,17 @@ import { DatabaseService } from '@core/database/database.service';
 import { GetBookRequestDto, GetBookResponseDto } from './dto/get-book-request.dto';
 import { GetBookDto } from './dto/get-book.dto';
 import { LoggerService } from '@core/logger/logger.service';
+import { CacheService } from '@core/cache/cache.service';
 
 @Injectable()
 export class BookService {
+  // 1 hour
+  private redisBookTtl = 3600;
 
   constructor(
     @InjectRepository(Book)
     private readonly bookRepository: Repository<Book>,
+    private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
   ) { }
@@ -21,6 +25,12 @@ export class BookService {
   async getAllBooks(params: GetBookRequestDto): Promise<GetBookResponseDto | Boolean> {
     try {
       let { page = 1, limit = 10, userId, statusId, categoryId } = params;
+
+      const cachedKey = `books:list:${userId || 'all'}:${statusId || 'all'}:${categoryId || 'all'}:p${page}:l${limit}`;
+      const cachedPage = await this.cacheService.get(cachedKey);
+      if (cachedPage) {
+        return JSON.parse(cachedPage);
+      }
 
       const qb = this.databaseService.queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
@@ -48,13 +58,17 @@ export class BookService {
 
       const [books, total] = await qb.getManyAndCount();
 
-      return {
+      const response: GetBookResponseDto = {
         totalItems: total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: total > 0 ? Math.ceil(total / limit) : 1,
         data: books.map((book) =>
           plainToInstance(GetBookDto, book, { excludeExtraneousValues: true })
         ),
-      }
+      };
+
+      await this.cacheService.set(cachedKey, JSON.stringify(response), this.redisBookTtl);
+
+      return response
     } catch (error) {
       this.loggerService.err(error.message, "BookService.getAllBooks");
       return false
