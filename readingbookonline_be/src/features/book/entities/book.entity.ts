@@ -20,7 +20,8 @@ export class Book {
     @Column({ name: "cover", type: 'text', nullable: true })
     cover: string;
 
-    @Column({ type: 'enum', enum: BookStatus, default: BookStatus.PENDING })
+    @ManyToOne(() => BookStatus, (status) => status.books)
+    @JoinColumn({ name: 'status_id' })
     status: BookStatus;
 
     @ManyToOne(() => User, (user) => user.books)

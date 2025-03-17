@@ -31,7 +31,8 @@ export class User {
     @JoinColumn({ name: 'role_id' })
     role: Role;
 
-    @Column({ type: 'enum', enum: UserStatus, default: UserStatus.PENDING })
+    @ManyToOne(() => UserStatus, (status) => status.users)
+    @JoinColumn({ name: 'status_id' })
     status: UserStatus;
 
     @OneToMany(() => Book, (book) => book.author)

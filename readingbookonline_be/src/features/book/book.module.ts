@@ -10,10 +10,20 @@ import { BookReport } from './entities/book-report.entity';
 import { BookReview } from './entities/book-review.entity';
 import { UserModule } from '@features/user/user.module';
 import { BookCategoryRelation } from './entities/book-category-relation.entity';
+import { BookStatus } from './entities/book-status.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Book, BookCategory, BookChapter, BookChapterPurchase, BookReport, BookReview, BookCategoryRelation]),
+    TypeOrmModule.forFeature([
+      Book,
+      BookCategory,
+      BookStatus,
+      BookChapter,
+      BookChapterPurchase,
+      BookReport,
+      BookReview,
+      BookCategoryRelation]
+    ),
     forwardRef(() => UserModule)
   ],
   controllers: [BookController],
