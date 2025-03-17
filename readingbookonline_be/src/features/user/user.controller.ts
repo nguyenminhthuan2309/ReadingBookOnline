@@ -1,34 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/get-user-response.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LoginDto, LoginResponseDto } from './dto/login.dto';
 
+@ApiTags('user')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  @Post('login')
+  @ApiResponse({ status: 200, description: 'Đăng nhập thành công' })
+  @ApiResponse({ status: 401, description: 'Thông tin đăng nhập sai' })
+  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto | Boolean> {
+    return this.userService.login(loginDto);
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @Post("/register")
+  @ApiResponse({ status: 200, description: 'Tạo tài khoản thành công' })
+  async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto | Boolean> {
+    return await this.userService.register(createUserDto);
   }
 }

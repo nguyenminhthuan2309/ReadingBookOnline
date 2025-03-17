@@ -16,8 +16,17 @@ export const postgresConfig: DataSourceOptions = {
     port: 5431,
     username: 'postgres',
     password: '1234',
-    database: 'postgres',
-    schema: "readingbookonline",
+    database: 'readingbookonline',
     logging: true,
     synchronize: true,
 };
+
+export const jwtConfig = {
+    secret: 'qBsm0hLr8bES7XoZKsxoc6Yguqj2nsSB',
+    expiresIn: '1h'
+}
+
+export const userConfig = {
+    roleUserId: 3,
+    statusUserId: 2
+}

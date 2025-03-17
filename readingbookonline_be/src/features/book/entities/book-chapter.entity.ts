@@ -9,6 +9,9 @@ export class BookChapter {
     @Column({ name: "title", type: 'varchar', length: 500 })
     title: string;
 
+    @Column({ name: "chapter", type: 'int' })
+    chapter: string;
+
     @Column({ name: "content", type: 'text' })
     content: string;
 

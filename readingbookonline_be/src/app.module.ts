@@ -12,7 +12,9 @@ import { BookModule } from '@features/book/book.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     DatabaseModule, // PostgreSQL
     CacheModule, // Redis Cache
     UserModule,

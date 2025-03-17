@@ -100,11 +100,28 @@ export class DatabaseService {
      * @param {Repository<T>} entity
      * @returns {SelectQueryBuilder<T>}
      */
-    queryBuilder<T extends ObjectLiteral>(entity: Repository<T>): SelectQueryBuilder<T> {
-        return entity.createQueryBuilder();
+    queryBuilder<T extends ObjectLiteral>(entity: Repository<T>, alias: string): SelectQueryBuilder<T> {
+        return entity.createQueryBuilder(alias);
     }
+
 
     async count<T extends ObjectLiteral>(entity: Repository<T>): Promise<number> {
         return entity.count()
+    }
+
+    async findAndCount<T extends ObjectLiteral>(entity: Repository<T>, options?: FindOptionsDto<T>): Promise<{ data: T[]; total: number }> {
+        const findManyOptions: FindManyOptions<T> = {
+            where: options?.where,
+            select: options?.select,
+            relations: options?.relations,
+            order: options?.order,
+            skip: options?.skip,
+            take: options?.take,
+            withDeleted: options?.withDeleted
+        };
+
+        const [data, total] = await entity.findAndCount(findManyOptions);
+
+        return { data, total };
     }
 }
