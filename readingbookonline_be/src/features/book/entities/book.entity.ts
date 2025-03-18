@@ -31,6 +31,9 @@ export class Book {
   @Column({ name: 'cover', type: 'text', nullable: true })
   cover: string;
 
+  @Column({ name: 'views', type: 'int', default: 0 })
+  views: number;
+
   @ManyToOne(() => BookStatus, (status) => status.books)
   @JoinColumn({ name: 'status_id' })
   status: BookStatus;

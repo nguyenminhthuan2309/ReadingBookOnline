@@ -1,38 +1,76 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as Handlebars from 'handlebars';
 import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   Injectable,
-  UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { UserResponseDto } from './dto/get-user-response.dto';
-import { jwtConfig, userConfig } from '@core/config/global';
-import { LoginDto, LoginResponseDto } from './dto/login.dto';
+import { userConfig } from '@core/config/global';
 import { LoggerService } from '@core/logger/logger.service';
+import { MailerService } from '@nestjs-modules/mailer';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { CacheService } from '@core/cache/cache.service';
+import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePasswordDto } from './dto/update-password-dto';
 
 @Injectable()
 export class UserService {
   private readonly roleUserId = userConfig.roleUserId;
   private readonly statusUserId = userConfig.statusUserId;
-  private secretJWT = jwtConfig.secret;
+  private readonly redisTtlResetPassword = userConfig.redisTtlResetPassword;
 
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly dataBaseService: DatabaseService,
-    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
     private readonly loggerService: LoggerService,
+    private readonly cacheService: CacheService,
   ) {}
 
-  async register(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  private generateOTP(): string {
+    return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join(
+      '',
+    );
+  }
+
+  private async renderTemplate(
+    templateName: string,
+    variables: Record<string, any>,
+  ): Promise<string> {
     try {
-      const { email, password, name } = createUserDto;
+      const templatePath = path.join(
+        process.cwd(),
+        'src',
+        'shared',
+        'templates',
+        `${templateName}.hbs`,
+      );
+
+      const templateContent = fs.readFileSync(templatePath, 'utf-8');
+      const compiledTemplate = Handlebars.compile(templateContent);
+
+      return compiledTemplate(variables);
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.resetPassword');
+      throw error;
+    }
+  }
+
+  async register(body: CreateUserDto): Promise<UserResponseDto> {
+    try {
+      const { email, password, name } = body;
 
       const emailExists = await this.dataBaseService.findOne<User>(
         this.userRepository,
@@ -56,6 +94,15 @@ export class UserService {
 
       this.loggerService.info('User created', 'UserService.register');
 
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Chào mừng bạn đến với ứng dụng!',
+        text: `Xin chào ${name}, cảm ơn bạn đã đăng ký!`,
+        html: `<h3>Xin chào ${name},</h3><p>Cảm ơn bạn đã đăng ký tài khoản. Chúc bạn có trải nghiệm tuyệt vời!</p>`,
+      });
+
+      this.loggerService.info('Email sent', 'UserService.register');
+
       return plainToInstance(UserResponseDto, newUser);
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.register');
@@ -64,43 +111,162 @@ export class UserService {
     }
   }
 
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+  async resetPassword(body: ResetPasswordDto): Promise<Boolean> {
     try {
-      const { email, password } = loginDto;
-      const user: User | null = await this.dataBaseService.findOne<User>(
+      const otp = this.generateOTP();
+      const emailContent = await this.renderTemplate('reset-password', {
+        token: otp,
+      });
+      const email = body.email;
+
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Mã OTP đặt lại mật khẩu',
+        html: emailContent,
+      });
+
+      this.loggerService.info('OTP sent', 'UserService.resetPassword');
+
+      const cachedKey = `reset-password:${email}`;
+
+      await this.cacheService.set(cachedKey, otp, this.redisTtlResetPassword);
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.resetPassword');
+      throw error;
+    }
+  }
+
+  async verifyResetPasswordCode(
+    body: VerifyResetPasswordDto,
+  ): Promise<Boolean> {
+    try {
+      const email = body.email;
+      const cachedKey = `reset-password:${email}`;
+      const failCountKey = `reset-password:fail-count:${email}`;
+      const storedOtp = await this.cacheService.get(cachedKey);
+
+      if (!storedOtp) {
+        throw new BadRequestException('Mã code không tồn tại hoặc đã hết hạn.');
+      }
+
+      const failCount = Number(await this.cacheService.get(failCountKey)) ?? 0;
+
+      if (storedOtp !== body.otp) {
+        const newFailCount = failCount + 1;
+
+        if (newFailCount >= 3) {
+          await this.cacheService.delete(cachedKey);
+          await this.cacheService.delete(failCountKey);
+          throw new BadRequestException('Bạn đã nhập sai quá số lần cho phép.');
+        }
+
+        await this.cacheService.set(
+          failCountKey,
+          newFailCount.toString(),
+          this.redisTtlResetPassword,
+        );
+        throw new BadRequestException('Mã OTP không đúng.');
+      }
+
+      await this.cacheService.delete(cachedKey);
+      await this.cacheService.delete(failCountKey);
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.resetPassword');
+      throw error;
+    }
+  }
+
+  async getProfile(req: Request): Promise<UserResponseDto> {
+    try {
+      const id = (req as any).user?.id;
+
+      const infoUser = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        { where: { id } },
+      );
+
+      const user = plainToInstance(UserResponseDto, infoUser, {
+        excludeExtraneousValues: true,
+      });
+
+      return user;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getProfile');
+      throw error;
+    }
+  }
+
+  async updateUser(
+    req: Request,
+    body: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        throw new BadRequestException('Không thể xác thực người dùng');
+      }
+
+      const user = await this.dataBaseService.findOne<User>(
         this.userRepository,
         {
-          where: { email },
-          relations: ['role', 'status'],
+          where: { id: userId },
         },
       );
 
       if (!user) {
-        throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+        throw new NotFoundException('Người dùng không tồn tại');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
-      }
+      if (body.name) user.name = body.name;
+      // if (updateUserDto.avatar) user.avatar = updateUserDto.avatar;
 
-      const payload = plainToInstance(
-        UserResponseDto,
-        { ...user, roleId: user.role.id, statusId: user.status.id },
-        { excludeExtraneousValues: true },
-      );
+      await this.userRepository.save(user);
 
-      const accessToken = await this.jwtService.signAsync(
-        instanceToPlain(payload),
-        { secret: this.secretJWT },
-      );
-
-      this.loggerService.info('User logged in', 'UserService.login');
-
-      return { accessToken };
+      return plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
-      this.loggerService.err(error.message, 'UserService.register');
+      this.loggerService.err(error.message, 'UserService.updateUser');
+      throw error;
+    }
+  }
 
+  async updatePassword(
+    req: Request,
+    body: UpdatePasswordDto,
+  ): Promise<Boolean> {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        throw new BadRequestException('Không thể xác thực người dùng');
+      }
+
+      const user = await this.dataBaseService.findOne(this.userRepository, {
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại');
+      }
+
+      const isMatch = await bcrypt.compare(body.oldPassword, user.password);
+      if (!isMatch) {
+        throw new BadRequestException('Mật khẩu cũ không đúng');
+      }
+
+      await this.dataBaseService.update<User>(this.userRepository, userId, {
+        password: await bcrypt.hash(body.newPassword, 10),
+      });
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.updatePassword');
       throw error;
     }
   }

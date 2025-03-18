@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
 import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'user@example.com', type: String })
+  @ApiProperty({ example: 'iiiimanhiiii007@gmail.com', type: String })
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email: string;
 

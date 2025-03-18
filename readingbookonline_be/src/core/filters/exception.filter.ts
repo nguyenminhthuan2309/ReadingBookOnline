@@ -9,7 +9,7 @@ import { LoggerService } from '@core/logger/logger.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger: LoggerService;
+  constructor(private readonly logger: LoggerService) {}
 
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();

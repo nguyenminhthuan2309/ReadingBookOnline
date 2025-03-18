@@ -1,9 +1,26 @@
-import { PaginationRequestDto } from '@shared/dto/common.dto/pagination-request.dto';
-import { PaginationResponseDto } from '@shared/dto/common.dto/pagination-response.dto';
 import { GetBookDto } from './get-book.dto';
-import { ArrayNotEmpty, IsArray, IsNumber, IsOptional } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
+import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+
+export enum SortByOptions {
+  VIEWS = 'views',
+  UPDATED_AT = 'updatedAt',
+  LATEST_CHAPTER = 'latestChapter',
+}
+
+export enum SortTypeOptions {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
 
 export class GetBookRequestDto extends PaginationRequestDto {
   @ApiPropertyOptional({ type: Number })
@@ -14,7 +31,7 @@ export class GetBookRequestDto extends PaginationRequestDto {
 
   @ApiPropertyOptional({
     type: Number,
-    description: 'Lọc sách theo trạng thái (status_id)',
+    description: 'Lọc sách theo trạng thái',
   })
   @IsOptional()
   @IsNumber()
@@ -23,7 +40,7 @@ export class GetBookRequestDto extends PaginationRequestDto {
 
   @ApiPropertyOptional({
     type: [Number],
-    description: 'Lọc sách theo danh mục (categoryId)',
+    description: 'Lọc sách theo danh mục',
   })
   @IsOptional()
   @IsArray()
@@ -33,6 +50,33 @@ export class GetBookRequestDto extends PaginationRequestDto {
     { toClassOnly: true },
   )
   categoryId?: number[];
+
+  @ApiPropertyOptional({
+    type: String,
+    enum: SortByOptions,
+    enumName: 'SortByOptions',
+    description: 'Sắp xếp theo trường nào',
+  })
+  @IsOptional()
+  @IsEnum(SortByOptions)
+  sortBy?: SortByOptions;
+
+  @ApiPropertyOptional({
+    type: String,
+    enum: SortTypeOptions,
+    enumName: 'SortTypeOptions',
+    description: 'Kiểu sắp xếp',
+  })
+  @IsOptional()
+  @IsEnum(SortTypeOptions)
+  @Transform(
+    ({ value }) =>
+      value?.toUpperCase() === 'ASC' || value?.toUpperCase() === 'DESC'
+        ? value.toUpperCase()
+        : 'DESC',
+    { toClassOnly: true },
+  )
+  sortType?: SortTypeOptions;
 }
 
 export class GetBookResponseDto extends PaginationResponseDto<GetBookDto> {}

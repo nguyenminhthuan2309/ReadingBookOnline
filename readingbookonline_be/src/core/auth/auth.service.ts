@@ -1,0 +1,70 @@
+import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
+import { User } from '@features/user/entities/user.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
+import { DatabaseService } from '@core/database/database.service';
+import { LoginDto, LoginResponseDto } from '@features/user/dto/login.dto';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { LoggerService } from '@core/logger/logger.service';
+import { jwtConfig } from '@core/config/global';
+
+@Injectable()
+export class AuthService {
+  private readonly jwtSecret = jwtConfig.secret;
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+    private readonly dataBaseService: DatabaseService,
+    private readonly loggerService: LoggerService,
+  ) {}
+
+  async login(body: LoginDto): Promise<LoginResponseDto> {
+    try {
+      const { email, password } = body;
+
+      const user: User | null = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        {
+          where: { email },
+          relations: ['role', 'status'],
+        },
+      );
+
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        throw new BadRequestException('Mật khẩu không đúng');
+      }
+
+      const payload = plainToInstance(
+        UserResponseDto,
+        { ...user, roleId: user.role.id, statusId: user.status.id },
+        { excludeExtraneousValues: true },
+      );
+
+      const accessToken = await this.jwtService.signAsync(
+        instanceToPlain(payload),
+        { secret: this.jwtSecret },
+      );
+
+      this.loggerService.info('User logged in', 'AuthService.login');
+
+      return { accessToken };
+    } catch (error) {
+      this.loggerService.err(error.message, 'AuthService.login');
+
+      throw error;
+    }
+  }
+}

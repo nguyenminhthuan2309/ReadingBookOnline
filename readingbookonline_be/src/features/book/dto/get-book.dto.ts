@@ -33,6 +33,11 @@ export class GetBookDto {
   @Expose()
   cover?: string;
 
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  views?: number;
+
   @IsNotEmpty()
   @Expose()
   @Type(() => GetBookStatusDto)

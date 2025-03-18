@@ -5,14 +5,17 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from '@core/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from '@core/filters/exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { LoggerService } from '@core/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3000;
 
+  const logger = app.get(LoggerService);
+
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
   app.enableCors();

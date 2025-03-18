@@ -12,11 +12,7 @@ export class UserResponseDto {
 
   @Exclude()
   @IsString()
-  password: string;
-
-  @Expose()
-  @IsString()
-  phone: string;
+  password?: string;
 
   @Expose()
   @IsString()

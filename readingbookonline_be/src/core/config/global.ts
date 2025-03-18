@@ -32,4 +32,6 @@ export const userConfig = {
 
   //status: 2 = activate
   statusUserId: 2,
+
+  redisTtlResetPassword: 300,
 };

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FindOptionsDto } from '@shared/dto/common.dto/database.dto';
+import { FindOptionsDto } from '@shared/dto/common/database/database.dto';
 import {
   Repository,
   DataSource,

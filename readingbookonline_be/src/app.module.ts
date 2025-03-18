@@ -9,9 +9,22 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from '@features/user/user.module';
 import { BookModule } from '@features/book/book.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { AuthModule } from '@core/auth/auth.module';
 
 @Module({
   imports: [
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -19,6 +32,7 @@ import { BookModule } from '@features/book/book.module';
     CacheModule, // Redis Cache
     UserModule,
     BookModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
