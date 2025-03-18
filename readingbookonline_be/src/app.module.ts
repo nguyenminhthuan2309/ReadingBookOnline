@@ -18,7 +18,7 @@ import { BookModule } from '@features/book/book.module';
     DatabaseModule, // PostgreSQL
     CacheModule, // Redis Cache
     UserModule,
-    BookModule
+    BookModule,
   ],
   controllers: [AppController],
   providers: [AppService],

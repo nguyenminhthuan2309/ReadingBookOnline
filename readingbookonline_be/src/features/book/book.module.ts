@@ -22,12 +22,11 @@ import { BookStatus } from './entities/book-status.entity';
       BookChapterPurchase,
       BookReport,
       BookReview,
-      BookCategoryRelation]
-    ),
-    forwardRef(() => UserModule)
+      BookCategoryRelation,
+    ]),
+    forwardRef(() => UserModule),
   ],
   controllers: [BookController],
   providers: [BookService],
 })
-
-export class BookModule { }
+export class BookModule {}

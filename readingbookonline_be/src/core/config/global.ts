@@ -5,28 +5,31 @@ import { DataSourceOptions } from 'typeorm';
 config({ path: path.join(process.cwd(), 'src', '.env') });
 
 export const redisConfig = {
-    host: 'redis://localhost',
-    port: 6379,
-    password: '1234',
+  host: process.env.REDIS_HOST || '',
+  port: process.env.REDIS_PORT || '',
+  password: process.env.REDIS_PASSWORD || '',
 };
 
 export const postgresConfig: DataSourceOptions = {
-    type: 'postgres',
-    host: 'localhost',
-    port: 5431,
-    username: 'postgres',
-    password: '1234',
-    database: 'readingbookonline',
-    logging: true,
-    synchronize: true,
+  type: 'postgres',
+  host: process.env.POSTGRES_HOST || '',
+  port: Number(process.env.POSTGRES_PORT) || 5432,
+  username: process.env.POSTGRES_USER || '',
+  password: process.env.POSTGRES_PASSWORD || '',
+  database: process.env.POSTGRES_DB || '',
+  logging: true,
+  synchronize: true,
 };
 
 export const jwtConfig = {
-    secret: 'qBsm0hLr8bES7XoZKsxoc6Yguqj2nsSB',
-    expiresIn: '1h'
-}
+  secret: process.env.JWT_SECRET || '',
+  expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+};
 
 export const userConfig = {
-    roleUserId: 3,
-    statusUserId: 2
-}
+  //role: 3 = member
+  roleUserId: 3,
+
+  //status: 2 = activate
+  statusUserId: 2,
+};

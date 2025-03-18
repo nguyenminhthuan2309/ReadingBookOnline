@@ -8,18 +8,20 @@ import { LoginDto, LoginResponseDto } from './dto/login.dto';
 @ApiTags('user')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @Post('login')
   @ApiResponse({ status: 200, description: 'Đăng nhập thành công' })
   @ApiResponse({ status: 401, description: 'Thông tin đăng nhập sai' })
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto | Boolean> {
+  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
     return this.userService.login(loginDto);
   }
 
-  @Post("/register")
+  @Post('/register')
   @ApiResponse({ status: 200, description: 'Tạo tài khoản thành công' })
-  async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto | Boolean> {
+  async register(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<UserResponseDto> {
     return await this.userService.register(createUserDto);
   }
 }

@@ -12,18 +12,12 @@ import { LoggerModule } from '@core/logger/logger.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      User,
-      UserReport,
-      UserStatus,
-      Role
-    ]),
+    TypeOrmModule.forFeature([User, UserReport, UserStatus, Role]),
     forwardRef(() => BookModule),
     JwtModule,
-    LoggerModule
+    LoggerModule,
   ],
   controllers: [UserController],
   providers: [UserService],
 })
-
-export class UserModule { }
+export class UserModule {}

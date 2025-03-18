@@ -4,7 +4,10 @@ import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { Book } from '@features/book/entities/book.entity';
 import { DatabaseService } from '@core/database/database.service';
-import { GetBookRequestDto, GetBookResponseDto } from './dto/get-book-request.dto';
+import {
+  GetBookRequestDto,
+  GetBookResponseDto,
+} from './dto/get-book-request.dto';
 import { GetBookDto } from './dto/get-book.dto';
 import { LoggerService } from '@core/logger/logger.service';
 import { CacheService } from '@core/cache/cache.service';
@@ -20,9 +23,9 @@ export class BookService {
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
-  ) { }
+  ) {}
 
-  async getAllBooks(params: GetBookRequestDto): Promise<GetBookResponseDto | Boolean> {
+  async getAllBooks(params: GetBookRequestDto): Promise<GetBookResponseDto> {
     try {
       let { page = 1, limit = 10, userId, statusId, categoryId } = params;
 
@@ -32,7 +35,8 @@ export class BookService {
         return JSON.parse(cachedPage);
       }
 
-      const qb = this.databaseService.queryBuilder(this.bookRepository, 'book')
+      const qb = this.databaseService
+        .queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
         .leftJoinAndSelect('book.status', 'status')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
@@ -53,8 +57,7 @@ export class BookService {
         qb.andWhere('category.id IN (:...categoryId)', { categoryId });
       }
 
-      qb.skip((page - 1) * limit)
-        .take(limit);
+      qb.skip((page - 1) * limit).take(limit);
 
       const [books, total] = await qb.getManyAndCount();
 
@@ -62,17 +65,21 @@ export class BookService {
         totalItems: total,
         totalPages: total > 0 ? Math.ceil(total / limit) : 1,
         data: books.map((book) =>
-          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true })
+          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true }),
         ),
       };
 
-      await this.cacheService.set(cachedKey, JSON.stringify(response), this.redisBookTtl);
+      await this.cacheService.set(
+        cachedKey,
+        JSON.stringify(response),
+        this.redisBookTtl,
+      );
 
-      return response
+      return response;
     } catch (error) {
-      this.loggerService.err(error.message, "BookService.getAllBooks");
-      return false
-    }
+      this.loggerService.err(error.message, 'BookService.getAllBooks');
 
+      throw error;
+    }
   }
 }

@@ -1,32 +1,44 @@
 import { Expose } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class GetBookChapterDto {
-    @Expose()
-    @IsNumber()
-    id: number;
+  @IsNotEmpty()
+  @Expose()
+  @IsNumber()
+  id: number;
 
-    @Expose()
-    @IsString()
-    title: string;
+  @IsNotEmpty()
+  @Expose()
+  @IsString()
+  title: string;
 
-    @Expose()
-    @IsNumber()
-    chapter: string;
+  @IsNotEmpty()
+  @Expose()
+  @IsNumber()
+  chapter: string;
 
-    @Expose()
-    @IsOptional()
-    @IsString()
-    cover?: string;
+  @Expose()
+  @IsOptional()
+  @IsString()
+  cover?: string;
 
-    @Expose()
-    @IsBoolean()
-    isLocked: boolean;
+  @IsNotEmpty()
+  @Expose()
+  @IsBoolean()
+  isLocked: boolean;
 
-    @Expose()
-    @IsNumber()
-    price: number;
+  @IsNotEmpty()
+  @Expose()
+  @IsNumber()
+  price: number;
 
-    @Expose()
-    createdAt: Date;
+  @IsNotEmpty()
+  @Expose()
+  createdAt: Date;
 }

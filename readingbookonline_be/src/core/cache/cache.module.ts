@@ -8,5 +8,4 @@ import { CacheController } from './cache.controller';
   controllers: [CacheController],
   exports: [CacheService],
 })
-
-export class CacheModule { }
+export class CacheModule {}

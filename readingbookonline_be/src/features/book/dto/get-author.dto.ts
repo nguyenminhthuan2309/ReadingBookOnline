@@ -1,14 +1,14 @@
 import { Expose } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
-export class GetBookStatusDto {
+export class AuthorDto {
   @IsNotEmpty()
-  @Expose()
   @IsNumber()
+  @Expose()
   id: number;
 
   @IsNotEmpty()
-  @Expose()
   @IsString()
+  @Expose()
   name: string;
 }

@@ -1,12 +1,14 @@
 import { Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class GetBookCategoryDto {
-    @Expose()
-    @IsNumber()
-    id: number;
+  @IsNotEmpty()
+  @Expose()
+  @IsNumber()
+  id: number;
 
-    @Expose()
-    @IsString()
-    name: string;
+  @IsNotEmpty()
+  @Expose()
+  @IsString()
+  name: string;
 }

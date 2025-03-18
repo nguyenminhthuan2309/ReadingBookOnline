@@ -4,17 +4,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { jwtConfig } from '@core/config/global';
 
 @Module({
-    imports: [
-        NestJwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: async (configService: ConfigService) => ({
-                secret: configService.get<string>(jwtConfig.secret),
-                signOptions: { expiresIn: configService.get<string>(jwtConfig.expiresIn) },
-            }),
-        }),
-    ],
-    exports: [NestJwtModule],
+  imports: [
+    NestJwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>(jwtConfig.secret),
+        signOptions: {
+          expiresIn: configService.get<string>(jwtConfig.expiresIn),
+        },
+      }),
+    }),
+  ],
+  exports: [NestJwtModule],
 })
-
-export class JwtModule { }
+export class JwtModule {}

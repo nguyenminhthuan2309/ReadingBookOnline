@@ -5,7 +5,7 @@ export class AppService {
   ping(): object {
     return {
       code: 200,
-      status: "OK"
+      status: 'OK',
     };
   }
 }

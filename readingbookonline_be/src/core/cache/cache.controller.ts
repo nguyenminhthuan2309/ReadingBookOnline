@@ -3,7 +3,7 @@ import { CacheService } from './cache.service';
 
 @Controller('cache')
 export class CacheController {
-  constructor(private readonly cacheService: CacheService) { }
+  constructor(private readonly cacheService: CacheService) {}
 
   @Post('set')
   async setCache(@Body() body: { key: string; value: string; ttl?: number }) {
@@ -44,7 +44,10 @@ export class CacheController {
   @Post('hash/set')
   async setHash(@Body() body: { key: string; field: string; value: string }) {
     await this.cacheService.setHash(body.key, body.field, body.value);
-    return { status: true, message: `Hash field ${body.field} set successfully` };
+    return {
+      status: true,
+      message: `Hash field ${body.field} set successfully`,
+    };
   }
 
   @Get('hash/get/:key/:field')

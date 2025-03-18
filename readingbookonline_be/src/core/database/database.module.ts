@@ -5,14 +5,13 @@ import { postgresConfig } from '@core/config/global';
 
 @Global()
 @Module({
-    imports: [
-        TypeOrmModule.forRoot({
-            ...postgresConfig,
-            autoLoadEntities: true,
-        }),
-    ],
-    providers: [DatabaseService],
-    exports: [DatabaseService],
+  imports: [
+    TypeOrmModule.forRoot({
+      ...postgresConfig,
+      autoLoadEntities: true,
+    }),
+  ],
+  providers: [DatabaseService],
+  exports: [DatabaseService],
 })
-
-export class DatabaseModule { }
+export class DatabaseModule {}

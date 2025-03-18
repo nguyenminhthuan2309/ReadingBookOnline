@@ -6,5 +6,4 @@ import { HttpRequestService } from './http-request.service';
   providers: [HttpRequestService],
   exports: [HttpRequestService],
 })
-
-export class HttpRequestModule { }
+export class HttpRequestModule {}
