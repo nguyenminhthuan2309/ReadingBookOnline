@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-const FormInput = ({ label, type = "text", ...props }) => {
+const FormInput = ({ label, type, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
 

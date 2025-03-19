@@ -1,6 +1,6 @@
 import React from "react";
 
-export const FormInput = ({ label, type = "text", ...props }) => {
+export const FormInput = ({ label, type, ...props }) => {
   return (
     <div className="w-full">
       <label className="self-start text-base">{label}</label>

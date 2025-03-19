@@ -1,56 +1,43 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Router from "next/router";
+import { useDispatch } from "react-redux";
 
 import { FormInput } from "./FormInput";
 import { ActionButton } from "./ActionButton";
 import { Button } from "@mui/material";
+import { useForm } from "react-hook-form";
+
+import { handleAuthenticate } from "@/utils/actions/authAction";
 
 export const LoginForm = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  // const [formData, setFormData] = useState({
+  //   username: "",
+  //   password: "",
+  // });
+  const dispatch = useDispatch();
+  const { handleSubmit, register } = useForm();
+  const handleLogin = useCallback((formData) => {
+    dispatch(handleAuthenticate(formData));
+  }, [dispatch]);
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(handleLogin)}
       className="flex flex-col self-center py-8 pr-20 pl-10 mt-16 max-w-full text-xl text-black bg-white rounded-xl w-[1052px] max-md:px-5 max-md:mt-10"
     >
       <h2 className="self-start text-3xl">SIGN IN</h2>
       <div className="shrink-0 mt-5 h-px border border-black border-solid w-[122px]" />
 
       <div className="mt-16 ml-32 max-md:mt-10 max-md:ml-2.5">
-        <FormInput
-          label="EMAIL/USERNAME"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
+        <FormInput label="EMAIL" {...register("email")} type="email" required />
       </div>
 
       <div className="mt-4 ml-32 max-md:ml-2.5">
         <FormInput
           label="PASSWORD"
           type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
+          {...register("password")}
           required
         />
       </div>
