@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsEnum,
+  IsString,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -28,6 +29,11 @@ export class GetBookRequestDto extends PaginationRequestDto {
   @IsNumber()
   @Transform(({ value }) => Number(value), { toClassOnly: true })
   userId?: number;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  title?: string;
 
   @ApiPropertyOptional({
     type: Number,

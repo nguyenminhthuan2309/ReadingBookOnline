@@ -41,13 +41,14 @@ export class BookService {
         page = 1,
         limit = 10,
         userId,
+        title,
         statusId,
         categoryId,
         sortBy = 'updatedAt',
         sortType = 'DESC',
       } = params;
 
-      const cachedKey = `books:list:${userId || 'all'}:${statusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
+      const cachedKey = `books:list:${userId || 'all'}:${title || 'all'}:${statusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
       const cachedPage = await this.cacheService.get(cachedKey);
       if (cachedPage) {
         return JSON.parse(cachedPage);
@@ -71,6 +72,17 @@ export class BookService {
 
       if (categoryId && categoryId.length > 0) {
         qb.andWhere('category.id IN (:...categoryId)', { categoryId });
+      }
+
+      if (title) {
+        qb.andWhere(
+          `(to_tsvector('simple', lower(book.title)) @@ websearch_to_tsquery(lower(:search)) 
+           OR lower(book.title) ILIKE :prefixSearch)`,
+          {
+            search: title.replace(/\s+/g, '&'),
+            prefixSearch: `%${title.replace(/\s+/g, '&')}%`,
+          },
+        );
       }
 
       if (sortBy === SortByOptions.VIEWS) {
