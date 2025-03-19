@@ -51,7 +51,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cập nhật thông tin người dùng' })
-  @Put('')
+  @Put()
   async updateUser(
     @Req() req: Request,
     @Body() body: UpdateUserDto,
