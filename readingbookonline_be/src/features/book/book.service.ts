@@ -19,11 +19,12 @@ import {
   GetBookCateogryResponseDto,
 } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
+import { bookConfig } from '@core/config/global';
 
 @Injectable()
 export class BookService {
   // 1 hour
-  private redisBookTtl = 3600;
+  private readonly redisBookTtl = bookConfig.redisBookTtl;
 
   constructor(
     @InjectRepository(Book)

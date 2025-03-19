@@ -224,7 +224,7 @@ export class UserService {
       }
 
       if (body.name) user.name = body.name;
-      // if (updateUserDto.avatar) user.avatar = updateUserDto.avatar;
+      if (body.avatar) user.avatar = body.avatar;
 
       await this.dataBaseService.update<User>(this.userRepository, userId, {
         ...body,
