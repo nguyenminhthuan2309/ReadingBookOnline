@@ -184,9 +184,9 @@ export class UserService {
     try {
       const id = (req as any).user?.id;
 
-      const infoUser = await this.dataBaseService.findOne<User>(
+      const infoUser: User | null = await this.dataBaseService.findOne<User>(
         this.userRepository,
-        { where: { id } },
+        { relations: ['role', 'status'], where: { id } },
       );
 
       const user = plainToInstance(UserResponseDto, infoUser, {

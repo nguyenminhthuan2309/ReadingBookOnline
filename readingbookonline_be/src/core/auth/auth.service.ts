@@ -37,7 +37,6 @@ export class AuthService {
           relations: ['role', 'status'],
         },
       );
-
       if (!user) {
         throw new NotFoundException('Người dùng không tồn tại');
       }
@@ -47,11 +46,9 @@ export class AuthService {
         throw new BadRequestException('Mật khẩu không đúng');
       }
 
-      const payload = plainToInstance(
-        UserResponseDto,
-        { ...user, roleId: user.role.id, statusId: user.status.id },
-        { excludeExtraneousValues: true },
-      );
+      const payload = plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      });
 
       const accessToken = await this.jwtService.signAsync(
         instanceToPlain(payload),
@@ -60,7 +57,7 @@ export class AuthService {
 
       this.loggerService.info('User logged in', 'AuthService.login');
 
-      return { accessToken };
+      return { accessToken, user: payload };
     } catch (error) {
       this.loggerService.err(error.message, 'AuthService.login');
 

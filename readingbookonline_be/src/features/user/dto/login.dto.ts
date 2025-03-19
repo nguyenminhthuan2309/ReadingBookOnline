@@ -15,4 +15,5 @@ export class LoginDto {
 
 export class LoginResponseDto {
   accessToken: string;
+  user: UserResponseDto;
 }
