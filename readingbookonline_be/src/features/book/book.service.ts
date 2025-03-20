@@ -92,12 +92,10 @@ export class BookService {
         qb.orderBy('book.updatedAt', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.LATEST_CHAPTER) {
         qb.orderBy(
-          '(SELECT MAX(chapters.updatedAt) FROM chapters WHERE chapters.bookId = book.id)',
-          sortType as SortTypeOptions,
+          `(SELECT MAX("book_chapter"."updated_at") FROM "book_chapter" WHERE "book_chapter"."book_id" = "book"."id")`,
+          'DESC',
         );
       }
-
-      qb.addOrderBy('chapters.chapter', 'ASC');
 
       qb.skip((page - 1) * limit).take(limit);
 
@@ -106,16 +104,21 @@ export class BookService {
       const response: GetBookResponseDto = {
         totalItems: total,
         totalPages: total > 0 ? Math.ceil(total / limit) : 1,
-        data: books.map((book) =>
-          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true }),
-        ),
+        data: books.map((book) => {
+          if (book.chapters) {
+            book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
+          }
+          return plainToInstance(GetBookDto, book, {
+            excludeExtraneousValues: true,
+          });
+        }),
       };
 
-      await this.cacheService.set(
-        cachedKey,
-        JSON.stringify(response),
-        this.redisBookTtl,
-      );
+      // await this.cacheService.set(
+      //   cachedKey,
+      //   JSON.stringify(response),
+      //   this.redisBookTtl,
+      // );
 
       return response;
     } catch (error) {
