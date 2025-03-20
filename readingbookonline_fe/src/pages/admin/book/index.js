@@ -1,4 +1,4 @@
-import BookManagement from "@/components/Admin/Books";
+import BookManagement from "@/containers/Admin/Books";
 
 export default function BookManagementPage() {
   return (

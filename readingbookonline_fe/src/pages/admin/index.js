@@ -1,4 +1,4 @@
-import UserManagement from "@/components/Admin/Users";
+import UserManagement from "@/containers/Admin/Users";
 
 export default function UserManagementPage() {
   return (

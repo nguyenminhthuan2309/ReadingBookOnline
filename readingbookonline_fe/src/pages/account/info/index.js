@@ -1,4 +1,4 @@
-import AccountInfo from "@/components/Account/Info";
+import AccountInfo from "@/containers/Account/Info";
 
 export default function AccountInfoPage() {
   return (

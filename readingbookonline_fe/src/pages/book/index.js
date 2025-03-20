@@ -1,4 +1,4 @@
-import BookInfo from "@/components/Book/Info";
+import BookInfo from "@/containers/Book/Info";
 
 export default function BookPage() {
   return (

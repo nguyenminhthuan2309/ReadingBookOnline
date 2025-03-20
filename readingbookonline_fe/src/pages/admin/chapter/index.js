@@ -1,4 +1,4 @@
-import ChapterManagement from "@/components/Admin/Chapters";
+import ChapterManagement from "@/containers/Admin/Chapters";
 
 export default function ChapterManagementPage() {
   return (
