@@ -20,6 +20,7 @@ import {
 } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
+import { BookChapter } from './entities/book-chapter.entity';
 
 @Injectable()
 export class BookService {
@@ -91,10 +92,7 @@ export class BookService {
       } else if (sortBy === SortByOptions.UPDATED_AT) {
         qb.orderBy('book.updatedAt', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.LATEST_CHAPTER) {
-        qb.orderBy(
-          `(SELECT MAX("book_chapter"."updated_at") FROM "book_chapter" WHERE "book_chapter"."book_id" = "book"."id")`,
-          'DESC',
-        );
+        qb.addOrderBy('chapters.updatedAt', sortType as SortTypeOptions);
       }
 
       qb.skip((page - 1) * limit).take(limit);
@@ -114,11 +112,11 @@ export class BookService {
         }),
       };
 
-      // await this.cacheService.set(
-      //   cachedKey,
-      //   JSON.stringify(response),
-      //   this.redisBookTtl,
-      // );
+      await this.cacheService.set(
+        cachedKey,
+        JSON.stringify(response),
+        this.redisBookTtl,
+      );
 
       return response;
     } catch (error) {
