@@ -1,24 +1,43 @@
 "use client";
-import React from "react";
-import Header from "./Header";
-import NavigationMenu from "./NavigationMenu";
+import React, { useEffect, useState } from "react";
+import {Header} from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";
 import ReviewSection from "./ReviewSection";
-import Footer from "./Footer";
+import {Footer} from "@/layouts/Footer";
+import { bookAPI } from "@/app/common/api";
+import { getAPI } from "@/utils/request";
 
 function MangaSPage() {
+  const [id, setId] = useState(1);
+  const [bookInfos, setBookInfos] = useState({});
+  const getBookInfoData = async () => {
+    const url = bookAPI.getBookById(id);
+    try {
+      const response = await getAPI(url);
+      const { data } = response.data.data;
+      setBookInfos(data[0]);
+      console.log("success");
+    } catch (error) {
+      console.log("error");
+    }
+  };
+  useEffect(() => {
+    getBookInfoData();
+  }, []);
+
+  console.log(bookInfos);
+
   return (
     <main className="rounded-none">
       <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
         <Header />
-        <NavigationMenu />
         <div className="flex flex-col self-center mt-9 w-full max-w-[1522px] max-md:max-w-full">
           <nav className="self-start text-3xl text-black">
             <a href="/">Home</a>/<a href="/sample-manga">Sample Manga</a>
           </nav>
-          <MangaDetails />
-          <ChapterList />
+          <MangaDetails bookInfo={bookInfos} />
+          <ChapterList chapters={bookInfos && bookInfos.chapters}/>
           <ReviewSection />
         </div>
         <Footer />

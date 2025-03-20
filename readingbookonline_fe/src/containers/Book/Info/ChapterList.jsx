@@ -1,22 +1,23 @@
+import moment from "moment";
 import React from "react";
 
-function ChapterList() {
-  const chapters = [
-    { number: 13, title: "waiting for more", date: "", isNew: true },
-    { number: 12, title: "", date: "Sample Date Month, Year" },
-    { number: 11, title: "", date: "Sample Date Month, Year" },
-    { number: 10, title: "", date: "Sample Date Month, Year" },
-    { number: 9, title: "it's still going", date: "Sample Date Month, Year" },
-    { number: 8, title: "", date: "Sample Date Month, Year" },
-    { number: 7, title: "it's still going", date: "Sample Date Month, Year" },
-    { number: 6, title: "it's still going", date: "Sample Date Month, Year" },
-    { number: "Epilogue", title: "", date: "Sample Date Month, Year" },
-    { number: 4, title: "", date: "Sample Date Month, Year" },
-    { number: 3, title: "it's still going", date: "Sample Date Month, Year" },
-    { number: 2, title: "it still continue", date: "Sample Date Month, Year" },
-    { number: 1, title: "when it all start", date: "Sample Date Month, Year" },
-    { number: 0, title: "Prologue", date: "Sample Date Month, Year" },
-  ];
+function ChapterList({ chapters }) {
+  // const chapters = [
+  //   { number: 13, title: "waiting for more", date: "", isNew: true },
+  //   { number: 12, title: "", date: "Sample Date Month, Year" },
+  //   { number: 11, title: "", date: "Sample Date Month, Year" },
+  //   { number: 10, title: "", date: "Sample Date Month, Year" },
+  //   { number: 9, title: "it's still going", date: "Sample Date Month, Year" },
+  //   { number: 8, title: "", date: "Sample Date Month, Year" },
+  //   { number: 7, title: "it's still going", date: "Sample Date Month, Year" },
+  //   { number: 6, title: "it's still going", date: "Sample Date Month, Year" },
+  //   { number: "Epilogue", title: "", date: "Sample Date Month, Year" },
+  //   { number: 4, title: "", date: "Sample Date Month, Year" },
+  //   { number: 3, title: "it's still going", date: "Sample Date Month, Year" },
+  //   { number: 2, title: "it still continue", date: "Sample Date Month, Year" },
+  //   { number: 1, title: "when it all start", date: "Sample Date Month, Year" },
+  //   { number: 0, title: "Prologue", date: "Sample Date Month, Year" },
+  //];
 
   return (
     <section className="mt-24 max-md:mt-10">
@@ -34,28 +35,23 @@ function ChapterList() {
       <hr className="border-b border-black" />
 
       <div className="mt-11 w-full min-h-[953px] max-md:mt-10 max-md:max-w-full">
-        {chapters.map((chapter, index) => (
-          <article
-            key={index}
-            className="mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
-          >
-            <div className="flex flex-wrap gap-5 justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
-              <h4 className="text-black">
-                {typeof chapter.number === "number"
-                  ? `Chapter ${chapter.number}`
-                  : chapter.number}
-                {chapter.title && ` - ${chapter.title}`}
-              </h4>
-              {chapter.isNew ? (
-                <span className="text-xl font-extrabold text-red-500">New</span>
-              ) : (
+        {chapters &&
+          chapters.reverse().map((chapter, index) => (
+            <article
+              key={index}
+              className="mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
+            >
+              <div className="flex flex-wrap gap-5 justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
+                <h4 className="text-black">
+                  {chapter.chapter}
+                  {chapter.title && ` - ${chapter.title}`}
+                </h4>
                 <time className="text-right text-neutral-700">
-                  {chapter.date}
+                  {moment(chapter.createdAt).format("YYYY-MM-DD hh:mm")}
                 </time>
-              )}
-            </div>
-          </article>
-        ))}
+              </div>
+            </article>
+          ))}
       </div>
     </section>
   );

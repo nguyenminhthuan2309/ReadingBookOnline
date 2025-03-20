@@ -1,22 +1,22 @@
-const Pagination = () => {
-  const pages = [1, 2, 3, 4, 5, "...", 10];
+import * as React from 'react';
+import Pagination from '@mui/material/Pagination';
+import PaginationItem from '@mui/material/PaginationItem';
+import Stack from '@mui/material/Stack';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
+export default function CustomIcons(props) {
   return (
-    <nav className="flex flex-wrap gap-9 items-center self-end text-1xl text-black whitespace-nowrap pt-9">
-      {pages.map((page, index) => (
-        <button
-          key={index}
-          className={`self-stretch ${
-            page === "..."
-              ? "text-3xl text-black "
-              : " bg-white h-[30px] w-[30px]"
-          }`}
-        >
-          {page}
-        </button>
-      ))}
-    </nav>
+    <Stack spacing={2}>
+      <Pagination
+        {...props}
+        renderItem={(item) => (
+          <PaginationItem
+            slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }}
+            {...item}
+          />
+        )}
+      />
+    </Stack>
   );
-};
-
-export default Pagination;
+}

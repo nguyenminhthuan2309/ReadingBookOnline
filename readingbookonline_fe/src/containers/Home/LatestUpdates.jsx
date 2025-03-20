@@ -1,128 +1,30 @@
-import React from "react";
+import React, {useEffect, useState } from "react";
 import BookTile from "./BookTile";
-import  Pagination  from "@/app/common/Pagination";
+import Pagination from "@/app/common/Pagination";
+import { bookAPI } from "@/app/common/api";
+import { getAPI } from "@/utils/request";
 
 export const LatestUpdates = () => {
-  const books = [
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    {
-      imageUrl:
-        "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-      title: "Sample Manga",
-      author: "Sample Author",
-      isHot: true,
-      chapters: [
-        "Chapter Sample - Name Sample",
-        "Chapter Sample - Name Sample",
-      ],
-      date: "Sample Date Month, Year",
-      isNew: true,
-    },
-    
-  ];
+  const [bookList, setBookList] = useState([]);
+  const [totalPage, setTotalPage] = useState();
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const getBookData = async () => {
+    const url = bookAPI.getBook(12, currentPage);
+    try {
+      const response = await getAPI(url);
+      const { data, totalPages } = response.data.data;
+      setBookList(data)
+      setTotalPage(totalPages)
+      console.log('Success')
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getBookData();
+  }, []);
 
   return (
     <section className="flex flex-col justify-center items-center min-w-60 w-[1117px] max-md:max-w-full">
@@ -145,10 +47,13 @@ export const LatestUpdates = () => {
         <hr className="flex z-10 shrink-0 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
       </header>
       <div className="flex flex-wrap gap-10 justify-between items-start mt-12 max-w-full w-[1049px] max-md:mt-10">
-        {books.map((book, index) => (
+        {bookList && bookList.map((book, index) => (
           <BookTile
             key={index}
-            {...book}
+            imageUrl={book.cover}
+            title={book.title}
+            author = {book.author.name}
+            chapters={book.chapters}
             className="flex flex-col rounded-none w-[222px]"
           />
         ))}

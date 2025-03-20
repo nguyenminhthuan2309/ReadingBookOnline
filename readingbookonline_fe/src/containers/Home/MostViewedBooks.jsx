@@ -1,4 +1,31 @@
+import { bookAPI } from "@/app/common/api";
+import { getAPI } from "@/utils/request";
+import moment from "moment";
+import React, { useEffect, useState } from "react";
+
 const MostViewedBooks = () => {
+  const [bookList, setBookList] = useState([]);
+  const [totalPage, setTotalPage] = useState();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const getBookData = async () => {
+    let url = bookAPI.getBook(12, currentPage);
+
+    try {
+      const response = await getAPI(url);
+      const { data, totalPages } = response.data.data;
+      setBookList(data);
+      setTotalPage(totalPages);
+      console.log("Success");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    getBookData();
+  }, []);
+
   return (
     <aside className="rounded-none min-w-60 w-[338px]">
       <div className="flex flex-col py-0.5 w-full bg-orange-100">
@@ -14,38 +41,45 @@ const MostViewedBooks = () => {
 
         {/* Most Viewed Books List */}
         <div className="flex flex-col pr-7 pl-2.5 mt-10 w-full max-md:pr-5">
-          {[1, 2, 3, 4, 5, 6].map((index) => (
-            <article key={index} className="flex gap-2 mt-8 first:mt-0">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/d8b75a8c9194e5cd0f55260fcba8f8574a6dd47ee6a7951f963fbb4037d7663b?placeholderIfAbsent=true"
-                className="object-contain aspect-[0.75] w-[113px]"
-                alt={`Most viewed manga ${index}`}
-              />
-              <div className="text-2xl text-black">
-                <h3>
-                  <span className="text-black">Sample Manga</span>
-                  <br />
-                  <span className="text-base leading-[30px] text-black">
-                    Sample Author
-                  </span>
-                </h3>
-                <div className="flex flex-col px-2.5 mt-1.5 text-sm">
-                  <div className="self-start px-2.5 py-1 rounded-md bg-zinc-300">
-                    Chapter Sample
+          {bookList &&
+            bookList.map((book, index) => {
+              const chapters = book.chapters;
+              return (
+                <article key={index} className="flex gap-2 mt-8 first:mt-0">
+                  <img
+                    src={book.cover}
+                    className="object-contain aspect-[0.75] w-[113px]"
+                    alt={`Most viewed manga ${index}`}
+                  />
+                  <div className="text-2xl text-black">
+                    <h3>
+                      <span className="text-black">{book.title}</span>
+                      <br />
+                      <span className="text-base leading-[30px] text-black">
+                        {book.author.name}
+                      </span>
+                    </h3>
+                    <div className="flex flex-col px-2.5 mt-1.5 text-sm">
+                      {chapters && chapters.slice(-2).map((chapter, index) => {
+                        console.log(chapter)
+                        return (
+                          <React.Fragment>
+                            <div className="self-start px-2.5 py-1 rounded-md bg-zinc-300">
+                              <p>Chapter {chapter.chapter}</p>
+                            </div>
+                            <time className="mt-1.5 text-neutral-700">
+                              {moment(chapter.createdAt).format(
+                                "YYYY-MM-DD hh:mm"
+                              )}
+                            </time>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <time className="mt-1.5 text-neutral-700">
-                    Sample Date Month, Year
-                  </time>
-                  <div className="self-start px-2.5 py-1 mt-2.5 rounded-md bg-zinc-300">
-                    Chapter Sample
-                  </div>
-                  <time className="mt-1.5 text-neutral-700">
-                    Sample Date Month, Year
-                  </time>
-                </div>
-              </div>
-            </article>
-          ))}
+                </article>
+              );
+            })}
         </div>
 
         <a

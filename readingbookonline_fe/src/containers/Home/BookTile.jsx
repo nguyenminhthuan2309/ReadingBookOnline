@@ -1,4 +1,4 @@
-
+import moment from "moment";
 import React from "react";
 
 const BookTile = ({
@@ -7,7 +7,6 @@ const BookTile = ({
   author,
   isHot = false,
   chapters = [],
-  date,
   isNew = false,
   className = "",
 }) => {
@@ -29,21 +28,25 @@ const BookTile = ({
           <p className="text-base leading-[30px]">{author}</p>
         </div>
       </div>
-      {chapters.map((chapter, index) => (
-        <React.Fragment key={index}>
-          <div className="px-2.5 py-1 mt-2 text-sm text-black rounded-md bg-zinc-300">
-            {chapter}
-          </div>
-          {isNew && index === 0 && (
-            <span className="self-end mt-2.5 mr-5 text-sm font-extrabold text-red-500">
-              New
-            </span>
-          )}
-        </React.Fragment>
-      ))}
-      {date && (
-        <time className="self-center mt-2 text-sm text-stone-600">{date}</time>
-      )}
+      {chapters &&
+        chapters.slice(-2).reverse().map((chapter, index) => (
+          <React.Fragment key={index}>
+            <div className="px-2.5 py-1 mt-2 text-sm text-black rounded-md bg-zinc-300">
+              <p>Chapter {chapter.chapter}</p>
+            </div>
+            {isNew && index === 0 && (
+              <span className="self-end mt-2.5 mr-5 text-sm font-extrabold text-red-500">
+                New
+              </span>
+            )}
+            <time
+              dateTime={chapter.createdAt}
+              className="self-end mt-2 text-sm text-stone-600"
+            >
+              {moment(chapter.createdAt).format('YYYY-MM-DD hh:mm')}
+            </time>
+          </React.Fragment>
+        ))}
     </article>
   );
 };

@@ -1,4 +1,4 @@
-const FilterBar = () => {
+const FilterBar = ({itemLength}) => {
   const orderOptions = ["latest", "A-Z", "rating", "most views"];
 
   return (
@@ -8,7 +8,7 @@ const FilterBar = () => {
           <div className="flex shrink-0 rounded-full bg-zinc-300 h-[37px] w-[37px]" />
         </div>
         <p className="self-start text-2xl leading-loose text-black basis-auto">
-          0 RESULTS
+          {itemLength} Result(s)
         </p>
       </div>
       <div className="flex flex-wrap gap-10 justify-between items-center self-start text-xl leading-10 text-stone-400 max-md:max-w-full">

@@ -1,7 +1,8 @@
 "use client";
+import moment from "moment";
 import React from "react";
 
-function MangaDetails() {
+function MangaDetails({bookInfo}) {
   return (
     <section className="mt-7">
       <h2 className="text-4xl font-semibold text-black">Manga 1</h2>
@@ -10,7 +11,7 @@ function MangaDetails() {
           <aside className="w-[22%] max-md:ml-0 max-md:w-full">
             <div className="mt-3 w-full max-md:mt-10">
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/5ffc46610c9fad2342bb8e8a95586d5ce8b85516c264d4e4578971897d71a215?placeholderIfAbsent=true"
+                src={bookInfo.cover}
                 alt="Manga 1 Cover"
                 className="object-contain w-full aspect-[0.74]"
               />
@@ -46,15 +47,30 @@ function MangaDetails() {
 
               <dl className="ml-5 w-[69%] max-md:w-full text-lg leading-10">
                 <dd className="text-stone-400">
-                  title 01, title 02, title 03, title 04,
+                  title 01, title 02, title 03, title 04,title 05, title 06
                 </dd>
-                <dd className="text-stone-400">title05, title 06</dd>
-                <dd className="text-stone-400">Sample author</dd>
+                <dd className="text-stone-400">
+                  {bookInfo.author && bookInfo.author.name}
+                </dd>
                 <dd className="text-stone-400">Ample artist</dd>
-                <dd className="text-stone-400">Genre 1, Genre 2, Genre 3</dd>
-                <dd className="text-stone-400">Novel/Manhua/Manga/Manhwa</dd>
-                <dd className="text-stone-400">Sample time MM, yyyy</dd>
-                <dd className="text-stone-400">On Going/Completed/Dropped</dd>
+                <dd className="text-stone-400">
+                  {bookInfo.categories &&
+                    bookInfo.categories.map((genre, index) => {
+                      return (
+                        <span key={index}>
+                          {genre.name}
+                          {index !== bookInfo.categories.length - 1 && ", "}
+                        </span>
+                      );
+                    })}
+                </dd>
+                <dd className="text-stone-400">Novel</dd>
+                <dd className="text-stone-400">
+                  {moment(bookInfo.createdAt).format("YYYY-MM-DD hh:mm")}
+                </dd>
+                <dd className="text-stone-400">
+                  {bookInfo.status && bookInfo.status.name.toLowerCase()}
+                </dd>
                 <div className="mt-4">
                   <button className="px-7 py-1.5 text-white rounded-2xl bg-slate-600 hover:bg-slate-700">
                     Read Last
@@ -65,14 +81,16 @@ function MangaDetails() {
           </div>
 
           <aside className="ml-5 w-[26%] max-md:ml-0 max-md:w-full">
-            <div className="flex gap-10 text-2xl leading-10 text-center text-black max-md:mt-10">
+            <div className="flex gap-10 text-2xl justify-center leading-10 text-center text-black">
               <div>
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/0aa0cc64a90b957cc6875d010518c312cc444301d4b6b199748772e615ccc724?placeholderIfAbsent=true"
                   alt="Views Icon"
                   className="object-contain aspect-[0.89] w-[65px]"
                 />
-                <p>0 Views</p>
+                <p>
+                  {bookInfo.views} <br /> Views
+                </p>
               </div>
               <div>
                 <img
@@ -99,14 +117,7 @@ function MangaDetails() {
         </header>
         <hr className="border-b border-black" />
         <p className="mt-11 mr-11 text-lg leading-10 text-black max-md:mt-10 max-md:mr-2.5 max-md:max-w-full">
-          Lorem ipsum dolor sit amet consectetur. Viverra odio cursus nec at
-          arcu fermentum odio. Diam venenatis rhoncus in elementum laoreet
-          lobortis tortor libero. Tincidunt ac eget posuere id fermentum.
-          Tristique faucibus ornare dui vestibulum pharetra porttitor tempus
-          lacus. Ullamcorper ut enim enim egestas. Parturient pretium id elit id
-          sed habitasse cursus lectus. Ut in viverra quam elementum diam commodo
-          tellus tortor. Euismod sed sit ultricies senectus quis nec. Neque ut
-          pulvinar in egestas egestas.
+          {bookInfo.description}
         </p>
       </section>
     </section>

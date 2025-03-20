@@ -1,4 +1,4 @@
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button } from "@mui/material";
@@ -13,14 +13,17 @@ const menuItems = [
 ];
 
 export const Header = () => {
+  const router = useRouter()
   return (
     <div className="w-full">
       <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-red-300 max-md:px-5 max-md:max-w-full">
-        <img
-          src="/images/name.png"
-          alt="Title"
-          className="object-fit shrink-0 self-start aspect-[0.9] h-[95px] w-[475px]"
-        />
+        <button onClick={()=>router.push('/')}>
+          <img
+            src="/images/name.png"
+            alt="Title"
+            className="object-fit shrink-0 self-start aspect-[0.9] h-[95px] w-[475px]"
+          />
+        </button>
         <nav className="flex gap-7 my-auto text-2xl max-md:max-w-full">
           <div className="flex gap-10 py-1.5 pr-2.5 pl-5 text-lg text-black bg-red-100 rounded-xl">
             <input
