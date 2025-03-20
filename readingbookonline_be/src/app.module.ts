@@ -11,6 +11,7 @@ import { UserModule } from '@features/user/user.module';
 import { BookModule } from '@features/book/book.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from '@core/auth/auth.module';
+import { CloudinaryModule } from '@core/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -28,11 +29,12 @@ import { AuthModule } from '@core/auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    DatabaseModule, // PostgreSQL
-    CacheModule, // Redis Cache
+    DatabaseModule,
+    CacheModule,
     UserModule,
     BookModule,
     AuthModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

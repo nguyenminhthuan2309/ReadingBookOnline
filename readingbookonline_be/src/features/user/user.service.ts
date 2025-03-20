@@ -211,10 +211,11 @@ export class UserService {
         throw new BadRequestException('Không thể xác thực người dùng');
       }
 
-      const user = await this.dataBaseService.findOne<User>(
+      const user: User | null = await this.dataBaseService.findOne<User>(
         this.userRepository,
         {
           where: { id: userId },
+          relations: ['role', 'status'],
         },
       );
 
@@ -223,9 +224,13 @@ export class UserService {
       }
 
       if (body.name) user.name = body.name;
-      // if (updateUserDto.avatar) user.avatar = updateUserDto.avatar;
+      if (body.avatar) user.avatar = body.avatar;
 
-      await this.userRepository.save(user);
+      await this.dataBaseService.update<User>(this.userRepository, userId, {
+        ...body,
+      });
+
+      this.loggerService.info('User updated', 'UserService.updateUser');
 
       return plainToInstance(UserResponseDto, user, {
         excludeExtraneousValues: true,

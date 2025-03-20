@@ -35,3 +35,14 @@ export const userConfig = {
 
   redisTtlResetPassword: 300,
 };
+
+export const bookConfig = {
+  redisBookTtl: 60 * 10,
+};
+
+export const cloudinaryConfig = {
+  folderAvatar: 'avatar',
+  folderBook: 'book',
+  folderBookChapter: 'chapter',
+  limitImageSize: 1024 * 1024,
+};

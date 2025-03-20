@@ -63,7 +63,7 @@ export class DatabaseService {
     id: number,
     data: DeepPartial<T>,
   ): Promise<void> {
-    await entity.update(id, data as any); //Ép kiểu để tránh lỗi TypeScript
+    await entity.update(id, data as any);
   }
 
   //5. Xóa bản ghi theo ID
