@@ -5,12 +5,14 @@ const forgotPasswordSlice = createSlice({
   initialState: {
     loading: false,
     email: "",
+    token: "",
     error: null,
   },
   reducers: {
     resetState: (state) => {
       state.loading = false;
       state.email = "";
+      token = "";
       state.error = null;
     },
   },
@@ -28,9 +30,20 @@ const forgotPasswordSlice = createSlice({
       .addCase("forgotPassword/error", (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase("verifyToken", (state, action) => {
+        state.loading = false;
+        state.email = action.payload;
+        state.token = action.payload;
+        state.error = null;
       });
   },
 });
+
+export const forgotPasswordRequest = () => ({ type: "forgotPassword/request" });
+export const forgotPasswordSuccess = () => ({ type: "forgotPassword/success" });
+export const forgotPasswordFail = () => ({ type: "forgotPassword/fail" });
+export const verifyToken = () => ({ type: "verifyToken" });
 
 export const { resetState } = forgotPasswordSlice.actions;
 export default forgotPasswordSlice.reducer;

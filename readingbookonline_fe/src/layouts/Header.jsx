@@ -1,4 +1,5 @@
-import Router, { useRouter } from "next/router";
+import React from "react";
+import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button } from "@mui/material";
@@ -43,7 +44,7 @@ export const Header = () => {
           <div className="flex flex-wrap gap-5 py-2">
             <Button
               sx={{ textTransform: "none" }}
-              onClick={() => Router.push("/account/sign_in")}
+              onClick={() => router.push("/account/sign_in")}
             >
               <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
                 Sign in
@@ -52,7 +53,7 @@ export const Header = () => {
             <span className="text-xl">|</span>
             <Button
               sx={{ textTransform: "none" }}
-              onClick={() => Router.push("/account/sign_up")}
+              onClick={() => router.push("/account/sign_up")}
             >
               <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
                 Sign up

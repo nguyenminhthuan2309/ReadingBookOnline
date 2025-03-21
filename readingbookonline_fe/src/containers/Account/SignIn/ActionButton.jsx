@@ -1,6 +1,7 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-export const ActionButton = ({
+const ActionButton = ({
   children,
   variant = "primary",
   className = "",
@@ -22,3 +23,11 @@ export const ActionButton = ({
     </button>
   );
 };
+
+ActionButton.propTypes = {
+  children: PropTypes.object,
+  variant: PropTypes.string,
+  className: PropTypes.string,
+}
+
+export default ActionButton;

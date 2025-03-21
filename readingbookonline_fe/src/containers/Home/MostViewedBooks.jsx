@@ -42,7 +42,7 @@ const MostViewedBooks = () => {
         {/* Most Viewed Books List */}
         <div className="flex flex-col pr-7 pl-2.5 mt-10 w-full max-md:pr-5">
           {bookList &&
-            bookList.map((book, index) => {
+            bookList.slice(0, 6).map((book, index) => {
               const chapters = book.chapters;
               return (
                 <article key={index} className="flex gap-2 mt-8 first:mt-0">
@@ -60,21 +60,21 @@ const MostViewedBooks = () => {
                       </span>
                     </h3>
                     <div className="flex flex-col px-2.5 mt-1.5 text-sm">
-                      {chapters && chapters.slice(-2).map((chapter, index) => {
-                        console.log(chapter)
-                        return (
-                          <React.Fragment>
-                            <div className="self-start px-2.5 py-1 rounded-md bg-zinc-300">
-                              <p>Chapter {chapter.chapter}</p>
-                            </div>
-                            <time className="mt-1.5 text-neutral-700">
-                              {moment(chapter.createdAt).format(
-                                "YYYY-MM-DD hh:mm"
-                              )}
-                            </time>
-                          </React.Fragment>
-                        );
-                      })}
+                      {chapters &&
+                        chapters.slice(-2).map((chapter, index) => {
+                          return (
+                            <React.Fragment key={index}>
+                              <div className="self-start px-2.5 py-1 rounded-md bg-zinc-300">
+                                <p>Chapter {chapter.chapter}</p>
+                              </div>
+                              <time className="mt-1.5 text-neutral-700">
+                                {moment(chapter.createdAt).format(
+                                  "YYYY-MM-DD hh:mm"
+                                )}
+                              </time>
+                            </React.Fragment>
+                          );
+                        })}
                     </div>
                   </div>
                 </article>
