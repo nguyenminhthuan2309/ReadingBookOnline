@@ -27,8 +27,9 @@ export const handleAuthenticate = (formdata) => {
       const response = await postAPI(url, formdata);
       if (response && response.data) {
         dispatch(loginSuccess());
-        setAuthorizationToken(response.data);
-        Router.push("/");
+        console.log(response.data.data.accessToken);
+        // setAuthorizationToken(response.data);
+        // Router.push("/");
       }
     } catch (error) {
       dispatch(loginFail());
@@ -80,7 +81,7 @@ export const checkToken = (email, otp) => {
   return async (dispatch) => {
     const url = authAPI.verifyOTP;
     try {
-      await postAPI(url, { email, otp});
+      await postAPI(url, { email, otp });
       dispatch(verifyToken());
       console.log("success");
     } catch (error) {

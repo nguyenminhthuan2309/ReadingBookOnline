@@ -6,9 +6,7 @@ const authAPI = {
   forgotPassword: `${API_GATEWAY}/user/reset-password`,
   verifyOTP: `${API_GATEWAY}/user/verify-reset-password`,
 };
-const userAPI = {
-  getUserInfo: (userId) => `${API_GATEWAY}/book/${userId}`,
-};
+const userAPI = {};
 
 const bookAPI = {
   getBook: (limitNumber, pageNumber) =>

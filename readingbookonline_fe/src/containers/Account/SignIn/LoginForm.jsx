@@ -27,7 +27,7 @@ const schema = yup.object().shape({
 export const LoginForm = () => {
   const [isOpen, setOpen] = useState(false);
   const dispatch = useDispatch();
-  const { handleSubmit, control } = useForm({
+  const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
   });
 
@@ -37,6 +37,7 @@ export const LoginForm = () => {
 
   const handleLogin = (formData) => {
     dispatch(handleAuthenticate(formData));
+    reset();
   };
 
   return (
@@ -53,7 +54,7 @@ export const LoginForm = () => {
           <InputField
             name={"email"}
             control={control}
-            type="email"
+            type="text"
             placeholder={"Nhập email . . ."}
           />
         </div>
