@@ -451,6 +451,32 @@ export class UserService {
       throw error;
     }
   }
+
+  async updateUserStatus(userId: number, statusId: number): Promise<Boolean> {
+    try {
+      const user = await this.dataBaseService.findOne(this.userRepository, {
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      await this.dataBaseService.update(this.userRepository, userId, {
+        status: { id: statusId },
+      });
+
+      this.loggerService.info(
+        `Updated status of user ${userId} to statusId ${statusId}`,
+        'UserService.updateUserStatus',
+      );
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.updateUserStatus');
+      throw error;
+    }
+  }
 }
 
 const generatePassword = (length) => {

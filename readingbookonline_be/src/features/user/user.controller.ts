@@ -7,7 +7,8 @@ import {
   Req,
   Put,
   Query,
-  Redirect,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
@@ -20,7 +21,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, UpdateUserStatusDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password-dto';
 import { AdminGuard } from '@core/auth/admin.guard';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
@@ -95,5 +96,18 @@ export class UserController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   async createManager(@Body() createDto: CreateManagerDto) {
     return this.userService.createManagerAccount(createDto);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Cập nhật trạng thái người dùng' })
+  @Patch('status/:id')
+  async updateUserStatus(
+    @Param('id') id: number,
+    @Body() updateUserStatusDto: UpdateUserStatusDto,
+  ): Promise<Boolean> {
+    return await this.userService.updateUserStatus(
+      id,
+      updateUserStatusDto.statusId,
+    );
   }
 }

@@ -1,6 +1,11 @@
-import { ApiPropertyOptional, PartialType, PickType } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger';
 import { CreateUserDto } from './create-user.dto';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(
   PickType(CreateUserDto, ['name', 'avatar'] as const),
@@ -31,4 +36,11 @@ export class UpdateUserDto extends PartialType(
   @IsString()
   @IsOptional()
   birthDate?: Date;
+}
+
+export class UpdateUserStatusDto {
+  @ApiProperty({ example: 2, description: 'ID của trạng thái mới' })
+  @IsNotEmpty()
+  @IsNumber()
+  statusId: number;
 }
