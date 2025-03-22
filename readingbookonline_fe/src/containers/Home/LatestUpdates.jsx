@@ -1,5 +1,5 @@
 import React, {useEffect, useState } from "react";
-import BookTile from "./BookTile";
+import BookTile from "@/components/BookItem";
 import Pagination from "@/app/common/Pagination";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";

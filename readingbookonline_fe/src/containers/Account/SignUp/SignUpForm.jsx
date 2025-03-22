@@ -1,40 +1,51 @@
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React from "react";
+import Router from "next/router";
 
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import Router from "next/router";
+import * as yup from "yup";
 
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Button } from "@mui/material";
-
-import FormInput from "./FormInput";
-import ActionButtons from "./ActionButton";
 import { registerAccount } from "@/utils/actions/authAction";
+import InputField from "@/components/RenderInput";
+
+const schema = yup.object().shape({
+  email: yup
+    .string()
+    .email("Email không hợp lệ")
+    .required("Email không được để trống"),
+  name: yup.string(),
+  password: yup
+    .string()
+    .required("Password không được để trống")
+    .min(6, "Mật khẩu phải có ít nhất 6 kí tự"),
+  reEnterPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Mật khẩu không khớp")
+    .required("Password không được để trống"),
+});
 
 const SignUpForm = () => {
-  const { handleSubmit, register } = useForm();
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
+  const { handleSubmit, control, reset } = useForm({
+    resolver: yupResolver(schema),
+  });
+
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (password === confirmPassword) {
-      setIsPasswordMatch(false);
-    } else {
-      setIsPasswordMatch(true);
+  const handleSignUp = (formData) => {
+    try {
+      if (formData && formData.reEnterPassword) {
+        // eslint-disable-next-line no-unused-vars
+        const { reEnterPassword, ...dataToSend } = formData;
+        dispatch(registerAccount(dataToSend));
+      }
+      reset();
+    } catch (error) {
+      console.log(error);
     }
-  }, [password, confirmPassword]);
-
-  console.log(password, confirmPassword);
-  console.log(isPasswordMatch);
-
-  const handleSignUp = useCallback(
-    (formData) => {
-      dispatch(registerAccount(formData));
-    },
-    [dispatch]
-  );
+  };
 
   return (
     <form
@@ -42,30 +53,34 @@ const SignUpForm = () => {
       className="mx-auto mt-20 max-w-[730px]"
     >
       <div className="flex flex-col gap-4">
-        <FormInput label="EMAIL" type="email" {...register("email")} required />
-        <FormInput
-          label="USERNAME"
-          type="text"
-          {...register("name")}
-          required
+        <span>EMAIL</span>
+        <InputField
+          name={"email"}
+          control={control}
+          type={"text"}
+          placeholder={"Nhập email . . ."}
         />
-        <FormInput
-          label="PASSWORD"
-          type="password"
-          {...register("password")}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+        <span>NAME</span>
+        <InputField
+          name={"name"}
+          control={control}
+          type={"text"}
+          placeholder={"Nhập Name . . ."}
         />
-        <FormInput
-          label="RE_ENTER PASSWORD"
-          type="password"
-          name="confirmPassword"
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
+        <span>PASSWORD</span>
+        <InputField
+          name={"password"}
+          control={control}
+          type={"password"}
+          placeholder={"Nhập password . . ."}
         />
-        {isPasswordMatch && (
-          <p>Re-enter password must be the same as password</p>
-        )}
+        <span>RE-ENTER PASSWORD</span>
+        <InputField
+          name={"reEnterPassword"}
+          control={control}
+          type={"password"}
+          placeholder={"Nhập password . . ."}
+        />
       </div>
 
       <img
@@ -83,7 +98,13 @@ const SignUpForm = () => {
           </p>
         </Button>
       </div>
-      <ActionButtons type="submit" />
+      <div className="flex gap-24 justify-center mt-12">
+      <Button sx={{ textTransform: "none" }} type="submit">
+        <span className="h-9 text-xl pt-1 text-white bg-amber-600 rounded-xl w-[231px]">
+          Sign Up
+        </span>
+      </Button>
+      </div>
     </form>
   );
 };

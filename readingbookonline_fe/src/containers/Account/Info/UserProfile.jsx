@@ -27,9 +27,6 @@ const UserProfile = () => {
           <button className="px-4 py-1.5 mt-2.5 rounded-xl bg-slate-600">
             Reset Password
           </button>
-          <button className="px-10 py-1.5 mt-2.5 whitespace-nowrap bg-red-500 rounded-xl max-md:px-5">
-            Deactivate
-          </button>
           <img
             src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/8d86f5ae0af72176dac1a4bec12fd28897771948d5a49485c91cf2af54152320?placeholderIfAbsent=true"
             alt="More options"

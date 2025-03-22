@@ -47,10 +47,16 @@ export const deleteAPI = (url, options, config) => {
 
 //Add token to header
 export const setAuthorizationToken = (token) => {
-  instance.defaults.headers.common.Authorization = `Bearer ${token}`;
+  if (token) {
+    instance.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete instance.defaults.headers.common.Authorization;
+  }
 };
 
 //Delet token in header
 export const deleteAuthorizationToken = () => {
-    delete instance.defaults.headers.common.Authorization;
+  delete instance.defaults.headers.common.Authorization;
 };
+
+// export const getItem

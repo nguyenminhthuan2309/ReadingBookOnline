@@ -1,16 +1,17 @@
+import { useRouter } from "next/router";
 import React from "react";
 
 const Header = () => {
+  const router = useRouter();
   return (
     <header className="flex items-center px-12 w-full bg-red-300 rounded-none h-[95px]">
-      <div className="flex items-center">
+      <button onClick={() => router.push("/")}>
         <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/760a36053484f29dcec9028026ddaeaff0b5c0f6"
-          alt="Library Logo"
-          className="w-[174px] h-[83px]"
+          src="/images/name.png"
+          alt="Title"
+          className="object-fit shrink-0 self-start aspect-[0.9] h-[95px] w-[475px]"
         />
-        <h1 className="ml-0 text-6xl text-white">Haru's Library</h1>
-      </div>
+      </button>
     </header>
   );
 };
