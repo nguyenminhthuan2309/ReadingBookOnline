@@ -3,22 +3,14 @@ import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button } from "@mui/material";
-
-const menuItems = [
-  "Recently read",
-  "Completed",
-  "New book(s)",
-  "Genre(s)",
-  "Gallery",
-  "Favorite(s)",
-];
+import GenrePopover from "@/components/GenreSelector";
 
 export const Header = () => {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className="w-full">
       <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-red-300 max-md:px-5 max-md:max-w-full">
-        <button onClick={()=>router.push('/')}>
+        <button onClick={() => router.push("/")}>
           <img
             src="/images/name.png"
             alt="Title"
@@ -64,13 +56,34 @@ export const Header = () => {
       </header>
       <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black bg-red-100 border-b border-black">
         <ul className="flex flex-wrap gap-7 items-start">
-          {menuItems.map((item) => (
-            <li key={item} className="w-[150px]">
-              <a href="#" className="hover:underline">
-                {item}
-              </a>
-            </li>
-          ))}
+          <li className="w-[150px]">
+            <a href="#" className="hover:underline">
+              Recently read
+            </a>
+          </li>
+          <li className="w-[150px]">
+            <a href="#" className="hover:underline">
+              Completed
+            </a>
+          </li>
+          <li className="w-[150px]">
+            <a href="#" className="hover:underline">
+              New book(s)
+            </a>
+          </li>
+          <li className="w-[150px]">
+            <GenrePopover/>
+          </li>
+          <li className="w-[150px]">
+            <a href="#" className="hover:underline">
+              Gallery
+            </a>
+          </li>
+          <li className="w-[150px]">
+            <a href="#" className="hover:underline">
+              Favorite(s)
+            </a>
+          </li>
         </ul>
       </nav>
     </div>

@@ -9,7 +9,7 @@ import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
 
 function MangaSPage() {
-  const [id, setId] = useState(1);
+  const [id, setId] = useState(500);
   const [bookInfos, setBookInfos] = useState({});
   const getBookInfoData = async () => {
     const url = bookAPI.getBookById(id);
@@ -19,7 +19,8 @@ function MangaSPage() {
       setBookInfos(data[0]);
       console.log("success");
     } catch (error) {
-      console.log("error");
+      console.log("error", error);
+      throw new Error
     }
   };
   useEffect(() => {
