@@ -1,5 +1,5 @@
 import React from "react";
-import BookTile from "./BookTile";
+import BookTile from "@/components/BookItem";
 
 export const RecommendedBooks = () => {
   const books = [

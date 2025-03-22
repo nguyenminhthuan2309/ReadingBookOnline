@@ -1,6 +1,7 @@
 "use client";
-import moment from "moment";
 import React from "react";
+import moment from "moment";
+import PropTypes from "prop-types";
 
 function MangaDetails({bookInfo}) {
   return (
@@ -69,7 +70,8 @@ function MangaDetails({bookInfo}) {
                   {moment(bookInfo.createdAt).format("YYYY-MM-DD hh:mm")}
                 </dd>
                 <dd className="text-stone-400">
-                  {bookInfo.status && bookInfo.status.name.toLowerCase()}
+                  {bookInfo.progressStatus &&
+                    bookInfo.progressStatus.name.toLowerCase()}
                 </dd>
                 <div className="mt-4">
                   <button className="px-7 py-1.5 text-white rounded-2xl bg-slate-600 hover:bg-slate-700">
@@ -122,6 +124,10 @@ function MangaDetails({bookInfo}) {
       </section>
     </section>
   );
+}
+
+MangaDetails.propTypes = {
+  bookInfo: PropTypes.object,
 }
 
 export default MangaDetails;
