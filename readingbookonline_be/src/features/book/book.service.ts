@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Book } from '@features/book/entities/book.entity';
 import { DatabaseService } from '@core/database/database.service';
 import {
@@ -10,7 +15,6 @@ import {
   SortByOptions,
   SortTypeOptions,
 } from './dto/get-book-request.dto';
-import { GetBookDto } from './dto/get-book.dto';
 import { LoggerService } from '@core/logger/logger.service';
 import { CacheService } from '@core/cache/cache.service';
 import {
@@ -20,11 +24,39 @@ import {
 } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
+import { GetBookDto } from './dto/get-book.dto';
+import { GetProgressStatusDto } from './dto/get-book-progess-status.dto';
+import { BookProgressStatus } from './entities/book-progess-status.entity';
+import { BookAccessStatus } from './entities/book-access-status.entity';
+import { GetAccessStatusDto } from './dto/get-book-access-status.dto';
+import { CreateBookDto } from './dto/create-book.dto';
+import { BookCategoryRelation } from './entities/book-category-relation.entity';
+import { UpdateBookDto } from './dto/update-book.dto';
+import { CreateBookChapterDto } from './dto/create-book-chapter.dto';
 import { BookChapter } from './entities/book-chapter.entity';
+import { UpdateBookChapterDto } from './dto/update-book-chapter.dto';
+import { User } from '@features/user/entities/user.entity';
+import {
+  CreateBookReviewDto,
+  UpdateBookReviewDto,
+} from './dto/book-review.dto';
+import { BookReview } from './entities/book-review.entity';
+import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
+import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import {
+  BookChapterCommentResponseDto,
+  CreateBookChapterCommentDto,
+  UpdateBookChapterCommentDto,
+} from './dto/book-chapter-comment.dto';
+import { BookChapterComment } from './entities/book-chapter-comment.entity';
+import { BookReviewResponseDto } from './dto/get-book-review.dto';
+import { BookFollow } from './entities/book-follow.entity';
+import { BookFollowDto, BookFollowResponseDto } from './dto/book-follow.dto';
+import { BookReportDto, BookReportResponseDto } from './dto/book-report.dto';
+import { BookReport } from './entities/book-report.entity';
 
 @Injectable()
 export class BookService {
-  // 1 hour
   private readonly redisBookTtl = bookConfig.redisBookTtl;
 
   constructor(
@@ -32,6 +64,22 @@ export class BookService {
     private readonly bookRepository: Repository<Book>,
     @InjectRepository(BookCategory)
     private readonly bookCategoryRepository: Repository<BookCategory>,
+    @InjectRepository(BookProgressStatus)
+    private readonly bookProgressStatusRepository: Repository<BookProgressStatus>,
+    @InjectRepository(BookAccessStatus)
+    private readonly bookAccessStatusRepository: Repository<BookAccessStatus>,
+    @InjectRepository(BookChapter)
+    private readonly bookChapterRepository: Repository<BookChapter>,
+    @InjectRepository(BookCategoryRelation)
+    private readonly bookCategoryRelationRepository: Repository<BookCategoryRelation>,
+    @InjectRepository(BookReview)
+    private readonly bookReviewRepository: Repository<BookReview>,
+    @InjectRepository(BookChapterComment)
+    private readonly bookChapterCommentRepository: Repository<BookChapterComment>,
+    @InjectRepository(BookReport)
+    private readonly bookReportRepository: Repository<BookReport>,
+    @InjectRepository(BookFollow)
+    private readonly bookFollowRepository: Repository<BookFollow>,
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
@@ -43,14 +91,15 @@ export class BookService {
         page = 1,
         limit = 10,
         userId,
-        title,
-        statusId,
+        search,
+        accessStatusId,
+        progressStatusId,
         categoryId,
         sortBy = 'updatedAt',
         sortType = 'DESC',
       } = params;
 
-      const cachedKey = `books:list:${userId || 'all'}:${title || 'all'}:${statusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
+      const cachedKey = `books:list:${userId || 'all'}:${search || 'all'}:${accessStatusId || 'all'}:${progressStatusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
       const cachedPage = await this.cacheService.get(cachedKey);
       if (cachedPage) {
         return JSON.parse(cachedPage);
@@ -59,7 +108,8 @@ export class BookService {
       const qb = this.databaseService
         .queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
-        .leftJoinAndSelect('book.status', 'status')
+        .leftJoinAndSelect('book.accessStatus', 'accessStatus')
+        .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
         .leftJoinAndSelect('book.chapters', 'chapters');
@@ -68,21 +118,29 @@ export class BookService {
         qb.andWhere('author.id = :userId', { userId });
       }
 
-      if (statusId) {
-        qb.andWhere('status.id = :statusId', { statusId });
+      if (accessStatusId) {
+        qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
+      }
+
+      if (progressStatusId) {
+        qb.andWhere('progressStatus.id = :progressStatusId', {
+          progressStatusId,
+        });
       }
 
       if (categoryId && categoryId.length > 0) {
         qb.andWhere('category.id IN (:...categoryId)', { categoryId });
       }
 
-      if (title) {
+      if (search) {
         qb.andWhere(
           `(to_tsvector('simple', lower(book.title)) @@ websearch_to_tsquery(lower(:search)) 
-           OR lower(book.title) ILIKE :prefixSearch)`,
+             OR to_tsvector('simple', lower(author.name)) @@ websearch_to_tsquery(lower(:search))
+             OR lower(book.title) ILIKE :prefixSearch 
+             OR lower(author.name) ILIKE :prefixSearch)`,
           {
-            search: title.replace(/\s+/g, '&'),
-            prefixSearch: `%${title.replace(/\s+/g, '&')}%`,
+            search: search.replace(/\s+/g, ' & '),
+            prefixSearch: `%${search}%`,
           },
         );
       }
@@ -146,7 +204,8 @@ export class BookService {
       const qb = this.databaseService
         .queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
-        .leftJoinAndSelect('book.status', 'status')
+        .leftJoinAndSelect('book.accessStatus', 'accessStatus')
+        .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
         .leftJoinAndSelect('book.chapters', 'chapters')
@@ -169,11 +228,11 @@ export class BookService {
         ],
       };
 
-      // await this.cacheService.set(
-      //   cachedKey,
-      //   JSON.stringify(response),
-      //   this.redisBookTtl,
-      // );
+      await this.cacheService.set(
+        cachedKey,
+        JSON.stringify(response),
+        this.redisBookTtl,
+      );
 
       return response;
     } catch (error) {
@@ -224,6 +283,628 @@ export class BookService {
       return response;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.getBookCategory');
+      throw error;
+    }
+  }
+
+  async getProgressStatus(user): Promise<GetProgressStatusDto[]> {
+    try {
+      let statuses: BookProgressStatus[];
+      const roleId = user.role.id;
+
+      if (roleId === 3) {
+        statuses = await this.databaseService.findAll(
+          this.bookProgressStatusRepository,
+          {
+            where: { id: In([1, 2, 3]) },
+          },
+        );
+      } else {
+        statuses = await this.databaseService.findAll(
+          this.bookProgressStatusRepository,
+        );
+      }
+
+      const dtos = plainToInstance(GetProgressStatusDto, statuses, {
+        excludeExtraneousValues: true,
+      });
+
+      return Array.isArray(dtos) ? dtos : [dtos];
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getProgressStatus');
+      throw error;
+    }
+  }
+
+  async getAccessStatus(user): Promise<GetAccessStatusDto[]> {
+    try {
+      const roleId = user.role.id;
+      let statuses: BookAccessStatus[];
+
+      if (roleId === 3) {
+        statuses = await this.databaseService.findAll(
+          this.bookAccessStatusRepository,
+          {
+            where: { id: In([2, 3]) },
+          },
+        );
+      } else {
+        statuses = await this.databaseService.findAll(
+          this.bookAccessStatusRepository,
+        );
+      }
+
+      const dtos = plainToInstance(GetAccessStatusDto, statuses, {
+        excludeExtraneousValues: true,
+      });
+      return Array.isArray(dtos) ? dtos : [dtos];
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getAccessStatus');
+      throw error;
+    }
+  }
+
+  async createBook(
+    dto: CreateBookDto,
+    author: Book['author'],
+  ): Promise<Boolean> {
+    try {
+      const book = await this.databaseService.create(this.bookRepository, {
+        title: dto.title,
+        description: dto.description,
+        cover: dto.cover,
+        ageRating: dto.ageRating,
+        accessStatus: { id: dto.accessStatusId },
+        progressStatus: { id: dto.progressStatusId },
+        author: { id: author.id },
+      });
+
+      if (dto.categoryIds && dto.categoryIds.length > 0) {
+        dto.categoryIds.map((categoryId) =>
+          this.databaseService.create(this.bookCategoryRelationRepository, {
+            book: book,
+            category: { id: categoryId },
+          }),
+        );
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.createBook');
+      throw error;
+    }
+  }
+
+  async updateBook(
+    bookId: number,
+    dto: UpdateBookDto,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const book = await this.databaseService.findOne(this.bookRepository, {
+        where: { id: bookId },
+        relations: ['author'],
+      });
+      if (!book) {
+        throw new NotFoundException('Không tìm thấy sách');
+      }
+
+      if (book.author.id !== author.id) {
+        throw new ForbiddenException('Bạn không có quyền cập nhật sách này');
+      }
+
+      await this.databaseService.update(this.bookRepository, bookId, {
+        title: dto.title,
+        description: dto.description,
+        cover: dto.cover,
+        ageRating: dto.ageRating,
+        accessStatus: { id: dto.accessStatusId },
+        progressStatus: { id: dto.progressStatusId },
+      });
+
+      if (dto.categoryIds && dto.categoryIds.length > 0) {
+        await this.bookCategoryRelationRepository.delete({
+          book: { id: bookId },
+        });
+
+        for (const categoryId of dto.categoryIds) {
+          await this.databaseService.create(
+            this.bookCategoryRelationRepository,
+            {
+              book: { id: bookId },
+              category: { id: categoryId },
+            },
+          );
+        }
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.updateBook');
+      throw error;
+    }
+  }
+
+  async deleteBook(bookId: number, author: Book['author']): Promise<boolean> {
+    try {
+      const book = await this.databaseService.findOne(this.bookRepository, {
+        where: { id: bookId },
+        relations: ['author'],
+      });
+      if (!book) {
+        throw new NotFoundException('Không tìm thấy sách');
+      }
+
+      if (book.author.id !== author.id) {
+        throw new ForbiddenException('Bạn không có quyền xóa sách này');
+      }
+
+      await this.databaseService.delete(this.bookRepository, bookId);
+      this.loggerService.info(
+        `Book with id ${bookId} deleted`,
+        'BookService.deleteBook',
+      );
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.deleteBook');
+      throw error;
+    }
+  }
+
+  async createChapter(
+    dto: CreateBookChapterDto,
+    bookId: number,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const book = await this.databaseService.findOne(this.bookRepository, {
+        where: { id: bookId },
+        relations: ['author'],
+      });
+
+      if (!book) {
+        throw new NotFoundException('Không tìm thấy sách');
+      }
+
+      if (book.author.id !== author.id) {
+        throw new ForbiddenException(
+          'Bạn không có quyền thêm chương vào sách này',
+        );
+      }
+
+      const existingChapter = await this.databaseService.findOne(
+        this.bookChapterRepository,
+        {
+          where: { book: { id: bookId }, chapter: dto.chapter },
+        },
+      );
+
+      if (existingChapter) {
+        throw new ConflictException('Chương này đã tồn tại');
+      }
+
+      await this.databaseService.create(this.bookChapterRepository, {
+        title: dto.title,
+        chapter: dto.chapter,
+        content: dto.content,
+        cover: dto.cover,
+        isLocked: dto.isLocked,
+        price: dto.price,
+        book: { id: book.id },
+      });
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookChapterService.createChapter');
+      throw error;
+    }
+  }
+
+  async updateChapter(
+    chapterId: number,
+    dto: UpdateBookChapterDto,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const chapter = await this.databaseService.findOne(
+        this.bookChapterRepository,
+        {
+          where: { id: chapterId },
+          relations: ['book', 'book.author'],
+        },
+      );
+
+      if (!chapter) {
+        throw new NotFoundException('Không tìm thấy chương sách');
+      }
+
+      if (chapter.book.author.id !== author.id) {
+        throw new ForbiddenException('Bạn không có quyền cập nhật chương này');
+      }
+
+      await this.databaseService.update(this.bookChapterRepository, chapterId, {
+        title: dto.title,
+        chapter: dto.chapter,
+        content: dto.content,
+        cover: dto.cover,
+        isLocked: dto.isLocked,
+        price: dto.price,
+      });
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookChapterService.updateChapter');
+      throw error;
+    }
+  }
+
+  async deleteChapter(
+    chapterId: number,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const chapter = await this.databaseService.findOne(
+        this.bookChapterRepository,
+        {
+          where: { id: chapterId },
+          relations: ['book', 'book.author'],
+        },
+      );
+
+      if (!chapter) {
+        throw new NotFoundException('Không tìm thấy chương sách');
+      }
+
+      if (chapter.book.author.id !== author.id) {
+        throw new ForbiddenException('Bạn không có quyền xóa chương này');
+      }
+
+      await this.databaseService.delete(this.bookChapterRepository, chapterId);
+      this.loggerService.info(
+        `Chapter with id ${chapterId} deleted`,
+        'BookChapterService.deleteChapter',
+      );
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookChapterService.deleteChapter');
+      throw error;
+    }
+  }
+
+  async createReview(
+    bookId: number,
+    user: User,
+    dto: CreateBookReviewDto,
+  ): Promise<BookReview> {
+    try {
+      const review = this.bookReviewRepository.create({
+        book: { id: bookId },
+        user: { id: user.id },
+        rating: dto.rating,
+        comment: dto.comment,
+      });
+
+      return await this.bookReviewRepository.save(review);
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReviewService.createReview');
+      throw error;
+    }
+  }
+
+  async updateReview(
+    reviewId: number,
+    user: User,
+    dto: UpdateBookReviewDto,
+  ): Promise<BookReview> {
+    try {
+      const review = await this.bookReviewRepository.findOne({
+        where: { id: reviewId },
+        relations: ['user'],
+      });
+
+      if (!review) throw new NotFoundException('Không tìm thấy đánh giá');
+
+      if (review.user.id !== user.id)
+        throw new ForbiddenException(
+          'Bạn không thể sửa đánh giá của người khác',
+        );
+
+      Object.assign(review, dto);
+      return await this.bookReviewRepository.save(review);
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReviewService.updateReview');
+      throw error;
+    }
+  }
+
+  async deleteReview(reviewId: number, user: User): Promise<void> {
+    try {
+      const review = await this.bookReviewRepository.findOne({
+        where: { id: reviewId },
+        relations: ['user'],
+      });
+
+      if (!review) throw new NotFoundException('Không tìm thấy đánh giá');
+
+      if (review.user.id !== user.id)
+        throw new ForbiddenException(
+          'Bạn không thể xóa đánh giá của người khác',
+        );
+
+      await this.bookReviewRepository.remove(review);
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReviewService.deleteReview');
+      throw error;
+    }
+  }
+
+  async getReviews(
+    bookId: number,
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<BookReviewResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const [data, totalItems] = await this.bookReviewRepository.findAndCount({
+        where: { book: { id: bookId } },
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip: (page - 1) * limit,
+        relations: ['user'],
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: plainToInstance(BookReviewResponseDto, data, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReviewService.getReviews');
+      throw error;
+    }
+  }
+
+  async createComment(
+    chapterId: number,
+    user: User,
+    dto: CreateBookChapterCommentDto,
+  ): Promise<BookChapterComment> {
+    try {
+      const comment = this.bookChapterCommentRepository.create({
+        user,
+        chapter: { id: chapterId },
+        comment: dto.comment,
+      });
+
+      return await this.bookChapterCommentRepository.save(comment);
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookChapterCommentService.createComment',
+      );
+      throw error;
+    }
+  }
+
+  async updateComment(
+    commentId: number,
+    user: User,
+    dto: UpdateBookChapterCommentDto,
+  ): Promise<BookChapterComment> {
+    try {
+      const comment = await this.bookChapterCommentRepository.findOne({
+        where: { id: commentId },
+        relations: ['user'],
+      });
+
+      if (!comment) throw new NotFoundException('Không tìm thấy bình luận');
+
+      if (comment.user.id !== user.id)
+        throw new ForbiddenException(
+          'Bạn không thể sửa bình luận của người khác',
+        );
+
+      Object.assign(comment, dto);
+      return await this.bookChapterCommentRepository.save(comment);
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookChapterCommentService.updateComment',
+      );
+      throw error;
+    }
+  }
+
+  async deleteComment(commentId: number, user: User): Promise<void> {
+    try {
+      const comment = await this.bookChapterCommentRepository.findOne({
+        where: { id: commentId },
+        relations: ['user'],
+      });
+
+      if (!comment) throw new NotFoundException('Không tìm thấy bình luận');
+
+      if (comment.user.id !== user.id)
+        throw new ForbiddenException(
+          'Bạn không thể xóa bình luận của người khác',
+        );
+
+      await this.bookChapterCommentRepository.remove(comment);
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookChapterCommentService.deleteComment',
+      );
+      throw error;
+    }
+  }
+
+  async getComments(
+    chapterId: number,
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<BookChapterCommentResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const [data, totalItems] =
+        await this.bookChapterCommentRepository.findAndCount({
+          where: { chapter: { id: chapterId } },
+          order: { createdAt: 'DESC' },
+          take: limit,
+          skip: (page - 1) * limit,
+          relations: ['user'],
+        });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: plainToInstance(BookChapterCommentResponseDto, data, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookChapterCommentService.getComments',
+      );
+      throw error;
+    }
+  }
+
+  async followBook(user: User, dto: BookFollowDto): Promise<Boolean> {
+    try {
+      const book = await this.bookRepository.findOne({
+        where: { id: dto.bookId },
+      });
+      if (!book) throw new NotFoundException('Không tìm thấy sách');
+
+      const isFollowing = await this.bookFollowRepository.findOne({
+        where: { user: { id: user.id }, book: { id: dto.bookId } },
+      });
+
+      if (isFollowing) return true;
+
+      await this.bookFollowRepository.save({
+        user,
+        book,
+      });
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.followBook');
+      throw error;
+    }
+  }
+
+  async unfollowBook(user: User, dto: BookFollowDto): Promise<Boolean> {
+    try {
+      const followRecord = await this.bookFollowRepository.findOne({
+        where: { user: { id: user.id }, book: { id: dto.bookId } },
+      });
+
+      if (!followRecord)
+        throw new NotFoundException('Bạn chưa theo dõi sách này');
+
+      await this.bookFollowRepository.delete(followRecord.id);
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.unfollowBook');
+      throw error;
+    }
+  }
+
+  async getFollow(
+    userId: number,
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<BookFollowResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const [data, totalItems] = await this.bookFollowRepository.findAndCount({
+        where: { user: { id: userId } },
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip: (page - 1) * limit,
+        relations: [
+          'book',
+          'book.author',
+          'book.accessStatus',
+          'book.progressStatus',
+          'book.progressStatus',
+          'book.bookCategoryRelations',
+          'book.bookCategoryRelations.category',
+        ],
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: plainToInstance(BookFollowResponseDto, data, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookFollowService.getFollow');
+      throw error;
+    }
+  }
+
+  async createReport(
+    user: User,
+    createReportDto: BookReportDto,
+  ): Promise<BookReportResponseDto> {
+    try {
+      const { bookId, reason } = createReportDto;
+
+      const book = await this.bookRepository.findOne({ where: { id: bookId } });
+      if (!book) {
+        throw new Error('Sách không tồn tại');
+      }
+
+      const report = this.bookReportRepository.create({ user, book, reason });
+      await this.bookReportRepository.save(report);
+
+      return plainToInstance(BookReportResponseDto, report, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReportService.createReport');
+      throw error;
+    }
+  }
+
+  async getReports(
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<BookReportResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+
+      const [data, totalItems] = await this.bookReportRepository.findAndCount({
+        order: { createdAt: 'DESC' },
+        take: limit,
+        skip: (page - 1) * limit,
+        relations: [
+          'user',
+          'book',
+          'book.author',
+          'book.accessStatus',
+          'book.progressStatus',
+          'book.progressStatus',
+          'book.bookCategoryRelations',
+          'book.bookCategoryRelations.category',
+        ],
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: plainToInstance(BookReportResponseDto, data, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookReportService.getReports');
       throw error;
     }
   }

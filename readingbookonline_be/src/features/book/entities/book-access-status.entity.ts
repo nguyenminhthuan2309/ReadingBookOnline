@@ -7,19 +7,22 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import { Book } from './book.entity';
 
-@Entity('role')
-export class Role {
+@Entity('book_access_status')
+export class BookAccessStatus {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_role_name')
-  @Column({ name: 'name', type: 'varchar', length: 500, unique: true })
+  @Index('idx_book_access_status_name')
+  @Column({ name: 'name', type: 'varchar', length: 50, unique: true })
   name: string;
 
-  @OneToMany(() => User, (user) => user.role)
-  users: User[];
+  @Column({ name: 'description', type: 'text', nullable: true })
+  description: string;
+
+  @OneToMany(() => Book, (book) => book.accessStatus)
+  books: Book[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

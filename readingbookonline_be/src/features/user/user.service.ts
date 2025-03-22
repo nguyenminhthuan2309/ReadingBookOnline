@@ -9,13 +9,16 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
 import { plainToInstance } from 'class-transformer';
-import { UserResponseDto } from './dto/get-user-response.dto';
-import { userConfig } from '@core/config/global';
+import {
+  GetUsersFilterDto,
+  UserResponseDto,
+} from './dto/get-user-response.dto';
+import { jwtConfig, userConfig } from '@core/config/global';
 import { LoggerService } from '@core/logger/logger.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -23,12 +26,18 @@ import { CacheService } from '@core/cache/cache.service';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password-dto';
+import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
+import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
+import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 
 @Injectable()
 export class UserService {
   private readonly roleUserId = userConfig.roleUserId;
   private readonly statusUserId = userConfig.statusUserId;
   private readonly redisTtlResetPassword = userConfig.redisTtlResetPassword;
+  private readonly jwtSecret = jwtConfig.secret;
+  private readonly jwtExpiresInVerify = jwtConfig.expiresInVerify;
 
   constructor(
     @InjectRepository(User)
@@ -37,6 +46,7 @@ export class UserService {
     private readonly mailerService: MailerService,
     private readonly loggerService: LoggerService,
     private readonly cacheService: CacheService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private generateOTP(): string {
@@ -70,7 +80,7 @@ export class UserService {
 
   async register(body: CreateUserDto): Promise<UserResponseDto> {
     try {
-      const { email, password, name } = body;
+      const { email, password, name, birth_date } = body;
 
       const emailExists = await this.dataBaseService.findOne<User>(
         this.userRepository,
@@ -87,6 +97,7 @@ export class UserService {
           email,
           password,
           name,
+          birthDate: birth_date ? new Date(birth_date) : undefined,
           role: { id: this.roleUserId },
           status: { id: this.statusUserId },
         },
@@ -94,19 +105,83 @@ export class UserService {
 
       this.loggerService.info('User created', 'UserService.register');
 
+      const verificationPayload = { id: newUser.id };
+      const verificationToken = await this.jwtService.signAsync(
+        verificationPayload,
+        {
+          secret: this.jwtSecret,
+          expiresIn: this.jwtExpiresInVerify,
+        },
+      );
+
+      await this.cacheService.set(
+        `verify:${newUser.id}`,
+        verificationToken,
+        this.redisTtlResetPassword,
+      );
+
+      const verificationUrl = `http://localhost:3000/user/verify?token=${verificationToken}`;
+
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Chào mừng bạn đến với ứng dụng!',
-        text: `Xin chào ${name}, cảm ơn bạn đã đăng ký!`,
-        html: `<h3>Xin chào ${name},</h3><p>Cảm ơn bạn đã đăng ký tài khoản. Chúc bạn có trải nghiệm tuyệt vời!</p>`,
+        subject: 'Xác thực tài khoản của bạn',
+        text: `Vui lòng xác thực tài khoản của bạn bằng cách truy cập đường dẫn sau: ${verificationUrl}. Link chỉ có hiệu lực trong 5 phút.`,
+        html: `<h3>Xin chào ${name},</h3>
+               <p>Vui lòng <a href="${verificationUrl}">click vào đây</a> để xác thực tài khoản của bạn. Lưu ý: Link chỉ có hiệu lực trong 5 phút.</p>`,
       });
 
-      this.loggerService.info('Email sent', 'UserService.register');
+      this.loggerService.info(
+        'Verification email sent',
+        'UserService.register',
+      );
 
       return plainToInstance(UserResponseDto, newUser);
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.register');
+      throw error;
+    }
+  }
 
+  async verify(token: string): Promise<Boolean> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.jwtSecret,
+      });
+
+      const storedToken = await this.cacheService.get(`verify:${payload.id}`);
+      if (!storedToken || storedToken !== token) {
+        throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+      }
+
+      const user = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        {
+          where: { id: payload.id },
+        },
+      );
+      if (!user) {
+        throw new BadRequestException('Người dùng không tồn tại');
+      }
+
+      await this.dataBaseService.update<User>(this.userRepository, user.id, {
+        status: { id: 1 },
+      });
+
+      await this.cacheService.delete(`verify:${user.id}`);
+
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject: 'Chào mừng bạn tham gia!',
+        text: `Xin chào ${user.name}, chào mừng bạn đến với ứng dụng của chúng tôi!`,
+        html: `<h3>Xin chào ${user.name},</h3>
+               <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
+      });
+
+      this.loggerService.info('Welcome email sent', 'UserService.verify');
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.verify');
       throw error;
     }
   }
@@ -140,7 +215,7 @@ export class UserService {
 
   async verifyResetPasswordCode(
     body: VerifyResetPasswordDto,
-  ): Promise<Boolean> {
+  ): Promise<boolean> {
     try {
       const email = body.email;
       const cachedKey = `reset-password:${email}`;
@@ -172,6 +247,30 @@ export class UserService {
 
       await this.cacheService.delete(cachedKey);
       await this.cacheService.delete(failCountKey);
+
+      const newPassword = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
+
+      const user = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        { where: { email } },
+      );
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại');
+      }
+
+      await this.dataBaseService.update<User>(this.userRepository, user.id, {
+        password: await bcrypt.hash(newPassword, 10),
+      });
+
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Mật khẩu mới của bạn',
+        text: `Mật khẩu mới của bạn là: ${newPassword}. Vui lòng đăng nhập và thay đổi mật khẩu sau khi đăng nhập.`,
+        html: `<p>Mật khẩu mới của bạn là: <strong>${newPassword}</strong></p>
+               <p>Vui lòng đăng nhập và thay đổi mật khẩu sau khi đăng nhập.</p>`,
+      });
 
       return true;
     } catch (error) {
@@ -225,6 +324,7 @@ export class UserService {
 
       if (body.name) user.name = body.name;
       if (body.avatar) user.avatar = body.avatar;
+      if (body.birthDate) user.birthDate = body.birthDate;
 
       await this.dataBaseService.update<User>(this.userRepository, userId, {
         ...body,
@@ -272,6 +372,85 @@ export class UserService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.updatePassword');
+      throw error;
+    }
+  }
+
+  async getUsers(
+    filter: GetUsersFilterDto,
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<UserResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const { id, email, name, status, role } = filter;
+
+      const query = this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.role', 'role')
+        .leftJoinAndSelect('user.status', 'status')
+        .orderBy('user.id', 'ASC');
+
+      if (id) {
+        query.andWhere('user.id = :id', { id });
+      }
+
+      if (email) {
+        query.andWhere('user.email ILIKE :email', { email: `%${email}%` });
+      }
+
+      if (name) {
+        query.andWhere('user.name ILIKE :name', { name: `%${name}%` });
+      }
+
+      if (status) {
+        query.andWhere('status.id = :status', { status });
+      }
+
+      if (role) {
+        query.andWhere('role.id = :role', { role });
+      }
+
+      const [data, totalItems] = await query
+        .take(limit)
+        .skip((page - 1) * limit)
+        .getManyAndCount();
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: plainToInstance(UserResponseDto, data, {
+          excludeExtraneousValues: true,
+        }),
+      };
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getUsers');
+      throw error;
+    }
+  }
+
+  async createManagerAccount(createDto: CreateManagerDto): Promise<User> {
+    try {
+      const { email, password, name } = createDto;
+
+      const existingUser = await this.userRepository.findOne({
+        where: { email },
+      });
+      if (existingUser) {
+        throw new BadRequestException('Email đã được sử dụng');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = this.userRepository.create({
+        email,
+        password: hashedPassword,
+        name,
+        role: { id: 2 },
+      });
+
+      return this.userRepository.save(newUser);
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.createManagerAccount');
       throw error;
     }
   }

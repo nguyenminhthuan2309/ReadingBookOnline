@@ -6,6 +6,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Book } from './book.entity';
 
@@ -17,12 +18,15 @@ export class BookReport {
   @Column({ name: 'reason', type: 'text' })
   reason: string;
 
+  @Index('idx_book_report_resolved')
   @Column({ name: 'resolved', type: 'boolean', default: false })
   resolved: boolean;
 
+  @Index('idx_book_report_user')
   @ManyToOne(() => User, (user) => user.reports)
   user: User;
 
+  @Index('idx_book_report_book')
   @ManyToOne(() => Book, (book) => book.reports)
   book: Book;
 

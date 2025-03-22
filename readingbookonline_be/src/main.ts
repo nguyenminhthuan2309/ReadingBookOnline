@@ -18,14 +18,25 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
-  app.enableCors();
+  app.enableCors({ allowedHeaders: 'Authorization' });
 
   // 🔹 Setup Swagger
   const config = new DocumentBuilder()
     .setTitle('API Documentation')
     .setDescription('The API description')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        description: `[just text field] Please enter token in following format: Bearer <JWT>`,
+        name: 'Authorization',
+        bearerFormat: 'Bearer',
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'access-token',
+    )
+    .addSecurityRequirements('access-token')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

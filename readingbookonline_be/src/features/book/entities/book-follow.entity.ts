@@ -3,27 +3,27 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   CreateDateColumn,
-  UpdateDateColumn,
   JoinColumn,
+  UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { BookChapter } from './book-chapter.entity';
+import { Book } from './book.entity';
 import { User } from '@features/user/entities/user.entity';
 
-@Entity('book_chapter_purchase')
-export class BookChapterPurchase {
+@Entity('book_follow')
+export class BookFollow {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_chapter_purchase_user')
-  @ManyToOne(() => User)
+  @Index('idx_book_follow_user')
+  @ManyToOne(() => User, (user) => user.bookFollows, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Index('idx_book_chapter_purchase_chapter')
-  @ManyToOne(() => BookChapter)
-  @JoinColumn({ name: 'chapter_id' })
-  chapter: BookChapter;
+  @Index('idx_book_follow_book')
+  @ManyToOne(() => Book, (book) => book.follows, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'book_id' })
+  book: Book;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

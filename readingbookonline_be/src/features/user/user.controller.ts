@@ -6,17 +6,25 @@ import {
   UseGuards,
   Req,
   Put,
+  Query,
+  Redirect,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/get-user-response.dto';
+import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
+import {
+  GetUsersFilterDto,
+  UserResponseDto,
+} from './dto/get-user-response.dto';
 import { ApiOperation } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
-import { JwtAuthGuard } from '@core/jwt/jwt-auth.guard';
+import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password-dto';
+import { AdminGuard } from '@core/auth/admin.guard';
+import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
+import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 
 @Controller('user')
 export class UserController {
@@ -26,6 +34,13 @@ export class UserController {
   @Post('/register')
   async register(@Body() body: CreateUserDto): Promise<UserResponseDto> {
     return await this.userService.register(body);
+  }
+
+  @ApiOperation({ summary: 'Xác thực tài khoản' })
+  @Get('/verify')
+  @Redirect('https://nestjs.com', 301)
+  async verify(@Query('token') token: string): Promise<Boolean> {
+    return await this.userService.verify(token);
   }
 
   @ApiOperation({ summary: 'Quên mật khẩu' })
@@ -64,5 +79,22 @@ export class UserController {
   @Put('update-password')
   async updatePassword(@Req() req: Request, @Body() body: UpdatePasswordDto) {
     return this.userService.updatePassword(req, body);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Admin lấy danh sách người dùng' })
+  @Get()
+  async getUsers(
+    @Query() filter: GetUsersFilterDto,
+    @Query() pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<UserResponseDto>> {
+    return this.userService.getUsers(filter, pagination);
+  }
+
+  @Post('create-manager')
+  @ApiOperation({ summary: 'Tạo tài khoản Manager (chỉ Super Admin)' })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async createManager(@Body() createDto: CreateManagerDto) {
+    return this.userService.createManagerAccount(createDto);
   }
 }

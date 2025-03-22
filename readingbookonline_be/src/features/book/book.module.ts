@@ -10,19 +10,27 @@ import { BookReport } from './entities/book-report.entity';
 import { BookReview } from './entities/book-review.entity';
 import { UserModule } from '@features/user/user.module';
 import { BookCategoryRelation } from './entities/book-category-relation.entity';
-import { BookStatus } from './entities/book-status.entity';
+import { BookAccessStatus } from './entities/book-access-status.entity';
+import { BookFollow } from './entities/book-follow.entity';
+import { BookProgressStatus } from './entities/book-progess-status.entity';
+import { BookReadingHistory } from './entities/book-reading-history.entity';
+import { BookChapterComment } from './entities/book-chapter-comment.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Book,
+      BookAccessStatus,
+      BookCategoryRelation,
       BookCategory,
-      BookStatus,
-      BookChapter,
       BookChapterPurchase,
+      BookChapter,
+      BookFollow,
+      BookProgressStatus,
+      BookReadingHistory,
       BookReport,
       BookReview,
-      BookCategoryRelation,
+      Book,
+      BookChapterComment,
     ]),
     forwardRef(() => UserModule),
   ],

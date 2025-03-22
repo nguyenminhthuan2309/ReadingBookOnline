@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { BookCategoryRelation } from './book-category-relation.entity';
 
@@ -14,6 +15,7 @@ export class BookCategory {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
+  @Index('idx_book_category_name')
   @Column({ name: 'name', type: 'varchar', length: 500 })
   name: string;
 

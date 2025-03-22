@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Book } from './book.entity';
 
@@ -15,10 +16,12 @@ export class BookReview {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
+  @Index('idx_book_review_user')
   @ManyToOne(() => User, (user) => user.reviews)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Index('idx_book_review_book')
   @ManyToOne(() => Book, (book) => book.reviews)
   @JoinColumn({ name: 'book_id' })
   book: Book;

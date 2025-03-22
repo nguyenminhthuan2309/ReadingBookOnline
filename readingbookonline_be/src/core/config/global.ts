@@ -23,7 +23,8 @@ export const postgresConfig: DataSourceOptions = {
 
 export const jwtConfig = {
   secret: process.env.JWT_SECRET || '',
-  expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  expiresIn: process.env.JWT_EXPIRES_IN || '8h',
+  expiresInVerify: '5m',
 };
 
 export const userConfig = {
@@ -42,7 +43,9 @@ export const bookConfig = {
 
 export const cloudinaryConfig = {
   folderAvatar: 'avatar',
+  folderDocument: 'document',
   folderBook: 'book',
   folderBookChapter: 'chapter',
   limitImageSize: 1024 * 1024,
+  limitWordSize: 1024 * 1024 * 5,
 };

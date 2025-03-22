@@ -7,10 +7,11 @@ import {
   IsString,
 } from 'class-validator';
 import { GetBookChapterDto } from './get-book-chapter.dto';
-import { GetBookStatusDto } from './get-book-status.dto';
 import { GetBookCategoryDto } from './get-book-category.dto';
 import { AuthorDto } from './get-author.dto';
 import { BookReview } from './get-book-review.dto';
+import { GetProgressStatusDto } from './get-book-progess-status.dto';
+import { GetAccessStatusDto } from './get-book-access-status.dto';
 
 export class GetBookDto {
   @IsNotEmpty()
@@ -40,8 +41,13 @@ export class GetBookDto {
 
   @IsNotEmpty()
   @Expose()
-  @Type(() => GetBookStatusDto)
-  status: GetBookStatusDto;
+  @Type(() => GetAccessStatusDto)
+  accessStatus: GetAccessStatusDto;
+
+  @IsNotEmpty()
+  @Expose()
+  @Type(() => GetProgressStatusDto)
+  progressStatus: GetProgressStatusDto;
 
   @IsNotEmpty()
   @Expose()

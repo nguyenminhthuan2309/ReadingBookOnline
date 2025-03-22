@@ -1,4 +1,5 @@
-import { Exclude, Expose, Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 class RoleDto {
@@ -45,6 +46,11 @@ export class UserResponseDto {
 
   @Expose()
   @IsOptional()
+  @IsString()
+  birthDate?: Date;
+
+  @Expose()
+  @IsOptional()
   @Type(() => RoleDto)
   role?: RoleDto;
 
@@ -62,4 +68,37 @@ export class UserResponseDto {
   @IsOptional()
   @IsDate()
   updateAt?: Date;
+}
+
+export class GetUsersFilterDto {
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  id?: number;
+
+  @ApiPropertyOptional({ example: 'admin@example.com' })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional({ example: 'Nguyễn Văn A' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ID của trạng thái người dùng',
+  })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  status?: number;
+
+  @ApiPropertyOptional({ example: 2, description: 'ID của vai trò' })
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  role?: number;
 }

@@ -22,4 +22,13 @@ export class UpdateUserDto extends PartialType(
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @ApiPropertyOptional({
+    description: 'Ngày sinh của người dùng',
+    example: '2000-02-14',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  birthDate?: Date;
 }

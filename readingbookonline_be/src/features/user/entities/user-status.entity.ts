@@ -5,6 +5,7 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -13,6 +14,7 @@ export class UserStatus {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
+  @Index('idx_user_status_name')
   @Column({ name: 'name', type: 'varchar', length: 50, unique: true })
   name: string;
 

@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 
@@ -30,19 +30,31 @@ export class GetBookRequestDto extends PaginationRequestDto {
   @Transform(({ value }) => Number(value), { toClassOnly: true })
   userId?: number;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Từ khóa tìm kiếm (title và author)',
+  })
   @IsOptional()
   @IsString()
-  title?: string;
+  search?: string;
 
   @ApiPropertyOptional({
     type: Number,
-    description: 'Lọc sách theo trạng thái',
+    description: 'Lọc sách theo trạng thái tiến độ (progressStatusId)',
   })
   @IsOptional()
-  @IsNumber()
+  @Expose()
   @Transform(({ value }) => Number(value), { toClassOnly: true })
-  statusId?: number;
+  accessStatusId?: number;
+
+  @ApiPropertyOptional({
+    type: Number,
+    description: 'Lọc sách theo trạng thái truy cập (accessStatusId)',
+  })
+  @IsOptional()
+  @Expose()
+  @Transform(({ value }) => Number(value), { toClassOnly: true })
+  progressStatusId: number;
 
   @ApiPropertyOptional({
     type: [Number],
