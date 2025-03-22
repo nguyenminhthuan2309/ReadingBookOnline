@@ -17,8 +17,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-
-  app.enableCors({ allowedHeaders: 'Authorization' });
+  app.enableCors();
 
   // 🔹 Setup Swagger
   const config = new DocumentBuilder()
