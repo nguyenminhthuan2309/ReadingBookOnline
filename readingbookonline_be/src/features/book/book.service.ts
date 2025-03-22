@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Book } from '@features/book/entities/book.entity';
 import { DatabaseService } from '@core/database/database.service';
 import {
@@ -54,6 +54,13 @@ import { BookFollow } from './entities/book-follow.entity';
 import { BookFollowDto, BookFollowResponseDto } from './dto/book-follow.dto';
 import { BookReportDto, BookReportResponseDto } from './dto/book-report.dto';
 import { BookReport } from './entities/book-report.entity';
+import { GetBookTypeDto } from './dto/book-type.dto';
+import { BookType } from './entities/book-type.entity';
+import {
+  BookReadingHistoryResponseDto,
+  CreateBookReadingHistoryDto,
+} from './dto/create-book-reading-history.dto';
+import { BookReadingHistory } from './entities/book-reading-history.entity';
 
 @Injectable()
 export class BookService {
@@ -64,6 +71,8 @@ export class BookService {
     private readonly bookRepository: Repository<Book>,
     @InjectRepository(BookCategory)
     private readonly bookCategoryRepository: Repository<BookCategory>,
+    @InjectRepository(BookType)
+    private readonly bookTypeRepository: Repository<BookType>,
     @InjectRepository(BookProgressStatus)
     private readonly bookProgressStatusRepository: Repository<BookProgressStatus>,
     @InjectRepository(BookAccessStatus)
@@ -80,6 +89,8 @@ export class BookService {
     private readonly bookReportRepository: Repository<BookReport>,
     @InjectRepository(BookFollow)
     private readonly bookFollowRepository: Repository<BookFollow>,
+    @InjectRepository(BookReadingHistory)
+    private readonly bookReadingHistoryRepository: Repository<BookReadingHistory>,
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
@@ -92,6 +103,7 @@ export class BookService {
         limit = 10,
         userId,
         search,
+        bookTypeId,
         accessStatusId,
         progressStatusId,
         categoryId,
@@ -99,7 +111,7 @@ export class BookService {
         sortType = 'DESC',
       } = params;
 
-      const cachedKey = `books:list:${userId || 'all'}:${search || 'all'}:${accessStatusId || 'all'}:${progressStatusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
+      const cachedKey = `books:${userId || 'all'}:${search || 'all'}:${bookTypeId || 'all'}:${accessStatusId || 'all'}:${progressStatusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
       const cachedPage = await this.cacheService.get(cachedKey);
       if (cachedPage) {
         return JSON.parse(cachedPage);
@@ -108,6 +120,7 @@ export class BookService {
       const qb = this.databaseService
         .queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.bookType', 'bookType')
         .leftJoinAndSelect('book.accessStatus', 'accessStatus')
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
@@ -117,21 +130,23 @@ export class BookService {
       if (userId) {
         qb.andWhere('author.id = :userId', { userId });
       }
-
+      if (bookTypeId) {
+        qb.andWhere('bookType.id = :bookTypeId', { bookTypeId });
+      }
       if (accessStatusId) {
         qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
       }
-
+      if (accessStatusId) {
+        qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
+      }
       if (progressStatusId) {
         qb.andWhere('progressStatus.id = :progressStatusId', {
           progressStatusId,
         });
       }
-
       if (categoryId && categoryId.length > 0) {
         qb.andWhere('category.id IN (:...categoryId)', { categoryId });
       }
-
       if (search) {
         qb.andWhere(
           `(to_tsvector('simple', lower(book.title)) @@ websearch_to_tsquery(lower(:search)) 
@@ -204,15 +219,14 @@ export class BookService {
       const qb = this.databaseService
         .queryBuilder(this.bookRepository, 'book')
         .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.bookType', 'bookType')
         .leftJoinAndSelect('book.accessStatus', 'accessStatus')
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
         .leftJoinAndSelect('book.chapters', 'chapters')
-        // .leftJoinAndSelect('book.reviews', 'reviews')
         .where('book.id = :bookId', { bookId })
         .addOrderBy('chapters.chapter', 'ASC');
-      // .addOrderBy('reviews.createdAt', 'DESC');
 
       const book = await qb.getOne();
 
@@ -287,23 +301,33 @@ export class BookService {
     }
   }
 
+  async getBookType(): Promise<GetBookTypeDto[]> {
+    try {
+      const types = await this.databaseService.findAll(
+        this.bookTypeRepository,
+        { order: { id: 'ASC' } },
+      );
+      if (!types || types.length === 0) {
+        throw new NotFoundException('Không tìm thấy loại sách nào');
+      }
+      return plainToInstance(GetBookTypeDto, types, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getProgressStatus');
+      throw error;
+    }
+  }
+
   async getProgressStatus(user): Promise<GetProgressStatusDto[]> {
     try {
-      let statuses: BookProgressStatus[];
       const roleId = user.role.id;
+      const filter = roleId === 3 ? { id: In([1, 2, 3]) } : {};
 
-      if (roleId === 3) {
-        statuses = await this.databaseService.findAll(
-          this.bookProgressStatusRepository,
-          {
-            where: { id: In([1, 2, 3]) },
-          },
-        );
-      } else {
-        statuses = await this.databaseService.findAll(
-          this.bookProgressStatusRepository,
-        );
-      }
+      const statuses = await this.databaseService.findAll(
+        this.bookProgressStatusRepository,
+        { where: filter, order: { id: 'ASC' } },
+      );
 
       const dtos = plainToInstance(GetProgressStatusDto, statuses, {
         excludeExtraneousValues: true,
@@ -319,24 +343,17 @@ export class BookService {
   async getAccessStatus(user): Promise<GetAccessStatusDto[]> {
     try {
       const roleId = user.role.id;
-      let statuses: BookAccessStatus[];
+      const filter = roleId === 3 ? { id: In([2, 3]) } : {};
 
-      if (roleId === 3) {
-        statuses = await this.databaseService.findAll(
-          this.bookAccessStatusRepository,
-          {
-            where: { id: In([2, 3]) },
-          },
-        );
-      } else {
-        statuses = await this.databaseService.findAll(
-          this.bookAccessStatusRepository,
-        );
-      }
+      const statuses = await this.databaseService.findAll(
+        this.bookAccessStatusRepository,
+        { where: filter, order: { id: 'ASC' } },
+      );
 
       const dtos = plainToInstance(GetAccessStatusDto, statuses, {
         excludeExtraneousValues: true,
       });
+
       return Array.isArray(dtos) ? dtos : [dtos];
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.getAccessStatus');
@@ -354,6 +371,7 @@ export class BookService {
         description: dto.description,
         cover: dto.cover,
         ageRating: dto.ageRating,
+        bookType: { id: dto.bookTypeId },
         accessStatus: { id: dto.accessStatusId },
         progressStatus: { id: dto.progressStatusId },
         author: { id: author.id },
@@ -611,6 +629,7 @@ export class BookService {
         );
 
       Object.assign(review, dto);
+
       return await this.bookReviewRepository.save(review);
     } catch (error) {
       this.loggerService.err(error.message, 'BookReviewService.updateReview');
@@ -670,15 +689,33 @@ export class BookService {
     chapterId: number,
     user: User,
     dto: CreateBookChapterCommentDto,
-  ): Promise<BookChapterComment> {
+  ): Promise<Boolean> {
     try {
-      const comment = this.bookChapterCommentRepository.create({
-        user,
-        chapter: { id: chapterId },
-        comment: dto.comment,
-      });
+      dto.chapterId = chapterId;
 
-      return await this.bookChapterCommentRepository.save(comment);
+      if (dto.parentId) {
+        const parent = await this.databaseService.findOne(
+          this.bookChapterCommentRepository,
+          {
+            where: { id: dto.parentId },
+          },
+        );
+        if (!parent) {
+          throw new NotFoundException('Bình luận gốc không tồn tại');
+        }
+      }
+
+      const commentEntity = this.databaseService.create(
+        this.bookChapterCommentRepository,
+        {
+          user,
+          chapter: { id: chapterId },
+          comment: dto.comment,
+          parent: dto.parentId ? { id: dto.parentId } : undefined,
+        },
+      );
+
+      return true;
     } catch (error) {
       this.loggerService.err(
         error.message,
@@ -742,26 +779,34 @@ export class BookService {
   }
 
   async getComments(
-    chapterId: number,
     pagination: PaginationRequestDto,
+    chapterId: number,
+    commentId: number,
   ): Promise<PaginationResponseDto<BookChapterCommentResponseDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
+
+      const whereClause = commentId
+        ? { chapter: { id: chapterId }, parent: { id: commentId } }
+        : { chapter: { id: chapterId }, parent: IsNull() };
+
       const [data, totalItems] =
         await this.bookChapterCommentRepository.findAndCount({
-          where: { chapter: { id: chapterId } },
+          where: whereClause,
           order: { createdAt: 'DESC' },
           take: limit,
           skip: (page - 1) * limit,
           relations: ['user'],
         });
 
+      const dtos = plainToInstance(BookChapterCommentResponseDto, data, {
+        excludeExtraneousValues: true,
+      }) as BookChapterCommentResponseDto[];
+
       return {
         totalItems,
         totalPages: Math.ceil(totalItems / limit),
-        data: plainToInstance(BookChapterCommentResponseDto, data, {
-          excludeExtraneousValues: true,
-        }),
+        data: dtos,
       };
     } catch (error) {
       this.loggerService.err(
@@ -829,6 +874,7 @@ export class BookService {
         relations: [
           'book',
           'book.author',
+          'book.bookType',
           'book.accessStatus',
           'book.progressStatus',
           'book.progressStatus',
@@ -888,6 +934,7 @@ export class BookService {
           'user',
           'book',
           'book.author',
+          'book.bookType',
           'book.accessStatus',
           'book.progressStatus',
           'book.progressStatus',
@@ -905,6 +952,69 @@ export class BookService {
       };
     } catch (error) {
       this.loggerService.err(error.message, 'BookReportService.getReports');
+      throw error;
+    }
+  }
+
+  async createReadingHistory(
+    user: User,
+    dto: CreateBookReadingHistoryDto,
+  ): Promise<boolean> {
+    try {
+      await this.databaseService.create(this.bookReadingHistoryRepository, {
+        user: { id: user.id },
+        book: { id: dto.bookId },
+        chapter: { id: dto.chapterId },
+      });
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookReadingHistoryService.createReadingHistory',
+      );
+      throw error;
+    }
+  }
+
+  async getReadingHistory(
+    user: User,
+    pagination: PaginationRequestDto,
+  ): Promise<PaginationResponseDto<BookReadingHistoryResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const [data, totalItems] =
+        await this.bookReadingHistoryRepository.findAndCount({
+          where: { user: { id: user.id } },
+          order: { createdAt: 'DESC' },
+          relations: [
+            'book',
+            'book.author',
+            'book.bookType',
+            'book.accessStatus',
+            'book.progressStatus',
+            'book.progressStatus',
+            'book.bookCategoryRelations',
+            'book.bookCategoryRelations.category',
+          ],
+          take: limit,
+          skip: (page - 1) * limit,
+        });
+
+      const dtos = plainToInstance(BookReadingHistoryResponseDto, data, {
+        excludeExtraneousValues: true,
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: dtos,
+      };
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookReadingHistoryService.getReadingHistory',
+      );
       throw error;
     }
   }

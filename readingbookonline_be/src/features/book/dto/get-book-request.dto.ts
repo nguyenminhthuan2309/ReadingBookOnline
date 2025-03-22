@@ -40,6 +40,15 @@ export class GetBookRequestDto extends PaginationRequestDto {
 
   @ApiPropertyOptional({
     type: Number,
+    description: 'Lọc sách theo loại Manga hay Novel (bookTypeId)',
+  })
+  @IsOptional()
+  @Expose()
+  @Transform(({ value }) => Number(value), { toClassOnly: true })
+  bookTypeId?: number;
+
+  @ApiPropertyOptional({
+    type: Number,
     description: 'Lọc sách theo trạng thái tiến độ (progressStatusId)',
   })
   @IsOptional()

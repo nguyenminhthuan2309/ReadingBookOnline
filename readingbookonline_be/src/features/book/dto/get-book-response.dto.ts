@@ -3,16 +3,40 @@ import { GetProgressStatusDto } from './get-book-progess-status.dto';
 import { GetAccessStatusDto } from './get-book-access-status.dto';
 import { GetBookCategoryDto } from './get-book-category.dto';
 import { AuthorDto } from './get-author.dto';
+import { IsDate, IsNumber, IsString } from 'class-validator';
 
 export class GetBookDto {
-  @Expose() id: number;
-  @Expose() title: string;
-  @Expose() description: string;
-  @Expose() cover: string;
-  @Expose() ageRating: number;
-  @Expose() views: number;
-  @Expose() createdAt: Date;
-  @Expose() updatedAt: Date;
+  @IsNumber()
+  @Expose()
+  id: number;
+
+  @IsString()
+  @Expose()
+  title: string;
+
+  @IsString()
+  @Expose()
+  description: string;
+
+  @IsString()
+  @Expose()
+  cover: string;
+
+  @IsString()
+  @Expose()
+  ageRating: number;
+
+  @IsString()
+  @Expose()
+  views: number;
+
+  @IsDate()
+  @Expose()
+  createdAt: Date;
+
+  @IsDate()
+  @Expose()
+  updatedAt: Date;
 
   @Expose()
   @Type(() => AuthorDto)

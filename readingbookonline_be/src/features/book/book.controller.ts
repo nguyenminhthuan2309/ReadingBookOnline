@@ -14,7 +14,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import {
   GetBookRequestDto,
   GetBookResponseDto,
@@ -44,6 +44,8 @@ import { BookFollowDto } from './dto/book-follow.dto';
 import { BookReportDto, BookReportResponseDto } from './dto/book-report.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 import { AdminGuard } from '@core/auth/admin.guard';
+import { GetBookTypeDto } from './dto/book-type.dto';
+import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.dto';
 
 @Controller('book')
 export class BookController {
@@ -63,6 +65,13 @@ export class BookController {
     @Query() params: GetBookCategoryRequestDto,
   ): Promise<GetBookCateogryResponseDto> {
     return await this.bookService.getBookCategory(params);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Lấy loại sách manga hay novel' })
+  @Get('book-type')
+  async getBookType(): Promise<GetBookTypeDto[]> {
+    return await this.bookService.getBookType();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -206,12 +215,20 @@ export class BookController {
   }
 
   @ApiOperation({ summary: 'Lấy danh sách chapter comment' })
+  @ApiQuery({
+    name: 'commentId',
+    type: Number,
+    required: false,
+    description:
+      'ID của bình luận cha để lấy các bình luận con. Nếu không truyền, trả về bình luận cha',
+  })
   @Get('chapter-comment')
   async getComments(
-    @Query('chapterId') chapterId: number,
     @Query() pagination: PaginationRequestDto,
+    @Query('chapterId') chapterId: number,
+    @Query('commentId') commentId?,
   ) {
-    return this.bookService.getComments(chapterId, pagination);
+    return this.bookService.getComments(pagination, chapterId, commentId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -253,6 +270,32 @@ export class BookController {
     @Query() pagination: PaginationRequestDto,
   ): Promise<PaginationResponseDto<BookReportResponseDto>> {
     return this.bookService.getReports(pagination);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Tạo mới lịch sử đọc sách' })
+  @Post('reading-history')
+  async createReadingHistory(
+    @Req() req,
+    @Body() dto: CreateBookReadingHistoryDto,
+  ): Promise<boolean> {
+    const author = req.user;
+
+    return this.bookService.createReadingHistory(author, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy danh sách lịch sử đọc sách của user (phân trang)',
+  })
+  @Get('reading-history')
+  async getReadingHistory(
+    @Req() req,
+    @Query() pagination: PaginationRequestDto,
+  ) {
+    const author = req.user;
+
+    return this.bookService.getReadingHistory(author, pagination);
   }
 
   @ApiOperation({ summary: 'Lấy chi tiết sách' })

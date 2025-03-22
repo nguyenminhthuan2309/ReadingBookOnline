@@ -1,16 +1,29 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { AuthorDto } from './get-author.dto';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 
 export class CreateBookChapterCommentDto {
+  @ApiProperty({ example: 1, description: 'ID của chapter' })
+  @IsNotEmpty()
+  @IsNumber()
+  chapterId: number;
+
   @ApiProperty({
+    example: 'Bình luận hay quá!',
     description: 'Nội dung bình luận',
-    example: 'Chương này hay quá!',
   })
   @IsNotEmpty()
   @IsString()
   comment: string;
+
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'ID của bình luận cha (nếu là reply)',
+  })
+  @IsOptional()
+  @IsNumber()
+  parentId?: number;
 }
 
 export class UpdateBookChapterCommentDto {
@@ -36,7 +49,10 @@ export class BookChapterCommentResponseDto {
   @Expose()
   createdAt: Date;
 
-  @ApiProperty({ type: AuthorDto })
+  @ApiProperty({
+    type: AuthorDto,
+    description: 'Thông tin của người viết bình luận',
+  })
   @Expose()
   @Transform(({ obj }) => ({
     id: obj.user.id,
@@ -44,4 +60,20 @@ export class BookChapterCommentResponseDto {
     name: obj.user.name,
   }))
   user: AuthorDto;
+
+  @ApiPropertyOptional({
+    example: 5,
+    description: 'ID của bình luận cha (nếu có)',
+  })
+  @Expose()
+  @Transform(({ obj }) => (obj.parent ? obj.parent.id : undefined))
+  parentId?: number;
+
+  @ApiPropertyOptional({
+    type: [BookChapterCommentResponseDto],
+    description: 'Danh sách bình luận con (nếu có)',
+  })
+  @Expose()
+  @Type(() => BookChapterCommentResponseDto)
+  children?: BookChapterCommentResponseDto[];
 }

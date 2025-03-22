@@ -2,9 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
-  IsInt,
   IsArray,
   ArrayNotEmpty,
+  IsNumber,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -26,17 +26,25 @@ export class CreateBookDto {
 
   @ApiProperty({ example: 12, description: 'Độ tuổi phù hợp' })
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber()
   ageRating: number;
+
+  @ApiProperty({
+    example: 1,
+    description: 'ID của loại sách (1: Novel, 2: Manga)',
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  bookTypeId: number;
 
   @ApiProperty({ example: 1, description: 'ID của Access Status' })
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber()
   accessStatusId: number;
 
   @ApiProperty({ example: 2, description: 'ID của Progress Status' })
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber()
   progressStatusId: number;
 
   @ApiProperty({

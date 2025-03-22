@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsInt,
-  IsBoolean,
-  IsOptional,
-  IsNumber,
-} from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateBookChapterDto {
   @ApiProperty({
@@ -19,7 +13,7 @@ export class CreateBookChapterDto {
     description: 'Số thứ tự chương trong sách',
     example: 1,
   })
-  @IsInt()
+  @IsNumber()
   chapter: number;
 
   @ApiProperty({

@@ -11,7 +11,7 @@ import { User } from '@features/user/entities/user.entity';
 import { Book } from './book.entity';
 import { BookChapter } from './book-chapter.entity';
 
-@Entity('reading_history')
+@Entity('book_reading_history')
 export class BookReadingHistory {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;

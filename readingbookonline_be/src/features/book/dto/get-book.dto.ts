@@ -12,6 +12,7 @@ import { AuthorDto } from './get-author.dto';
 import { BookReview } from './get-book-review.dto';
 import { GetProgressStatusDto } from './get-book-progess-status.dto';
 import { GetAccessStatusDto } from './get-book-access-status.dto';
+import { GetBookTypeDto } from './book-type.dto';
 
 export class GetBookDto {
   @IsNotEmpty()
@@ -38,6 +39,11 @@ export class GetBookDto {
   @IsNumber()
   @Expose()
   views?: number;
+
+  @IsNotEmpty()
+  @Expose()
+  @Type(() => GetBookTypeDto)
+  bookType: GetBookTypeDto;
 
   @IsNotEmpty()
   @Expose()

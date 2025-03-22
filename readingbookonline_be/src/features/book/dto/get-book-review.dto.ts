@@ -1,4 +1,4 @@
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { AuthorDto } from './get-author.dto';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';

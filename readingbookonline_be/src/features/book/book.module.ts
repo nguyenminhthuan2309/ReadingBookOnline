@@ -15,6 +15,7 @@ import { BookFollow } from './entities/book-follow.entity';
 import { BookProgressStatus } from './entities/book-progess-status.entity';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { BookChapterComment } from './entities/book-chapter-comment.entity';
+import { BookType } from './entities/book-type.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { BookChapterComment } from './entities/book-chapter-comment.entity';
       BookChapterPurchase,
       BookChapter,
       BookFollow,
+      BookType,
       BookProgressStatus,
       BookReadingHistory,
       BookReport,

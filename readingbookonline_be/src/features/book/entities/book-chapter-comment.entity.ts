@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { BookChapter } from './book-chapter.entity';
 import { User } from '@features/user/entities/user.entity';
@@ -32,6 +33,16 @@ export class BookChapterComment {
 
   @Column({ name: 'comment', type: 'text' })
   comment: string;
+
+  @ManyToOne(() => BookChapterComment, (comment) => comment.children, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'parent_id' })
+  parent?: BookChapterComment;
+
+  @OneToMany(() => BookChapterComment, (comment) => comment.parent)
+  children?: BookChapterComment[];
 
   @Index('idx_book_chapter_comment_created_at')
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })

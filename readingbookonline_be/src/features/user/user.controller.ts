@@ -38,7 +38,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Xác thực tài khoản' })
   @Get('/verify')
-  @Redirect('http://localhost:3001', 301)
   async verify(@Query('token') token: string): Promise<Boolean> {
     return await this.userService.verify(token);
   }

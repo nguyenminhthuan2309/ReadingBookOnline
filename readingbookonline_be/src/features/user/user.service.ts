@@ -27,7 +27,6 @@ import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password-dto';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 
@@ -120,7 +119,7 @@ export class UserService {
         this.redisTtlResetPassword,
       );
 
-      const verificationUrl = `http://localhost:3000/user/verify?token=${verificationToken}`;
+      const verificationUrl = `http://localhost:3001/account/sign_in?token=${verificationToken}`;
 
       await this.mailerService.sendMail({
         to: email,
@@ -248,9 +247,7 @@ export class UserService {
       await this.cacheService.delete(cachedKey);
       await this.cacheService.delete(failCountKey);
 
-      const newPassword = Math.floor(
-        100000 + Math.random() * 900000,
-      ).toString();
+      const newPassword = generatePassword(8);
 
       const user = await this.dataBaseService.findOne<User>(
         this.userRepository,
@@ -455,3 +452,14 @@ export class UserService {
     }
   }
 }
+
+const generatePassword = (length) => {
+  const chars =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    password += chars[randomIndex];
+  }
+  return password;
+};
