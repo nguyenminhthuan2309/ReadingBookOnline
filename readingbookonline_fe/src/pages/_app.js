@@ -1,19 +1,15 @@
+"use client";
+
 import React, { useState } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
 import "../app/globals.css";
 import store from "@/utils/redux/store";
+
 import { Provider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastContainer } from "react-toastify";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "react-toastify/dist/ReactToastify.css";
+import PropTypes from "prop-types";
 
 export const metadata = {
   title: "Create Next App",
@@ -25,8 +21,14 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
+        <ToastContainer />
         <Component {...pageProps} />
       </QueryClientProvider>
     </Provider>
   );
 }
+
+MyApp.propTypes = {
+  Component: PropTypes.elementType.isRequired,
+  pageProps: PropTypes.object,
+};

@@ -22,7 +22,6 @@ export default function GenrePopover() {
     setAnchorEl(null);
   };
 
-  console.log(genres);
   const handleGenreClick = (genreId) => {
     // router.push(`/list?genre=${genreId}`);
     handleClose();

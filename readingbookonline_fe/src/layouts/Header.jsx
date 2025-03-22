@@ -1,12 +1,26 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
+import { USER_INFO } from "@/utils/constants";
 
 export const Header = () => {
   const router = useRouter();
+  const [user, setUser] = useState();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const userInfo = localStorage.getItem(USER_INFO);
+      if (!userInfo) return;
+      setUser(JSON.parse(userInfo));
+    }
+    return;
+  }, []);
+
   return (
     <div className="w-full">
       <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-red-300 max-md:px-5 max-md:max-w-full">
@@ -72,7 +86,7 @@ export const Header = () => {
             </a>
           </li>
           <li className="w-[150px]">
-            <GenrePopover/>
+            <GenrePopover />
           </li>
           <li className="w-[150px]">
             <a href="#" className="hover:underline">

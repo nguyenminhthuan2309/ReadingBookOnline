@@ -1,23 +1,8 @@
 import moment from "moment";
+import PropTypes from "prop-types";
 import React from "react";
 
 function ChapterList({ chapters }) {
-  // const chapters = [
-  //   { number: 13, title: "waiting for more", date: "", isNew: true },
-  //   { number: 12, title: "", date: "Sample Date Month, Year" },
-  //   { number: 11, title: "", date: "Sample Date Month, Year" },
-  //   { number: 10, title: "", date: "Sample Date Month, Year" },
-  //   { number: 9, title: "it's still going", date: "Sample Date Month, Year" },
-  //   { number: 8, title: "", date: "Sample Date Month, Year" },
-  //   { number: 7, title: "it's still going", date: "Sample Date Month, Year" },
-  //   { number: 6, title: "it's still going", date: "Sample Date Month, Year" },
-  //   { number: "Epilogue", title: "", date: "Sample Date Month, Year" },
-  //   { number: 4, title: "", date: "Sample Date Month, Year" },
-  //   { number: 3, title: "it's still going", date: "Sample Date Month, Year" },
-  //   { number: 2, title: "it still continue", date: "Sample Date Month, Year" },
-  //   { number: 1, title: "when it all start", date: "Sample Date Month, Year" },
-  //   { number: 0, title: "Prologue", date: "Sample Date Month, Year" },
-  //];
 
   return (
     <section className="mt-24 max-md:mt-10">
@@ -55,6 +40,10 @@ function ChapterList({ chapters }) {
       </div>
     </section>
   );
+}
+
+ChapterList.propTypes={
+  chapters: PropTypes.object,
 }
 
 export default ChapterList;

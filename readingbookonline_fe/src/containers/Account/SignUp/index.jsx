@@ -1,7 +1,7 @@
+
 import React from "react";
 import Header from "./Header";
 import SignUpForm from "./SignUpForm";
-import Router from "next/router";
 
 const SignUpPage = () => {
   return (

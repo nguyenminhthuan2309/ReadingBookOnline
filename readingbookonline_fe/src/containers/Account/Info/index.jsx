@@ -1,3 +1,4 @@
+import React from "react";
 import NoticesSidebar from "./NoticesSidebar";
 import UserProfile from "./UserProfile";
 
@@ -5,11 +6,10 @@ import { Header } from "@/layouts/Header";
 import { Footer } from "@/layouts/Footer";
 
 const AccountPage = () => {
-
   return (
     <div className="rounded-none">
       <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
-          <Header />
+        <Header />
         <main className="flex flex-col self-center mt-10 w-full max-w-[1521px] max-md:mt-10 max-md:max-w-full">
           <nav className="self-start text-3xl text-black">
             <a href="/">Home</a>/<a href="/account">Account</a>
@@ -25,7 +25,7 @@ const AccountPage = () => {
             </div>
           </div>
         </main>
-        <Footer/>
+        <Footer />
       </div>
     </div>
   );

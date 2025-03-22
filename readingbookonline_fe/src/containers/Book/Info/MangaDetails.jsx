@@ -3,17 +3,17 @@ import React from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
 
-function MangaDetails({bookInfo}) {
+function MangaDetails({ bookInfo }) {
   return (
     <section className="mt-7">
-      <h2 className="text-4xl font-semibold text-black">Manga 1</h2>
+      <h2 className="text-4xl font-semibold text-black">{bookInfo.title}</h2>
       <div className="mt-5 mr-9 max-md:mr-2.5 max-md:max-w-full">
         <div className="flex gap-5 max-md:flex-col">
           <aside className="w-[22%] max-md:ml-0 max-md:w-full">
             <div className="mt-3 w-full max-md:mt-10">
               <img
                 src={bookInfo.cover}
-                alt="Manga 1 Cover"
+                alt={`${bookInfo.cover} cover`}
                 className="object-contain w-full aspect-[0.74]"
               />
               <div className="flex mt-7 max-md:mr-1">
@@ -32,7 +32,6 @@ function MangaDetails({bookInfo}) {
           <div className="ml-5 w-[52%] max-md:ml-0 max-md:w-full">
             <div className="flex gap-5 max-md:flex-col">
               <dl className="w-[31%] max-md:w-full text-lg leading-10">
-                <dt className="text-black">Alternative title(s):</dt>
                 <dt className="text-black">Author(s):</dt>
                 <dt className="text-black">Artist(s):</dt>
                 <dt className="text-black">Genre(s):</dt>
@@ -47,9 +46,6 @@ function MangaDetails({bookInfo}) {
               </dl>
 
               <dl className="ml-5 w-[69%] max-md:w-full text-lg leading-10">
-                <dd className="text-stone-400">
-                  title 01, title 02, title 03, title 04,title 05, title 06
-                </dd>
                 <dd className="text-stone-400">
                   {bookInfo.author && bookInfo.author.name}
                 </dd>
@@ -128,6 +124,6 @@ function MangaDetails({bookInfo}) {
 
 MangaDetails.propTypes = {
   bookInfo: PropTypes.object,
-}
+};
 
 export default MangaDetails;

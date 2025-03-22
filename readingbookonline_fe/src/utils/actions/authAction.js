@@ -1,3 +1,4 @@
+import { ShowNotify } from "@/components/Notification";
 import {
   forgotPasswordFail,
   forgotPasswordRequest,
@@ -18,6 +19,7 @@ import {
 
 import { authAPI } from "@/app/common/api";
 import Router from "next/router";
+import { ACCESS_TOKEN, ERROR, INFO, SUCESSS, USER_INFO } from "../constants";
 
 export const handleAuthenticate = (formdata) => {
   return async (dispatch) => {
@@ -27,13 +29,27 @@ export const handleAuthenticate = (formdata) => {
       const response = await postAPI(url, formdata);
       if (response && response.data) {
         dispatch(loginSuccess());
-        console.log(response.data.data.accessToken);
-        // setAuthorizationToken(response.data);
-        // Router.push("/");
+        const { accessToken, user } = response.data.data;
+        if (typeof window !== "undefined") {
+          localStorage.setItem(ACCESS_TOKEN, accessToken);
+          localStorage.setItem(
+            USER_INFO,
+            JSON.stringify({
+              ...user,
+              userId: user.id,
+              avatar: user.avatar,
+              email: user.email,
+              name: user.name,
+              userRole: user.role,
+              status: user.status,
+            })
+          );
+        }
+        Router.push("/");
       }
     } catch (error) {
       dispatch(loginFail());
-      console.log("Login error", error);
+      ShowNotify(ERROR, error.response.data.msg);
     }
   };
 };
@@ -52,12 +68,12 @@ export const registerAccount = (formdata) => {
     try {
       const response = await postAPI(url, formdata);
       if (response && response.data) {
-        console.log("Register success", response.data);
-        Router.push("/account/sign_in");
+        ShowNotify(SUCESSS, response.data.msg);
       }
+      Router.push("/account/sign_in");
     } catch (error) {
       dispatch(loginFail());
-      console.log("Login error", error);
+      ShowNotify(ERROR, error.response.data.msg);
     }
   };
 };
@@ -69,10 +85,10 @@ export const handleForgotPassword = (email) => {
     try {
       await postAPI(url, email);
       dispatch(forgotPasswordSuccess());
-      console.log("An email has been send");
+      ShowNotify(INFO, "A email has been sent please check your email");
     } catch (error) {
       dispatch(forgotPasswordFail());
-      console.log(error);
+      ShowNotify(ERROR, error.response.data.msg);
     }
   };
 };

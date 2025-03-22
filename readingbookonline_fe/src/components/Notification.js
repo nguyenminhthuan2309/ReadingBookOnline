@@ -1,4 +1,5 @@
-import { toast } from "react-toastify";
+import { ERROR, INFO, MESSAGE, SUCESSS } from "@/utils/constants";
+import { Bounce, toast } from "react-toastify";
 
 const options = {
   position: "bottom-right",
@@ -14,22 +15,22 @@ const options = {
 
 export const ShowNotify = (type, message) => {
   switch (type) {
-    case "success": {
+    case SUCESSS: {
       toast.success(message, options);
       break;
     }
 
-    case "error": {
+    case ERROR: {
       toast.error(message, options);
       break;
     }
 
-    case "info": {
+    case INFO: {
       toast.info(message, options);
       break;
     }
 
-    case "message": {
+    case MESSAGE: {
       toast(message, options);
       break;
     }

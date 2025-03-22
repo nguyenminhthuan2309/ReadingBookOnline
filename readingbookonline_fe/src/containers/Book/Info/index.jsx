@@ -1,17 +1,20 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {Header} from "@/layouts/Header";
+import { Header } from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";
 import ReviewSection from "./ReviewSection";
-import {Footer} from "@/layouts/Footer";
+import { Footer } from "@/layouts/Footer";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
+import { useSearchParams } from "next/navigation";
 
 function MangaSPage() {
-  const [id, setId] = useState(500);
+  const searchParam = useSearchParams();
+  const bookId = searchParam.get("number");
   const [bookInfos, setBookInfos] = useState({});
-  const getBookInfoData = async () => {
+
+  const getBookInfoData = async (id) => {
     const url = bookAPI.getBookById(id);
     try {
       const response = await getAPI(url);
@@ -20,14 +23,13 @@ function MangaSPage() {
       console.log("success");
     } catch (error) {
       console.log("error", error);
-      throw new Error
+      throw new Error();
     }
   };
   useEffect(() => {
-    getBookInfoData();
-  }, []);
-
-  console.log(bookInfos);
+    if (!bookId) return;
+    getBookInfoData(bookId);
+  }, [bookId]);
 
   return (
     <main className="rounded-none">
@@ -38,7 +40,7 @@ function MangaSPage() {
             <a href="/">Home</a>/<a href="/sample-manga">Sample Manga</a>
           </nav>
           <MangaDetails bookInfo={bookInfos} />
-          <ChapterList chapters={bookInfos && bookInfos.chapters}/>
+          <ChapterList chapters={bookInfos && bookInfos.chapters} />
           <ReviewSection />
         </div>
         <Footer />

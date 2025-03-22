@@ -1,3 +1,7 @@
+"use client";
+
+import React from "react";
+
 export const Footer = () => {
   return (
     <footer className="self-stretch px-7 pt-10 pb-5 mt-9 w-full text-lg text-white bg-slate-600 max-md:px-5 max-md:max-w-full">

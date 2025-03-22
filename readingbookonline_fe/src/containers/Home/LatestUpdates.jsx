@@ -50,6 +50,7 @@ export const LatestUpdates = () => {
         {bookList && bookList.map((book, index) => (
           <BookTile
             key={index}
+            bookId={book.id}
             imageUrl={book.cover}
             title={book.title}
             author = {book.author.name}
