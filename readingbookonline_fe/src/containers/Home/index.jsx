@@ -1,6 +1,5 @@
 import React from "react";
 import { Header } from "@/layouts/Header";
-import { Footer } from "@/layouts/Footer";
 import { NoticesSection } from "./NoticesSection";
 import { RecommendedBooks } from "./RecommendBooks";
 import { LatestUpdates } from "./LatestUpdates";
@@ -17,7 +16,6 @@ export const HomePage = () => {
           <LatestUpdates />
           <MostViewedBooks />
         </div>
-        <Footer />
       </div>
     </div>
   );

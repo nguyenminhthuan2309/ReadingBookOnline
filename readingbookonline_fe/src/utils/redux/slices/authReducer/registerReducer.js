@@ -16,6 +16,7 @@ const registerSlice = createSlice({
   },
   extraReducers:(builder)=>{
     builder
+    // eslint-disable-next-line no-unused-vars
     .addCase("register/request", (state, action) => {
       state.loading = true;
       state.error = null;
@@ -32,6 +33,10 @@ const registerSlice = createSlice({
     });
 }
 });
+
+export const registerRequest = () => ({ type: "register/request" });
+export const registerSuccess = () => ({ type: "register/success" });
+export const registerFail = () => ({ type: "register/fail" });
 
 export const { resetState } = registerSlice.actions;
 export default registerSlice.reducer;

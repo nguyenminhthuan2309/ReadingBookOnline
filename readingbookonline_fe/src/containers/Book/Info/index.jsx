@@ -4,7 +4,6 @@ import { Header } from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";
 import ReviewSection from "./ReviewSection";
-import { Footer } from "@/layouts/Footer";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
 import { useSearchParams } from "next/navigation";
@@ -43,7 +42,6 @@ function MangaSPage() {
           <ChapterList chapters={bookInfos && bookInfos.chapters} />
           <ReviewSection />
         </div>
-        <Footer />
       </div>
     </main>
   );

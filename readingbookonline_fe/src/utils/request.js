@@ -1,6 +1,23 @@
 import axios from "axios";
+import { ACCESS_TOKEN } from "./constants";
+import { getItem } from "./localStorage";
 
 export const instance = axios.create({});
+
+instance.interceptors.request.use(
+  async (config) => {
+    const access_token = getItem(ACCESS_TOKEN);
+    if (!access_token) {
+      config.headers.Authorization = "";
+    } else {
+      config.headers.Authorization = `Bearer ${access_token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return error;
+  }
+);
 
 export const getAPI = (url) => {
   return instance
@@ -44,19 +61,3 @@ export const deleteAPI = (url, options, config) => {
       throw err;
     });
 };
-
-//Add token to header
-export const setAuthorizationToken = (token) => {
-  if (token) {
-    instance.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete instance.defaults.headers.common.Authorization;
-  }
-};
-
-//Delet token in header
-export const deleteAuthorizationToken = () => {
-  delete instance.defaults.headers.common.Authorization;
-};
-
-// export const getItem

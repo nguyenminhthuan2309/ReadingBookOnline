@@ -1,3 +1,5 @@
+import React from "react";
+
 const SearchBar = () => {
   return (
     <div className="flex flex-wrap gap-5 justify-between items-start self-center px-7 py-3.5 max-w-full text-3xl bg-white rounded-xl text-slate-800 w-[1087px] max-md:px-5">

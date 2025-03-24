@@ -3,7 +3,6 @@ import {
   forgotPasswordFail,
   forgotPasswordRequest,
   forgotPasswordSuccess,
-  verifyToken,
 } from "../redux/slices/authReducer/forgotPasswordReducer";
 import {
   loginRequest,
@@ -11,15 +10,21 @@ import {
   loginFail,
   logout,
 } from "../redux/slices/authReducer/loginReducer";
-import {
-  postAPI,
-  setAuthorizationToken,
-  deleteAuthorizationToken,
-} from "../request";
+import { postAPI } from "../request";
 
 import { authAPI } from "@/app/common/api";
 import Router from "next/router";
 import { ACCESS_TOKEN, ERROR, INFO, SUCESSS, USER_INFO } from "../constants";
+import {
+  verifyTokenFail,
+  verifyTokenRequest,
+  verifyTokenSuccess,
+} from "../redux/slices/authReducer/checkToken";
+import {
+  registerFail,
+  registerRequest,
+  registerSuccess,
+} from "../redux/slices/authReducer/registerReducer";
 
 export const handleAuthenticate = (formdata) => {
   return async (dispatch) => {
@@ -30,22 +35,25 @@ export const handleAuthenticate = (formdata) => {
       if (response && response.data) {
         dispatch(loginSuccess());
         const { accessToken, user } = response.data.data;
-        if (typeof window !== "undefined") {
-          localStorage.setItem(ACCESS_TOKEN, accessToken);
-          localStorage.setItem(
-            USER_INFO,
-            JSON.stringify({
-              ...user,
-              userId: user.id,
-              avatar: user.avatar,
-              email: user.email,
-              name: user.name,
-              userRole: user.role,
-              status: user.status,
-            })
-          );
+        localStorage.setItem(ACCESS_TOKEN, accessToken);
+        localStorage.setItem(
+          USER_INFO,
+          JSON.stringify({
+            ...user,
+            userId: user.id,
+            avatar: user.avatar,
+            email: user.email,
+            name: user.name,
+            userRole: user.role,
+            status: user.status,
+          })
+        );
+        if (window.history.length > 1) {
+          console.log("here");
+          Router.back();
+        } else {
+          Router.push("/");
         }
-        Router.push("/");
       }
     } catch (error) {
       dispatch(loginFail());
@@ -57,22 +65,29 @@ export const handleAuthenticate = (formdata) => {
 export const handleLogout = () => {
   return async (dispatch) => {
     dispatch(logout());
-    deleteAuthorizationToken();
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+    window.location.reload();
   };
 };
 
 export const registerAccount = (formdata) => {
   return async (dispatch) => {
-    dispatch(loginRequest());
+    dispatch(registerRequest());
     const url = authAPI.register;
     try {
       const response = await postAPI(url, formdata);
+      dispatch(registerSuccess());
       if (response && response.data) {
-        ShowNotify(SUCESSS, response.data.msg);
+        ShowNotify(
+          SUCESSS,
+          "A email has been sent please check your email to verify your account"
+        );
       }
       Router.push("/account/sign_in");
     } catch (error) {
-      dispatch(loginFail());
+      dispatch(registerFail());
       ShowNotify(ERROR, error.response.data.msg);
     }
   };
@@ -95,13 +110,19 @@ export const handleForgotPassword = (email) => {
 
 export const checkToken = (email, otp) => {
   return async (dispatch) => {
+    dispatch(verifyTokenRequest());
     const url = authAPI.verifyOTP;
     try {
       await postAPI(url, { email, otp });
-      dispatch(verifyToken());
-      console.log("success");
+      dispatch(verifyTokenSuccess());
+      ShowNotify(
+        SUCESSS,
+        "Your password has successfully reseted. Please check email for new password"
+      );
     } catch (error) {
       console.log(error);
+      dispatch(verifyTokenFail());
+      ShowNotify(ERROR, error.response.data.msg);
     }
   };
 };

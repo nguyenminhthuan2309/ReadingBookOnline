@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const loginSlice = createSlice({
@@ -38,8 +39,8 @@ const loginSlice = createSlice({
 });
 
 export const loginRequest = () => ({ type: "login/request" });
-export const loginSuccess = () => ({ type: "login/success"});
-export const loginFail = () => ({ type: "login/fail"});
+export const loginSuccess = () => ({ type: "login/success" });
+export const loginFail = () => ({ type: "login/fail" });
 export const logout = () => ({ type: "logout" });
 
 export const { resetState } = loginSlice.actions;

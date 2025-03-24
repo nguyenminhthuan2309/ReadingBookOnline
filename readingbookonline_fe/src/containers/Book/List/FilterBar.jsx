@@ -1,3 +1,6 @@
+import React from "react";
+import PropTypes from "prop-types";
+
 const FilterBar = ({itemLength}) => {
   const orderOptions = ["latest", "A-Z", "rating", "most views"];
 
@@ -28,4 +31,8 @@ const FilterBar = ({itemLength}) => {
   );
 };
 
+
+FilterBar.propTypes = {
+  itemLength: PropTypes.number,
+};
 export default FilterBar;

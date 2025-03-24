@@ -1,22 +1,27 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Header } from "@/layouts/Header";
-import { Footer } from "@/layouts/Footer";
 import SearchBar from "./SearchBar";
 import FilterBar from "./FilterBar";
-import BookTile from "./BookTile";
+import BookTile from "@/components/BookItem";
 import Pagination from "./Pagination";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
+import { getItem } from "@/utils/localStorage";
+import { USER_INFO } from "@/utils/constants";
 
 const BookListPage = () => {
+  const [user, setUser] = useState({});
   const [bookList, setBookList] = useState([]);
   const [totalPage, setTotalPage] = useState();
   const [totaItem, setTotalItem] = useState();
   const [currentPage, setCurrentPage] = useState(1);
 
   const getBookData = async () => {
-    const url = bookAPI.getBook(20, currentPage);
+    let url = bookAPI.getBook(20, currentPage);
+    if (user) {
+      url += `&userId=${user?.id}`;
+    }
     try {
       const response = await getAPI(url);
       const { data, totalPages, totalItems } = response.data.data;
@@ -30,33 +35,31 @@ const BookListPage = () => {
   };
 
   useEffect(() => {
-    getBookData();
+    const userInfo = getItem(USER_INFO);
+    if (userInfo) {
+      setUser(userInfo);
+    }
   }, []);
 
-  const books = Array(14).fill({
-    imageUrl:
-      "https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true",
-    title: "Sample Manga",
-    author: "Sample Author",
-    isHot: true,
-    chapters: ["Chapter Sample", "Chapter Sample"],
-    date: "Sample Date Month, Year",
-    isNew: true,
-  });
+  useEffect(() => {
+    if (user?.id !== undefined) {
+      getBookData();
+    }
+  }, [user]);
 
   return (
     <main className="pb-1.5 rounded-none">
-      <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
+      <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
 
         <section className="flex flex-col self-center mt-11 w-full max-w-[1523px] max-md:mt-10 max-md:max-w-full">
           <SearchBar />
-          <FilterBar itemLength={totaItem}/>
+          <FilterBar itemLength={totaItem} />
 
           <div className="flex shrink-0 w-full h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:mr-0.5" />
 
-          <div className="flex flex-wrap justify-center items-center gap-12  mt-10">
-            {bookList &&
+          <div className="flex flex-wrap justify-center items-center gap-12 mt-10">
+            {bookList.length > 0 ? (
               bookList.map((book, index) => (
                 <BookTile
                   key={index}
@@ -66,13 +69,13 @@ const BookListPage = () => {
                   chapters={book.chapters}
                   className="flex flex-col rounded-none w-[200px]"
                 />
-              ))}
+              ))
+            ) : (
+              <div className="min-h-[25vh] content-center"> No data Found </div>
+            )}
           </div>
-
           <Pagination />
         </section>
-
-        <Footer />
       </div>
     </main>
   );

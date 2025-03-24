@@ -1,3 +1,5 @@
+import React from "react";
+
 const Pagination = () => {
   const pages = [1, 2, 3, 4, 5, "...", 10];
 

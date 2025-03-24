@@ -4,26 +4,26 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
-import { IconButton, Button } from "@mui/material";
+import { IconButton, Button, Typography } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
 import { USER_INFO } from "@/utils/constants";
+import AccountMenu from "@/components/Avatar";
+import { getItem } from "@/utils/localStorage";
 
 export const Header = () => {
   const router = useRouter();
-  const [user, setUser] = useState();
+  const [user, setUser] = useState({});
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userInfo = localStorage.getItem(USER_INFO);
-      if (!userInfo) return;
-      setUser(JSON.parse(userInfo));
+    const userInfo = getItem(USER_INFO);
+    if (userInfo) {
+      setUser(userInfo);
     }
-    return;
   }, []);
 
   return (
     <div className="w-full">
-      <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-red-300 max-md:px-5 max-md:max-w-full">
+      <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-[#FFAF98] max-md:px-5 max-md:max-w-full">
         <button onClick={() => router.push("/")}>
           <img
             src="/images/name.png"
@@ -47,25 +47,29 @@ export const Header = () => {
             alt="User"
             className="object-contain shrink-0 my-auto aspect-[0.86] w-[18px]"
           />
-          <div className="flex flex-wrap gap-5 py-2">
-            <Button
-              sx={{ textTransform: "none" }}
-              onClick={() => router.push("/account/sign_in")}
-            >
-              <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
-                Sign in
-              </span>
-            </Button>
-            <span className="text-xl">|</span>
-            <Button
-              sx={{ textTransform: "none" }}
-              onClick={() => router.push("/account/sign_up")}
-            >
-              <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
-                Sign up
-              </span>
-            </Button>
-          </div>
+          {!user ? (
+            <div className="flex flex-wrap gap-5 py-2">
+              <Button
+                sx={{ textTransform: "none" }}
+                onClick={() => router.push("/account/sign_in")}
+              >
+                <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
+                  Sign in
+                </span>
+              </Button>
+              <span className="text-xl">|</span>
+              <Button
+                sx={{ textTransform: "none" }}
+                onClick={() => router.push("/account/sign_up")}
+              >
+                <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
+                  Sign up
+                </span>
+              </Button>
+            </div>
+          ) : (
+            <AccountMenu name={user && user.name?.slice(0, 1)} />
+          )}
         </nav>
       </header>
       <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black bg-red-100 border-b border-black">
@@ -89,9 +93,13 @@ export const Header = () => {
             <GenrePopover />
           </li>
           <li className="w-[150px]">
-            <a href="#" className="hover:underline">
-              Gallery
-            </a>
+            <Typography
+              variant="body1"
+              onClick={() => router.push(`/book_list?page=Gallary`)}
+              sx={{ cursor: "pointer", color: "black" }}
+            >
+              <span className="text-2xl hover:underline">Gallary</span>
+            </Typography>
           </li>
           <li className="w-[150px]">
             <a href="#" className="hover:underline">

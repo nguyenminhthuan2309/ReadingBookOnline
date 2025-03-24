@@ -20,7 +20,7 @@ const BookTile = ({
   chapters = [],
   // isNew = false,
   className = "",
-  onClickChapter,
+  // onClickChapter,
 }) => {
   const router = useRouter();
   const handleBookClick = () => {
@@ -87,6 +87,6 @@ BookTile.propTypes = {
   chapters: PropTypes.array,
   isNew: PropTypes.bool,
   className: PropTypes.string,
-  onClickChapter: PropTypes.func,
+  // onClickChapter: PropTypes.func,
 };
 export default BookTile;
