@@ -17,7 +17,12 @@ const bookAPI = {
   createBook: `${API_GATEWAY}/book`,
 };
 
-const uploadAPI = {
-  uploadImage: `${API_GATEWAY}/upload/image`
+const chapterAPI = {
+  createChapter: (bookId) => `${API_GATEWAY}/book/chapter/${bookId}`,
 };
-export { authAPI, userAPI, bookAPI, uploadAPI };
+
+const uploadAPI = {
+  uploadImage: `${API_GATEWAY}/upload/image`,
+  uploadFile: `${API_GATEWAY}/upload/file`,
+};
+export { authAPI, userAPI, bookAPI, chapterAPI, uploadAPI };

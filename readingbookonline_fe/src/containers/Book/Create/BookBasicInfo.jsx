@@ -63,6 +63,7 @@ function BookBasicInfo() {
       setSelectedGenres(selectedGenres.filter((id) => id !== genreId));
     }
   };
+
   const handleUploadFile = async (data) => {
     try {
       if (!data) return;
