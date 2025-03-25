@@ -41,6 +41,10 @@ export class AuthService {
         throw new NotFoundException('Người dùng không tồn tại');
       }
 
+      if (user.status.name === 'INACTIVE') {
+        throw new BadRequestException('Tài khoản của bạn chưa được xác thực');
+      }
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         throw new BadRequestException('Mật khẩu không đúng');

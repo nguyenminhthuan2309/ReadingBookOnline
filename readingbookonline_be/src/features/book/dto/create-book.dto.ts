@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
   IsArray,
   ArrayNotEmpty,
   IsNumber,
+  IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -14,10 +15,10 @@ export class CreateBookDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ example: 'A thrilling adventure of ...' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ example: 'A thrilling adventure of ...' })
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({ example: 'https://example.com/cover.jpg' })
   @IsNotEmpty()

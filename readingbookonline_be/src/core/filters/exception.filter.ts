@@ -1,3 +1,4 @@
+import { LoggerService } from '@core/logger/logger.service';
 import {
   ArgumentsHost,
   Catch,
@@ -5,7 +6,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { LoggerService } from '@core/logger/logger.service';
+import { JsonWebTokenError } from 'jsonwebtoken';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -32,12 +33,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exceptionResponse['message'] || message;
         errorData = exceptionResponse['error'] || null;
       }
+    } else if (exception instanceof JsonWebTokenError) {
+      status = HttpStatus.UNAUTHORIZED;
+      message = 'Token không hợp lệ';
+      this.logger.err(
+        `JWT Error: ${exception.message}`,
+        'GlobalExceptionFilter',
+      );
     } else {
+      status = HttpStatus.BAD_REQUEST;
+      message = exception.message || 'An unexpected error occurred';
       this.logger.err(
         `Unexpected Error: ${exception.message}`,
         'GlobalExceptionFilter',
       );
-      message = exception.message || 'An unexpected error occurred';
     }
 
     response.status(status).json({

@@ -149,10 +149,10 @@ export class BookService {
       }
       if (search) {
         qb.andWhere(
-          `(to_tsvector('simple', lower(book.title)) @@ websearch_to_tsquery(lower(:search)) 
-             OR to_tsvector('simple', lower(author.name)) @@ websearch_to_tsquery(lower(:search))
-             OR lower(book.title) ILIKE :prefixSearch 
-             OR lower(author.name) ILIKE :prefixSearch)`,
+          `(to_tsvector('simple', unaccent(lower(book.title))) @@ websearch_to_tsquery(unaccent(lower(:search))) 
+             OR to_tsvector('simple', unaccent(lower(author.name))) @@ websearch_to_tsquery(unaccent(lower(:search)))
+             OR unaccent(lower(book.title)) ILIKE :prefixSearch 
+             OR unaccent(lower(author.name)) ILIKE :prefixSearch)`,
           {
             search: search.replace(/\s+/g, ' & '),
             prefixSearch: `%${search}%`,
@@ -162,6 +162,8 @@ export class BookService {
 
       if (sortBy === SortByOptions.VIEWS) {
         qb.orderBy('book.views', sortType as SortTypeOptions);
+      } else if (sortBy === SortByOptions.TITLE) {
+        qb.orderBy('book.title', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.UPDATED_AT) {
         qb.orderBy('book.updatedAt', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.LATEST_CHAPTER) {
@@ -385,6 +387,8 @@ export class BookService {
           }),
         );
       }
+
+      await this.cacheService.deletePattern('books:*');
 
       return true;
     } catch (error) {
@@ -1015,6 +1019,36 @@ export class BookService {
         error.message,
         'BookReadingHistoryService.getReadingHistory',
       );
+      throw error;
+    }
+  }
+
+  async updateBookStatus(
+    bookId: number,
+    accessStatusId: number,
+    progressStatusId: number,
+  ): Promise<Boolean> {
+    try {
+      const book = await this.databaseService.findOne(this.bookRepository, {
+        where: { id: bookId },
+      });
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+
+      await this.databaseService.update(this.bookRepository, bookId, {
+        accessStatus: { id: accessStatusId },
+        progressStatus: { id: progressStatusId },
+      });
+
+      this.loggerService.info(
+        `Updated book ${bookId} with accessStatusId ${accessStatusId} and progressStatusId ${progressStatusId}`,
+        'BookService.updateBookStatuses',
+      );
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.updateBookStatuses');
       throw error;
     }
   }

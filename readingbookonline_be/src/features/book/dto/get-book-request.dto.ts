@@ -8,11 +8,12 @@ import {
   IsString,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
 
 export enum SortByOptions {
+  TITLE = 'title',
   VIEWS = 'views',
   UPDATED_AT = 'updatedAt',
   LATEST_CHAPTER = 'latestChapter',

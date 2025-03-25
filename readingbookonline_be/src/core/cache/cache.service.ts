@@ -100,4 +100,23 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   async getAllHash(key: string): Promise<Record<string, string>> {
     return await this.redis.hgetall(key);
   }
+
+  // Thêm hàm deletePattern vào CacheService
+  async deletePattern(pattern: string): Promise<void> {
+    const stream = this.redis.scanStream({ match: pattern });
+    stream.on('data', (keys: string[]) => {
+      if (keys.length) {
+        const pipeline = this.redis.pipeline();
+        keys.forEach((key) => {
+          pipeline.del(key);
+        });
+        pipeline.exec();
+      }
+    });
+
+    return new Promise((resolve, reject) => {
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+  }
 }

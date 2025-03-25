@@ -12,6 +12,7 @@ import {
   Delete,
   Req,
   ForbiddenException,
+  Patch,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
@@ -46,6 +47,7 @@ import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination
 import { AdminGuard } from '@core/auth/admin.guard';
 import { GetBookTypeDto } from './dto/book-type.dto';
 import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.dto';
+import { UpdateBookStatusDto } from './entities/book-status.dto';
 
 @Controller('book')
 export class BookController {
@@ -327,5 +329,20 @@ export class BookController {
   ): Promise<boolean> {
     const author = req.user;
     return await this.bookService.deleteBook(id, author);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Cập nhật trạng thái của sách' })
+  @Patch(':id/status')
+  async updateBookStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateBookStatusDto: UpdateBookStatusDto,
+    @Request() req,
+  ): Promise<Boolean> {
+    return await this.bookService.updateBookStatus(
+      id,
+      updateBookStatusDto.accessStatusId,
+      updateBookStatusDto.progressStatusId,
+    );
   }
 }
