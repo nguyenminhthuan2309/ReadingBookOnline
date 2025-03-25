@@ -1,70 +1,422 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+
+import InputField from "@/components/RenderInput";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { CircularProgress } from "@mui/material";
+
+import { Controller, useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { uploadImage } from "@/utils/actions/uploadAction";
+import { useGenres } from "@/utils/useGenre";
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
+  TextField,
+} from "@mui/material";
+import { createBook } from "@/utils/actions/bookAction";
+
+const schema = yup.object().shape({
+  title: yup.string().required("Title không được để trống"),
+  description: yup.string().required("Description is required"),
+});
 
 function BookBasicInfo() {
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.uploadImage);
+  const { data: genres, isLoading } = useGenres();
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
+
+  const [imageUrl, setImageUrl] = useState(null);
+  const [bookType, setBookType] = useState(1);
+  const [status, setStatus] = useState(1);
+  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [publicStatus, setPublicStatus] = useState(1);
+
+  const handleBookTypeChange = (event) => {
+    setBookType(event.target.value);
+  };
+
+  const handleStatusChange = (event) => {
+    setStatus(event.target.value);
+  };
+
+  const handlePublicStatusChange = (event) => {
+    setPublicStatus(event.target.value);
+  };
+
+  const handleGenreChange = (genreId) => (event) => {
+    if (event.target.checked) {
+      setSelectedGenres([...selectedGenres, genreId]);
+    } else {
+      setSelectedGenres(selectedGenres.filter((id) => id !== genreId));
+    }
+  };
+  const handleUploadFile = async (data) => {
+    try {
+      if (!data) return;
+      const imageData = new FormData();
+      imageData.append("file", data);
+      const res = await dispatch(uploadImage(imageData));
+      if (res && res.data) {
+        // Assuming the image URL is in res.data
+        setImageUrl(res.data);
+        // If the URL is nested deeper, adjust accordingly
+        // For example: setImageUrl(res.data.imageUrl);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleSubmitBookInfo = (data) => {
+    // data will contain title and description from the form
+    const formData = {
+      ...data, // spread the form data (title and description)
+      bookTypeId: +bookType, // add the other state values
+      accessStatusId: status,
+      ageRating: 12,
+      categoryIds: selectedGenres,
+      progressStatusId: publicStatus,
+      cover: imageUrl || "", // add the uploaded image URL
+    };
+
+    dispatch(createBook(formData));
+  };
+
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
-      <img
-        src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/3102a3e537cfbb4c5a7490201b5a476d171ef8cfdf7a88b06e8d45196d5e3574?placeholderIfAbsent=true"
-        alt="Book preview"
-        className="object-contain shrink-0 max-w-full aspect-[0.76] w-[222px]"
-      />
-      <div className="flex flex-col grow shrink-0 items-start basis-0 w-fit max-md:max-w-full">
-        <label className="block">
-          Tittle: <span className="text-[#DE741C]">(Required)</span>
-        </label>
-        <input
-          type="text"
-          className="flex shrink-0 self-stretch mt-3.5 bg-white rounded-xl h-[43px] max-md:max-w-full w-full px-4"
-          required
-        />
-        <p className="mt-3 text-black">
-          Avoid sensitive words and sexual words
-        </p>
-        <p className="mt-3.5 font-semibold text-red-700">
-          This field must not be empty!
+      <form onSubmit={handleSubmit(handleSubmitBookInfo)} className="w-full">
+        <div className="flex flex-col items-start max-md:max-w-full">
+          <div className="flex flex-row w-full gap-10">
+            <div className="w-[290px] justify-items-center">
+              {loading ? (
+                <CircularProgress />
+              ) : (
+                <img src={imageUrl} alt="book" />
+              )}
+            </div>
+            <div className="w-full">
+              <label className="block">
+                Title: <span className="text-[#DE741C]">(Required)</span>
+              </label>
+              <InputField
+                name="title"
+                control={control}
+                type="text"
+                placeholder="Enter book title..."
+              />
+              {errors.title && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.title.message}
+                </p>
+              )}
+              <label className="mt-12 block max-md:mt-10">
+                Cover image: <span className="text-[#DE741C]">(Required)</span>
+              </label>
+              <div className="flex flex-col items-start self-stretch mt-3.5 text-white bg-white rounded-xl max-md:pr-5 max-md:max-w-full">
+                <label className="relative">
+                  <div className="flex flex-row">
+                    <input
+                      type="file"
+                      accept=".png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={(e) => {
+                        const selectedFile = e.target.files[0];
+                        const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+                        if (!selectedFile) {
+                          return;
+                        }
+
+                        // Convert sizes to MB for easier comparison in logs
+                        const fileSizeInMB = selectedFile.size / (1024 * 1024);
+                        const maxSizeInMB = maxSize / (1024 * 1024);
+
+                        if (fileSizeInMB > maxSizeInMB) {
+                          alert(
+                            `File is too large. Your file is ${fileSizeInMB.toFixed(
+                              2
+                            )}MB. Maximum size is ${maxSizeInMB}MB`
+                          );
+                          e.target.value = ""; // Reset the input
+                          return;
+                        }
+                        handleUploadFile(selectedFile); // Note: changed from 'file' to 'selectedFile'
+                      }}
+                    />
+                    <span className="px-3.5 py-3 w-36 inline-block text-center rounded-xl bg-zinc-300 text-black cursor-pointer hover:bg-zinc-400">
+                      {!imageUrl ? "Choose file" : "File uploaded"}
+                    </span>
+                    <span className="px-2 text-black z-10 content-center">
+                      {imageUrl}
+                    </span>
+                  </div>
+                </label>
+              </div>
+              <p className="mt-3 text-black">
+                Avoid sexual picture, inappropriate picture
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-14">
+          <FormControl>
+            <FormLabel id="demo-row-radio-buttons-group-label">
+              <span className="text-black text-[18px]">Type</span>
+            </FormLabel>
+            <RadioGroup
+              row
+              aria-labelledby="demo-row-radio-buttons-group-label"
+              name="row-radio-buttons-group"
+              defaultValue={1}
+            >
+              <FormControlLabel
+                value={1}
+                control={<Radio />}
+                label="Novel"
+                onChange={handleBookTypeChange}
+              />
+              <FormControlLabel
+                value={2}
+                control={<Radio />}
+                label="Picture book"
+                onChange={handleBookTypeChange}
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+
+        {+bookType === 1 && (
+          <div className="mt-14">
+            <FormControl>
+              <FormLabel id="demo-row-radio-buttons-group-label">
+                <span className="text-black text-[18px]">Type of Novel</span>
+              </FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+              >
+                <FormControlLabel
+                  value={"shousetsu"}
+                  control={<Radio />}
+                  label="Shousetsu (JP)"
+                />
+                <FormControlLabel
+                  value={"xiaoshuo"}
+                  control={<Radio />}
+                  label="Xiaoshuo(CN)"
+                />
+                <FormControlLabel
+                  value={"soseol"}
+                  control={<Radio />}
+                  label="Soseol(KR)"
+                />
+                <FormControlLabel
+                  value={"truyen"}
+                  control={<Radio />}
+                  label="Truyện chữ(VN)"
+                />{" "}
+                <FormControlLabel
+                  value={"novel"}
+                  control={<Radio />}
+                  label="Novel"
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
+        )}
+        {+bookType === 2 && (
+          <div className="mt-14">
+            <FormControl>
+              <FormLabel id="demo-row-radio-buttons-group-label">
+                <span className="text-black text-[18px]">Type of Novel</span>
+              </FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+              >
+                <FormControlLabel
+                  value={"manga"}
+                  control={<Radio />}
+                  label="Manga(JP)"
+                />
+                <FormControlLabel
+                  value={"manhua"}
+                  control={<Radio />}
+                  label="Manhua(CN)"
+                />
+                <FormControlLabel
+                  value={"manhwa"}
+                  control={<Radio />}
+                  label="Manhwa(KR)"
+                />
+                <FormControlLabel
+                  value={"truyenTranh"}
+                  control={<Radio />}
+                  label="Truyện tranh(VN)"
+                />{" "}
+                <FormControlLabel
+                  value={"comic"}
+                  control={<Radio />}
+                  label="Comic"
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
+        )}
+
+        <h2 className="mt-14 max-md:mt-10">Genre(s):</h2>
+        <div className="flex flex-wrap gap-3.5 mr-5 w-full">
+          {!isLoading &&
+            genres.map((genre, index) => (
+              <FormControlLabel
+                key={genre.id || index}
+                control={
+                  <Checkbox
+                    checked={selectedGenres.includes(genre.id)}
+                    onChange={handleGenreChange(genre.id)}
+                    color="primary"
+                    size="medium" // or "small" or "large"
+                    sx={{
+                      "&.Mui-checked": {
+                        color: "#your-color-here", // Custom color when checked
+                      },
+                      "& .MuiSvgIcon-root": {
+                        fontSize: 28, // Custom size
+                      },
+                    }}
+                  />
+                }
+                label={genre.name}
+                className="flex grow shrink gap-7 self-stretch my-auto w-[143px]"
+              />
+            ))}
+        </div>
+
+        <div className="mt-14">
+          <FormControl>
+            <FormLabel id="demo-row-radio-buttons-group-label">
+              <span className="text-black text-[18px]">Status</span>
+            </FormLabel>
+            <RadioGroup
+              row
+              aria-labelledby="demo-row-radio-buttons-group-label"
+              name="row-radio-buttons-group"
+              defaultValue={1}
+              className="flex flex-wrap gap-10"
+            >
+              <FormControlLabel
+                value={1}
+                control={<Radio />}
+                label="On Going"
+                onChange={handleStatusChange}
+              />
+              <FormControlLabel
+                value={2}
+                control={<Radio />}
+                label="Completed"
+                onChange={handleStatusChange}
+              />
+              <FormControlLabel
+                value={3}
+                control={<Radio />}
+                label="Dropped"
+                onChange={handleStatusChange}
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+
+        <label className="mt-14 block max-md:mt-10">Description:</label>
+        <div className="flex shrink-0 self-stretch rounded-xl h-[249px] max-md:mt-10 max-md:max-w-full w-full">
+          <Controller
+            name="description"
+            control={control}
+            defaultValue=""
+            render={({ field, fieldState: { error } }) => (
+              <TextField
+                {...field}
+                multiline
+                rows={8}
+                fullWidth
+                placeholder="Enter book description..."
+                error={!!error}
+                helperText={error?.message}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "100%",
+                    "& textarea": {
+                      height: "100% !important",
+                      overflowY: "auto",
+                    },
+                  },
+                  backgroundColor: "white",
+                }}
+              />
+            )}
+          />
+        </div>
+
+        <div className="mt-14">
+          <FormControl>
+            <FormLabel id="demo-row-radio-buttons-group-label">
+              <span className="text-black text-[18px]">Public status</span>
+            </FormLabel>
+            <RadioGroup
+              row
+              aria-labelledby="demo-row-radio-buttons-group-label"
+              name="row-radio-buttons-group"
+              defaultValue={1}
+              className="flex flex-wrap gap-10"
+            >
+              <FormControlLabel
+                value={1}
+                control={<Radio />}
+                label="Public"
+                onChange={handlePublicStatusChange}
+              />
+              <FormControlLabel
+                value={2}
+                control={<Radio />}
+                label="Private"
+                onChange={handlePublicStatusChange}
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+
+        <p className="mt-4 ml-2.5 text-black">
+          *Only public static got display public
         </p>
 
-        <label className="mt-4 block">Alternative title:</label>
-        <input
-          type="text"
-          className="flex shrink-0 self-stretch mt-3.5 bg-white rounded-xl h-[43px] max-md:max-w-full w-full px-4"
-        />
-        <p className="mt-3 text-black w-[342px]">
-          Avoid sensitive words and sexual words
-          <br />
-          One title per line
-        </p>
-
-        <label className="mt-12 block max-md:mt-10">
-          Cover image: <span className="text-[#DE741C]">(Required)</span>
-        </label>
-        <div className="flex flex-col items-start self-stretch mt-3.5 text-white bg-white rounded-xl max-md:pr-5 max-md:max-w-full">
-          <button className="px-3.5 py-3 w-36 max-w-full rounded-xl bg-zinc-300 max-md:pr-5">
-            Choose file
+        <div className="flex flex-wrap gap-8 justify-self-center mt-24 text-xl text-white w-[907px] max-md:mt-10">
+          <button
+            type="submit"
+            className="grow shrink-0 px-16 py-6 rounded-xl basis-0 bg-slate-600 w-fit max-md:px-5 max-md:max-w-full"
+          >
+            Create new manga
+          </button>
+          <button
+            type="button"
+            className="grow shrink-0 px-16 py-6 bg-amber-600 rounded-xl basis-0 w-fit max-md:px-5 max-md:max-w-full"
+          >
+            Continue to add chapter
           </button>
         </div>
-        <p className="mt-3 text-black">
-          Avoid sexual picture, inappropriate picture
-        </p>
-
-        <label className="mt-14 block max-md:mt-10">
-          Language: <span className="text-[#DE741C]">(Required)</span>
-        </label>
-        <select className="flex shrink-0 self-stretch mt-3.5 w-full bg-white rounded-xl h-[43px] px-4">
-          <option value="">Select language</option>
-        </select>
-
-        <label className="mt-14 block max-md:mt-10">Author(s):</label>
-        <input
-          type="text"
-          className="flex shrink-0 self-stretch mt-3.5 bg-white rounded-xl h-[43px] max-md:max-w-full w-full px-4"
-        />
-        <p className="mt-3 text-black w-[412px]">
-          Avoid sensitive words and sexual words
-          <br />
-          One author per line
-        </p>
-      </div>
+      </form>
     </section>
   );
 }

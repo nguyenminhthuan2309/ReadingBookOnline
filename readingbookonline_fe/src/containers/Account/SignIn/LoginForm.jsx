@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Router from "next/router";
 import { useDispatch } from "react-redux";
 
@@ -12,6 +12,12 @@ import InputField from "@/components/RenderInput";
 import ActionButton from "./ActionButton";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { handleAuthenticate } from "@/utils/actions/authAction";
+import { useSearchParams } from "next/navigation";
+
+import { getAPI } from "@/utils/request";
+import { authAPI } from "@/app/common/api";
+import { ShowNotify } from "@/components/Notification";
+import { ERROR } from "@/utils/constants";
 
 const schema = yup.object().shape({
   email: yup
@@ -25,6 +31,8 @@ const schema = yup.object().shape({
 });
 
 export const LoginForm = () => {
+  const searchParam = useSearchParams();
+  const token = searchParam.get("token");
   const [isOpen, setOpen] = useState(false);
   const dispatch = useDispatch();
   const { handleSubmit, control, reset } = useForm({
@@ -39,6 +47,18 @@ export const LoginForm = () => {
     dispatch(handleAuthenticate(formData));
     reset();
   };
+
+  // useEffect(() => {
+  //   if (!token) return;
+  //   try {
+  //     const url = authAPI.verifyToken(token);
+  //     const response = getAPI(url);
+  //     console.log(response);
+  //   } catch (err) {
+  //     throw new err
+  //     ShowNotify(ERROR, err.response.data.msg)
+  //   }
+  // }, [token]);
 
   return (
     <div className="self-center">
@@ -69,11 +89,11 @@ export const LoginForm = () => {
           />
         </div>
 
-        <img
+        {/* <img
           src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/31e1e30681ac5d2a632385b295076c1f5f3a0f1025aa5479934d3fa9f4be7af1?placeholderIfAbsent=true"
           alt="Login decoration"
           className="object-contain self-center mt-6 max-w-full aspect-[4.02] w-[421px]"
-        />
+        /> */}
 
         <div className="flex w-full px-32">
           <Button
@@ -99,7 +119,7 @@ export const LoginForm = () => {
         </div>
       </form>
       <React.Fragment>
-        <ForgotPasswordDialog open={isOpen} close={handleCloseDialog}/>
+        <ForgotPasswordDialog open={isOpen} close={handleCloseDialog} />
       </React.Fragment>
     </div>
   );

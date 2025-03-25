@@ -5,7 +5,7 @@ import SignUpForm from "./SignUpForm";
 
 const SignUpPage = () => {
   return (
-    <main className="flex flex-col bg-red-100 min-h-[screen]">
+    <main className="flex flex-col min-h-[screen]">
       <Header />
       <section className="flex justify-center px-5 py-20">
         <div className="p-9 w-full bg-white rounded-xl max-w-[1052px]">

@@ -28,7 +28,7 @@ const MostViewedBooks = () => {
 
   return (
     <aside className="rounded-none min-w-60 w-[338px]">
-      <div className="flex flex-col py-0.5 w-full bg-orange-100">
+      <div className="flex flex-col py-0.5 w-full bg-[#FFDFCA]">
         <div className="flex gap-5 self-start ml-4 max-md:ml-2.5">
           <div className="flex flex-col justify-center items-center px-1.5 bg-amber-600 h-[49px] w-[49px]">
             <div className="flex shrink-0 rounded-full bg-zinc-300 h-[37px] w-[37px]" />

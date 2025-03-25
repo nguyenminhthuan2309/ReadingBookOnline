@@ -6,7 +6,7 @@ export const instance = axios.create({});
 
 instance.interceptors.request.use(
   async (config) => {
-    const access_token = getItem(ACCESS_TOKEN);
+    const access_token = localStorage.getItem(ACCESS_TOKEN);
     if (!access_token) {
       config.headers.Authorization = "";
     } else {

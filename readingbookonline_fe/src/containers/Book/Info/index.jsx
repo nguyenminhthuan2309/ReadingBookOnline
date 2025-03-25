@@ -32,7 +32,7 @@ function MangaSPage() {
 
   return (
     <main className="rounded-none">
-      <div className="flex flex-col w-full bg-red-100 max-md:max-w-full">
+      <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
         <div className="flex flex-col self-center mt-9 w-full max-w-[1522px] max-md:max-w-full">
           <nav className="self-start text-3xl text-black">

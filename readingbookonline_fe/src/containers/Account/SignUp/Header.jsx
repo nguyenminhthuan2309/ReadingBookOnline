@@ -4,7 +4,7 @@ import React from "react";
 const Header = () => {
   const router = useRouter();
   return (
-    <header className="flex items-center px-12 w-full bg-red-300 rounded-none h-[95px]">
+    <header className="flex items-center px-12 w-full bg-[#FFAF98] rounded-none h-[95px]">
       <button onClick={() => router.push("/")}>
         <img
           src="/images/name.png"

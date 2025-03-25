@@ -19,16 +19,16 @@ export default function HomePage() {
     return;
   }, []);
 
-  if (!user || (user && user.role?.id === 3)) {
+  if (user && user.role && user.role.id !== 3) {
     return (
       <>
-        <Home />
+        <AdminPage />
       </>
     );
   } else {
     return (
       <>
-        <AdminPage />
+        <Home />
       </>
     );
   }

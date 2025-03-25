@@ -26,7 +26,7 @@ const InputField = ({
     <TextField
       {...field}
       fullWidth
-      className="flex shrink-0 w-full mt-4 px-2 h-[47px] bg-white rounded-xl border border-black border-solid"
+      className="flex shrink-0 w-full mt-4 px-2 bg-white"
       type={type === "password" && !showPassword ? "password" : "text"}
       placeholder={placeholder}
       disabled={disabled}
@@ -35,17 +35,17 @@ const InputField = ({
       inputProps={{ maxLength }}
       sx={{ mt: 2, mb: 2 }}
       InputProps={{
-          endAdornment:
-            type === "password" ? (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ) : null,
+        endAdornment:
+          type === "password" ? (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword((prev) => !prev)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ) : null,
       }}
     />
   );

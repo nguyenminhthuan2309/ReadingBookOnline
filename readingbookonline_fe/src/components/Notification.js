@@ -1,7 +1,7 @@
 import { ERROR, INFO, MESSAGE, SUCESSS } from "@/utils/constants";
 import { Bounce, toast } from "react-toastify";
 
-const options = {
+const initialOptions = {
   position: "bottom-right",
   autoClose: 3000,
   hideProgressBar: true,
@@ -13,25 +13,26 @@ const options = {
   transition: Bounce,
 };
 
-export const ShowNotify = (type, message) => {
+export const ShowNotify = (type, message, option = {}) => {
+  const configOption = { ...initialOptions, ...option };
   switch (type) {
     case SUCESSS: {
-      toast.success(message, options);
+      toast.success(message, configOption);
       break;
     }
 
     case ERROR: {
-      toast.error(message, options);
+      toast.error(message, configOption);
       break;
     }
 
     case INFO: {
-      toast.info(message, options);
+      toast.info(message, configOption);
       break;
     }
 
     case MESSAGE: {
-      toast(message, options);
+      toast(message, configOption);
       break;
     }
 

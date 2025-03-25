@@ -5,6 +5,7 @@ const authAPI = {
   login: `${API_GATEWAY}/auth/login`,
   forgotPassword: `${API_GATEWAY}/user/reset-password`,
   verifyOTP: `${API_GATEWAY}/user/verify-reset-password`,
+  verifyToken: (token) => `${API_GATEWAY}/user/verify?token=${token}`,
 };
 const userAPI = {};
 
@@ -13,5 +14,10 @@ const bookAPI = {
     `${API_GATEWAY}/book?limit=${limitNumber}&page=${pageNumber}`,
   getBookById: (id) => `${API_GATEWAY}/book/${id}`,
   getBookGenre: `${API_GATEWAY}/book/category?limit=42&page=1`,
+  createBook: `${API_GATEWAY}/book`,
 };
-export { authAPI, userAPI, bookAPI };
+
+const uploadAPI = {
+  uploadImage: `${API_GATEWAY}/upload/image`
+};
+export { authAPI, userAPI, bookAPI, uploadAPI };

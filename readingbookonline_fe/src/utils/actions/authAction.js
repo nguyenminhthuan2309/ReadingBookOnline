@@ -49,7 +49,6 @@ export const handleAuthenticate = (formdata) => {
           })
         );
         if (window.history.length > 1) {
-          console.log("here");
           Router.back();
         } else {
           Router.push("/");
@@ -65,9 +64,7 @@ export const handleAuthenticate = (formdata) => {
 export const handleLogout = () => {
   return async (dispatch) => {
     dispatch(logout());
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-    }
+    localStorage.clear();
     window.location.reload();
   };
 };
@@ -82,10 +79,10 @@ export const registerAccount = (formdata) => {
       if (response && response.data) {
         ShowNotify(
           SUCESSS,
-          "A email has been sent please check your email to verify your account"
+          "A email has been sent please check your email to verify your account",
+          { autoClose: false }
         );
       }
-      Router.push("/account/sign_in");
     } catch (error) {
       dispatch(registerFail());
       ShowNotify(ERROR, error.response.data.msg);

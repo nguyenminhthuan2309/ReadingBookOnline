@@ -4,7 +4,7 @@ import React from "react";
 export const Header = () => {
   const router = useRouter();
   return (
-    <header className="px-16 pt-7 w-full text-white bg-red-300 rounded-none border-2 border-black border-solid max-md:px-5 max-md:max-w-full max-md:text-4xl">
+    <header className="px-16 pt-7 w-full bg-[#FFAF98] rounded-none border-2 border-black border-solid max-md:px-5 max-md:max-w-full max-md:text-4xl">
       <button onClick={() => router.push("/")}>
         <img
           src="/images/name.png"

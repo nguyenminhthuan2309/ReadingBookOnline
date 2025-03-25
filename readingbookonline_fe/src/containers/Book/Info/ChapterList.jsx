@@ -19,7 +19,7 @@ function ChapterList({ chapters }) {
       </header>
       <hr className="border-b border-black" />
 
-      <div className="mt-11 w-full min-h-[953px] max-md:mt-10 max-md:max-w-full">
+      <div className="mt-11 w-full min-h-[30vh] max-md:mt-10 max-md:max-w-full">
         {chapters &&
           chapters.reverse().map((chapter, index) => (
             <article

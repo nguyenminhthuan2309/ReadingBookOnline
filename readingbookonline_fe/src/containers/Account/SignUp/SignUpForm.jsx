@@ -83,11 +83,11 @@ const SignUpForm = () => {
         />
       </div>
 
-      <img
+      {/* <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/b4e8dcbe93344886384bae2bb8c3ac7eecde8eb7"
         alt="Decorative element"
         className="mx-auto mt-[35px] w-[421px] h-[105px] pt-6"
-      />
+      /> */}
       <div className="flex w-full px-10">
         <Button
           sx={{ textTransform: "none" }}

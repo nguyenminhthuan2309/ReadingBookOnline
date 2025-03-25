@@ -8,7 +8,7 @@ import MostViewedBooks from "./MostViewedBooks";
 export const HomePage = () => {
   return (
     <div className="rounded-none">
-      <div className="flex flex-col items-center w-full bg-red-100 max-md:max-w-full">
+      <div className="flex flex-col items-center w-full max-md:max-w-full">
         <Header />
         <NoticesSection />
         <RecommendedBooks />
