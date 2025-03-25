@@ -131,7 +131,7 @@ function ChapterBasicInfo() {
       price: 5000,
     };
 
-    dispatch(createChapter(519, formData));
+    dispatch(createChapter(518, formData));
   };
 
   return (
@@ -177,7 +177,7 @@ function ChapterBasicInfo() {
               <span>*Avoid sexual, violent, or offensive word</span>
             </div>
           </div>
-          <div className="mt-14">
+          {/* <div className="mt-14">
             <FormControl>
               <FormLabel id="demo-row-radio-buttons-group-label">
                 <span className="text-black text-[18px]">Public Status:</span>
@@ -203,7 +203,7 @@ function ChapterBasicInfo() {
           </div>
           <div className="flex flex-col w-full text-black/50">
             <span>*Only public status got display on the website</span>
-          </div>
+          </div> */}
           <div className="mt-14 w-full justify-items-center">
             <SectionDivider text="← Chapter File →" />
           </div>
@@ -339,7 +339,7 @@ function ChapterBasicInfo() {
               </>
             )}
           </div>
-          <FormControl>
+          {/* <FormControl>
             <FormLabel id="demo-row-radio-buttons-group-label">
               <span className="text-black text-[18px]">After submit:</span>
             </FormLabel>
@@ -360,7 +360,7 @@ function ChapterBasicInfo() {
                 label="Upload next chapter"
               />
             </RadioGroup>
-          </FormControl>
+          </FormControl> */}
           <div className=" mt-14 w-full text-white flex justify-center">
             <button
               type="submit"

@@ -21,7 +21,7 @@ function ChapterList({ chapters }) {
 
       <div className="mt-11 w-full min-h-[30vh] max-md:mt-10 max-md:max-w-full">
         {chapters &&
-          chapters.reverse().map((chapter, index) => (
+          chapters.map((chapter, index) => (
             <article
               key={index}
               className="mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
