@@ -33,8 +33,8 @@ const uploadImageSlice = createSlice({
 });
 
 export const uploadImageRequest = () => ({ type: "uploadImage/request" });
-export const uploadImageSuccess = () => ({ type: "uploadImage/success" });
-export const uploadImageFail = () => ({ type: "uploadImage/error" });
+export const uploadImageSuccess = (data) => ({ type: "uploadImage/success", payload: data });
+export const uploadImageFail = (data) => ({ type: "uploadImage/error", payload: data });
 
 export const { resetState } = uploadImageSlice.actions;
 export default uploadImageSlice.reducer;

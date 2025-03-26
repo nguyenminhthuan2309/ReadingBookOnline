@@ -12,10 +12,12 @@ import { uploadFileFail, uploadFileRequest, uploadFileSuccess } from "../redux/s
 export const uploadImage = (file) => {
   return async (dispatch) => {
     dispatch(uploadImageRequest());
+    ShowNotify(INFO, "Uploading file...");
     const url = uploadAPI.uploadImage;
     try {
       const response = await postAPI(url, file);
       dispatch(uploadImageSuccess());
+      ShowNotify(SUCESSS, "Upload file successfully");
       return response.data;
     } catch (error) {
       dispatch(uploadImageFail());

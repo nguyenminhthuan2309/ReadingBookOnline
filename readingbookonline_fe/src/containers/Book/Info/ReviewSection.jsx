@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import CommentItem from "./CommentItem";
-import SpoilerEditor from "@/components/CommentWithSpoilerTag";
+// import SpoilerEditor from "@/components/CommentWithSpoilerTag";
 
 function ReviewSection() {
   const comments = [
@@ -40,9 +40,9 @@ function ReviewSection() {
           0 Review(s)
         </p>
       </header>
-      <div>
+      {/* <div>
         <SpoilerEditor />
-      </div>
+      </div> */}
       <hr className="border-b border-black mt-2" />
 
       <div className="bg-[#FFDFCA] rounded-[10px]">

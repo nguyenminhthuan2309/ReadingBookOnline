@@ -33,8 +33,8 @@ const uploadFileSlice = createSlice({
 });
 
 export const uploadFileRequest = () => ({ type: "uploadFile/request" });
-export const uploadFileSuccess = () => ({ type: "uploadFile/success" });
-export const uploadFileFail = () => ({ type: "uploadFile/error" });
+export const uploadFileSuccess = (data) => ({ type: "uploadFile/success", payload: data });
+export const uploadFileFail = (data) => ({ type: "uploadFile/error", payload: data });
 
 export const { resetState } = uploadFileSlice.actions;
 export default uploadFileSlice.reducer;

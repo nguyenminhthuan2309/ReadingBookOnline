@@ -3,6 +3,8 @@ import React from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
 
+// import EditNoteIcon from "@mui/icons-material/EditNote";
+
 function MangaDetails({ bookInfo }) {
   return (
     <section className="mt-7">
@@ -30,7 +32,7 @@ function MangaDetails({ bookInfo }) {
           </aside>
 
           <div className="ml-5 w-[52%] max-md:ml-0 max-md:w-full">
-            <div className="flex gap-5 max-md:flex-col">
+            <div className="flex max-md:flex-col">
               <dl className="w-[31%] max-md:w-full text-lg leading-10">
                 <dt className="text-black">Author(s):</dt>
                 <dt className="text-black">Artist(s):</dt>
@@ -45,7 +47,7 @@ function MangaDetails({ bookInfo }) {
                 </div>
               </dl>
 
-              <dl className="ml-5 w-[69%] max-md:w-full text-lg leading-10">
+              <dl className="w-[69%] max-md:w-full text-lg leading-10">
                 <dd className="text-stone-400">
                   {bookInfo.author && bookInfo.author.name}
                 </dd>

@@ -16,6 +16,19 @@ const editBookSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase("getBookbyId/request", (state, action) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase("getBookbyId/success", (state, action) => {
+        state.loading = false;
+        state.bookData = action.payload;
+        state.error = null;
+      })
+      .addCase("getBookbyId/error", (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase("editBook/request", (state, action) => {
         state.loading = true;
         state.error = null;
@@ -32,9 +45,13 @@ const editBookSlice = createSlice({
   },
 });
 
+export const getBookbyIdRequest = () => ({ type: "getBookbyId/request" });
+export const getBookbyIdSuccess = (data) => ({ type: "getBookbyId/success", payload: data });
+export const getBookbyIdFail = (data) => ({ type: "getBookbyId/fail", payload: data });
+
 export const editBookRequest = () => ({ type: "editBook/request" });
-export const editBookSuccess = () => ({ type: "editBook/success" });
-export const editBookFail = () => ({ type: "editBook/fail" });
+export const editBookSuccess = (data) => ({ type: "editBook/success", payload: data });
+export const editBookFail = (data) => ({ type: "editBook/fail", payload: data });
 
 export const { resetState } = editBookSlice.actions;
 export default editBookSlice.reducer;
