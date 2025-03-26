@@ -440,6 +440,8 @@ export class BookService {
         }
       }
 
+      await this.cacheService.deletePattern('books:*');
+
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.updateBook');
@@ -466,6 +468,8 @@ export class BookService {
         `Book with id ${bookId} deleted`,
         'BookService.deleteBook',
       );
+
+      await this.cacheService.deletePattern('books:*');
 
       return true;
     } catch (error) {
