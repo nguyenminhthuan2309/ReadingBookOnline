@@ -7,41 +7,42 @@ import ReviewSection from "./ReviewSection";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
 import { useSearchParams } from "next/navigation";
+import { getBookInfoData } from "@/utils/actions/bookAction";
+import { useDispatch, useSelector } from "react-redux";
+import { CircularProgress } from "@mui/material";
 
 function MangaSPage() {
+  const dispatch = useDispatch();
   const searchParam = useSearchParams();
   const bookId = searchParam.get("number");
-  const [bookInfos, setBookInfos] = useState({});
+  const bookInfos = useSelector((state) => state.bookInfo.bookData);
+  const loading = useSelector((state) => state.bookInfo.loading);
 
-  const getBookInfoData = async (id) => {
-    const url = bookAPI.getBookById(id);
-    try {
-      const response = await getAPI(url);
-      const { data } = response.data.data;
-      setBookInfos(data[0]);
-      console.log("success");
-    } catch (error) {
-      console.log("error", error);
-      throw new Error();
-    }
-  };
   useEffect(() => {
-    if (!bookId) return;
-    getBookInfoData(bookId);
+    if (bookId) {
+      dispatch(getBookInfoData(bookId));
+    }
   }, [bookId]);
 
   return (
     <main className="rounded-none">
       <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
-        <div className="flex flex-col self-center mt-9 w-full max-w-[1522px] max-md:max-w-full">
-          <nav className="self-start text-3xl text-black">
-            <a href="/">Home</a>/<a href="/sample-manga">Sample Manga</a>
-          </nav>
-          <MangaDetails bookInfo={bookInfos} />
-          <ChapterList chapters={bookInfos && bookInfos.chapters} />
-          <ReviewSection />
-        </div>
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <div className="flex flex-col self-center mt-9 w-full max-w-[1522px] max-md:max-w-full">
+            <nav className="self-start text-3xl text-black">
+              <a href="/">Home</a>/<a href="/sample-manga">Sample Manga</a>
+            </nav>
+            <MangaDetails bookInfo={bookInfos} />
+            <ChapterList
+              chapters={bookInfos && bookInfos.chapters}
+              bookId={bookInfos && bookInfos.id}
+            />
+            <ReviewSection />
+          </div>
+        )}
       </div>
     </main>
   );

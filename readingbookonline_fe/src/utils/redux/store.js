@@ -3,7 +3,7 @@ import loginReducer from "./slices/authReducer/loginReducer";
 import registerReducer from "./slices/authReducer/registerReducer";
 import forgotPasswordReducer from "./slices/authReducer/forgotPasswordReducer";
 import verifyTokenReducer from "./slices/authReducer/checkToken";
-// import bookListReducer from "./slices/bookReducer/bookList"
+import bookReducer from "./slices/bookReducer/editBook"
 import uploadImageRducer from "./slices/uploadReducer/uploadImage";
 
 export default configureStore({
@@ -12,7 +12,7 @@ export default configureStore({
     register: registerReducer,
     forgotPassword: forgotPasswordReducer,
     verifyToken: verifyTokenReducer,
-    // getBook: bookListReducer,
+    bookInfo: bookReducer,
     uploadImage: uploadImageRducer,
   },
 });

@@ -20,17 +20,15 @@ const BookTile = ({
   chapters = [],
   // isNew = false,
   className = "",
-  // onClickChapter,
 }) => {
   const router = useRouter();
   const handleBookClick = () => {
     if(!bookId) return;
     router.push(`/book?number=${encodeURIComponent(bookId)}`);
   };
-  const handleChapterClick = (event) => {
+  const handleChapterClick = (event, chapter) => {
     event.stopPropagation();
-    // onClickChapter();
-    console.log("Chapter is Click");
+    router.push(`/chapter?name=${chapter.id}`);
     return;
   };
   return (
@@ -60,7 +58,7 @@ const BookTile = ({
                 <Button
                   sx={{ textTransform: "none" }}
                   className="w-full"
-                  onClick={handleChapterClick}
+                  onClick={(event) => handleChapterClick(event, chapter)}
                 >
                   <span className="w-full px-2.5 py-1 mt-2 text-sm text-black rounded-md bg-zinc-300">
                     Chapter {chapter.chapter}
@@ -87,6 +85,5 @@ BookTile.propTypes = {
   chapters: PropTypes.array,
   isNew: PropTypes.bool,
   className: PropTypes.string,
-  // onClickChapter: PropTypes.func,
 };
 export default BookTile;

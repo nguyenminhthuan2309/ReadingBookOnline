@@ -39,8 +39,8 @@ const loginSlice = createSlice({
 });
 
 export const loginRequest = () => ({ type: "login/request" });
-export const loginSuccess = () => ({ type: "login/success" });
-export const loginFail = () => ({ type: "login/fail" });
+export const loginSuccess = () => ({ type: "login/success"});
+export const loginFail = (data) => ({ type: "login/fail", payload: data });
 export const logout = () => ({ type: "logout" });
 
 export const { resetState } = loginSlice.actions;

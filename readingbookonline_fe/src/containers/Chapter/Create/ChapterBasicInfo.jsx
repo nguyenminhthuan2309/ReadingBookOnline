@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
@@ -26,6 +26,7 @@ import SectionDivider from "./SectionDivider";
 import * as docx from "docx-preview";
 import { uploadFile } from "@/utils/actions/uploadAction";
 import { createChapter } from "@/utils/actions/chapterAction";
+import { useSearchParams } from "next/navigation";
 
 const schema = yup.object().shape({
   number: yup
@@ -38,13 +39,15 @@ const schema = yup.object().shape({
 
 function ChapterBasicInfo() {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const bookId = searchParams.get("bookNumber");
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const fileInputRef = useRef(null);
 
-  const { handleSubmit, control } = useForm({
+  const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
   });
 
@@ -70,7 +73,6 @@ function ChapterBasicInfo() {
   const handleFile = async (file) => {
     setFile(file);
 
-    console.log(file);
     if (
       file.type ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -120,7 +122,7 @@ function ChapterBasicInfo() {
     }
   };
 
-  const handleSubmitChapterInfo = (data) => {
+  const handleSubmitChapterInfo = useCallback((data) => {
     const formData = {
       ...data,
       title: data.title,
@@ -130,9 +132,11 @@ function ChapterBasicInfo() {
       isLocked: false,
       price: 5000,
     };
-
-    dispatch(createChapter(518, formData));
-  };
+    if (bookId && fileUrl) {
+      dispatch(createChapter(bookId, formData));
+      reset()
+    }
+  }, [fileUrl]);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
@@ -177,7 +181,7 @@ function ChapterBasicInfo() {
               <span>*Avoid sexual, violent, or offensive word</span>
             </div>
           </div>
-          {/* <div className="mt-14">
+          <div className="mt-14">
             <FormControl>
               <FormLabel id="demo-row-radio-buttons-group-label">
                 <span className="text-black text-[18px]">Public Status:</span>
@@ -203,7 +207,7 @@ function ChapterBasicInfo() {
           </div>
           <div className="flex flex-col w-full text-black/50">
             <span>*Only public status got display on the website</span>
-          </div> */}
+          </div>
           <div className="mt-14 w-full justify-items-center">
             <SectionDivider text="← Chapter File →" />
           </div>
@@ -339,7 +343,7 @@ function ChapterBasicInfo() {
               </>
             )}
           </div>
-          {/* <FormControl>
+          <FormControl>
             <FormLabel id="demo-row-radio-buttons-group-label">
               <span className="text-black text-[18px]">After submit:</span>
             </FormLabel>
@@ -360,7 +364,7 @@ function ChapterBasicInfo() {
                 label="Upload next chapter"
               />
             </RadioGroup>
-          </FormControl> */}
+          </FormControl>
           <div className=" mt-14 w-full text-white flex justify-center">
             <button
               type="submit"

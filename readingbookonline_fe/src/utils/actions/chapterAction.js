@@ -3,6 +3,7 @@ import { createChapterFail, createChapterRequest, createChapterSuccess } from ".
 import { postAPI } from "../request";
 import { ShowNotify } from "@/components/Notification";
 import { ERROR, SUCESSS } from "../constants";
+import Router from "next/router";
 
 export const createChapter = (bookId, chapterData) => {
   return async (dispatch) => {
@@ -12,6 +13,7 @@ export const createChapter = (bookId, chapterData) => {
         const response = await postAPI(url, chapterData)
         dispatch(createChapterSuccess())
         ShowNotify(SUCESSS, "Create chapter successfully")
+        Router.push(`/book?number=${bookId}`);
         return response;
     } catch (error) {
         dispatch(createChapterFail())

@@ -33,8 +33,8 @@ const forgotPasswordSlice = createSlice({
 });
 
 export const forgotPasswordRequest = () => ({ type: "forgotPassword/request" });
-export const forgotPasswordSuccess = () => ({ type: "forgotPassword/success" });
-export const forgotPasswordFail = () => ({ type: "forgotPassword/fail" });
+export const forgotPasswordSuccess = (data) => ({ type: "forgotPassword/success", payload: data });
+export const forgotPasswordFail = (data) => ({ type: "forgotPassword/fail", payload: data });
 
 export const { resetState } = forgotPasswordSlice.actions;
 export default forgotPasswordSlice.reducer;

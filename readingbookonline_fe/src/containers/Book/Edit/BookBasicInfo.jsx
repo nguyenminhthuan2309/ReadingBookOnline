@@ -23,6 +23,7 @@ import { createBook } from "@/utils/actions/bookAction";
 
 const schema = yup.object().shape({
   title: yup.string().required("Title không được để trống"),
+  description: yup.string().required("Description is required"),
 });
 
 function BookBasicInfo() {
@@ -70,7 +71,10 @@ function BookBasicInfo() {
       imageData.append("file", data);
       const res = await dispatch(uploadImage(imageData));
       if (res && res.data) {
+        // Assuming the image URL is in res.data
         setImageUrl(res.data);
+        // If the URL is nested deeper, adjust accordingly
+        // For example: setImageUrl(res.data.imageUrl);
       }
     } catch (err) {
       console.log(err);

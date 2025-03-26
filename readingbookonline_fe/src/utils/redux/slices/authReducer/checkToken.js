@@ -24,8 +24,8 @@ const verifyTokenSlice = createSlice({
       })
       .addCase("verifyToken/success", (state, action) => {
          state.loading = false;
-         state.email = action.payload;
-         state.token = action.payload;
+         state.email = action.payload.email;
+         state.token = action.payload.token;
          state.error = null;
       })
       .addCase("verifyToken/error", (state, action) => {
@@ -36,8 +36,8 @@ const verifyTokenSlice = createSlice({
 });
 
 export const verifyTokenRequest = () => ({ type: "verifyToken/request" });
-export const verifyTokenSuccess = () => ({ type: "verifyToken/success" });
-export const verifyTokenFail = () => ({ type: "verifyToken/fail" });
+export const verifyTokenSuccess = (data) => ({ type: "verifyToken/success", payload: data });
+export const verifyTokenFail = (data) => ({ type: "verifyToken/fail", payload: data });
 
 export const { resetState } = verifyTokenSlice.actions;
 export default verifyTokenSlice.reducer;
