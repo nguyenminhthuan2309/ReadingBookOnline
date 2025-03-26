@@ -23,6 +23,11 @@ export class GetBookChapterDto {
   @IsNumber()
   chapter: string;
 
+  @IsNotEmpty()
+  @Expose()
+  @IsString()
+  content: string;
+
   @Expose()
   @IsOptional()
   @IsString()
