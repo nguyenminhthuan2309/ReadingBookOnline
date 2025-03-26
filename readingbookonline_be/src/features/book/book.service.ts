@@ -24,7 +24,7 @@ import {
 } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
-import { GetBookDto } from './dto/get-book.dto';
+import { GetBookDetail, GetBookDto } from './dto/get-book.dto';
 import { GetProgressStatusDto } from './dto/get-book-progess-status.dto';
 import { BookProgressStatus } from './entities/book-progess-status.entity';
 import { BookAccessStatus } from './entities/book-access-status.entity';
@@ -201,7 +201,7 @@ export class BookService {
     }
   }
 
-  async getBookDetail(bookId: number): Promise<GetBookResponseDto> {
+  async getBookDetail(bookId: number): Promise<any> {
     try {
       const cachedKey = `book:detail:${bookId}`;
 
@@ -237,12 +237,23 @@ export class BookService {
         throw new NotFoundException('Không tìm thấy sách');
       }
 
+      const ratingResult = await this.databaseService
+        .queryBuilder(this.bookReviewRepository, 'review')
+        .select('ROUND(AVG(review.rating)::numeric, 1)', 'avgRating')
+        .where('review.book_id = :bookId', { bookId })
+        .getRawOne();
+      const avgRating = Number(ratingResult.avgRating) || 0;
+
+      const bookDto = plainToInstance(GetBookDetail, book, {
+        excludeExtraneousValues: true,
+      });
+
+      bookDto.rating = avgRating;
+
       const response: GetBookResponseDto = {
         totalItems: 1,
         totalPages: 1,
-        data: [
-          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true }),
-        ],
+        data: [bookDto],
       };
 
       await this.cacheService.set(
@@ -367,7 +378,7 @@ export class BookService {
   async createBook(
     dto: CreateBookDto,
     author: Book['author'],
-  ): Promise<Boolean> {
+  ): Promise<number> {
     try {
       const book = await this.databaseService.create(this.bookRepository, {
         title: dto.title,
@@ -391,7 +402,7 @@ export class BookService {
 
       await this.cacheService.deletePattern('books:*');
 
-      return true;
+      return book.id;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.createBook');
       throw error;
@@ -605,6 +616,7 @@ export class BookService {
         this.bookChapterRepository,
         {
           where: { id: chapterId },
+          relations: ['book', 'book.bookType'],
         },
       );
 

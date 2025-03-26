@@ -98,7 +98,7 @@ export class BookController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Tạo sách mới' })
   @Post()
-  async create(@Body() dto: CreateBookDto, @Request() req): Promise<Boolean> {
+  async create(@Body() dto: CreateBookDto, @Request() req): Promise<number> {
     const author = req.user;
     return await this.bookService.createBook(dto, author);
   }
@@ -317,9 +317,7 @@ export class BookController {
 
   @ApiOperation({ summary: 'Lấy chi tiết sách' })
   @Get(':id')
-  async getDetailBook(
-    @Param('id') bookId: number,
-  ): Promise<GetBookResponseDto> {
+  async getDetailBook(@Param('id') bookId: number): Promise<any> {
     return await this.bookService.getBookDetail(bookId);
   }
 

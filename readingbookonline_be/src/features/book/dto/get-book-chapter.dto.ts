@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -6,12 +6,17 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { GetBookDto } from './get-book.dto';
 
 export class GetBookChapterDto {
   @IsNotEmpty()
   @Expose()
   @IsNumber()
   id: number;
+
+  @Expose()
+  @Type(() => GetBookDto)
+  book: GetBookDto;
 
   @IsNotEmpty()
   @Expose()

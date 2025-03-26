@@ -87,3 +87,10 @@ export class GetBookDto {
   @Expose()
   createdAt: Date;
 }
+
+export class GetBookDetail extends GetBookDto {
+  @IsNotEmpty()
+  @IsNumber()
+  @Expose()
+  rating: number;
+}

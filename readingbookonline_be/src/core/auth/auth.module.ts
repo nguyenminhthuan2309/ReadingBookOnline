@@ -15,7 +15,7 @@ import { jwtConfig } from '@core/config/global';
     JwtModule.register({
       global: true,
       secret: jwtConfig.secret || 'your_secret_key',
-      signOptions: { expiresIn: jwtConfig.expiresIn || '1h' },
+      signOptions: { expiresIn: jwtConfig.expiresIn || '8h' },
     }),
     TypeOrmModule.forFeature([User]),
     LoggerModule,
