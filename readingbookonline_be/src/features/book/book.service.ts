@@ -61,6 +61,7 @@ import {
   CreateBookReadingHistoryDto,
 } from './dto/create-book-reading-history.dto';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
+import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 
 @Injectable()
 export class BookService {
@@ -594,6 +595,28 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookChapterService.deleteChapter');
+      throw error;
+    }
+  }
+
+  async getChapter(chapterId: number): Promise<GetBookChapterDto> {
+    try {
+      const chapter = await this.databaseService.findOne<BookChapter>(
+        this.bookChapterRepository,
+        {
+          where: { id: chapterId },
+        },
+      );
+
+      if (!chapter) {
+        throw new NotFoundException('Không tìm thấy chương');
+      }
+
+      return plainToInstance(GetBookChapterDto, chapter, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookChapterService.updateChapter');
       throw error;
     }
   }

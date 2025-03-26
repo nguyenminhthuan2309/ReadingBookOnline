@@ -15,7 +15,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import {
   GetBookRequestDto,
   GetBookResponseDto,
@@ -48,6 +48,7 @@ import { AdminGuard } from '@core/auth/admin.guard';
 import { GetBookTypeDto } from './dto/book-type.dto';
 import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.dto';
 import { UpdateBookStatusDto } from './entities/book-status.dto';
+import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 
 @Controller('book')
 export class BookController {
@@ -141,6 +142,20 @@ export class BookController {
     if (!author) throw new ForbiddenException('Bạn không có quyền');
 
     return this.bookService.deleteChapter(chapterId, author);
+  }
+
+  @Get('/chatper/:chapterId')
+  @ApiOperation({ summary: 'Lấy thông tin chương theo ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Thông tin chương',
+    type: GetBookChapterDto,
+  })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy chương' })
+  async getChapter(
+    @Param('chapterId', ParseIntPipe) chapterId: number,
+  ): Promise<GetBookChapterDto> {
+    return await this.bookService.getChapter(chapterId);
   }
 
   @UseGuards(JwtAuthGuard)
