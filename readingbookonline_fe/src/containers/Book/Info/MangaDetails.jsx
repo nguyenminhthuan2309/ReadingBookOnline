@@ -35,7 +35,6 @@ function MangaDetails({ bookInfo }) {
             <div className="flex max-md:flex-col">
               <dl className="w-[31%] max-md:w-full text-lg leading-10">
                 <dt className="text-black">Author(s):</dt>
-                <dt className="text-black">Artist(s):</dt>
                 <dt className="text-black">Genre(s):</dt>
                 <dt className="text-black">Type:</dt>
                 <dt className="text-black">Release:</dt>
@@ -51,7 +50,6 @@ function MangaDetails({ bookInfo }) {
                 <dd className="text-stone-400">
                   {bookInfo.author && bookInfo.author.name}
                 </dd>
-                <dd className="text-stone-400">Ample artist</dd>
                 <dd className="text-stone-400">
                   {bookInfo.categories &&
                     bookInfo.categories.map((genre, index) => {

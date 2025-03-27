@@ -15,6 +15,7 @@ const bookAPI = {
   getBookById: (id) => `${API_GATEWAY}/book/${id}`,
   getBookGenre: `${API_GATEWAY}/book/category?limit=42&page=1`,
   createBook: `${API_GATEWAY}/book`,
+  deleteBook: (id) => `${API_GATEWAY}/book/${id}`,
 };
 
 const chapterAPI = {

@@ -40,7 +40,16 @@ const BookTile = ({
           title={`${title} cover`}
         />
         <CardContent sx={{ backgroundColor: "transparent" }}>
-          <Typography gutterBottom variant="h5" component="div">
+          <Typography
+            sx={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            gutterBottom
+            variant="h5"
+            component="div"
+          >
             {title}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -48,7 +57,7 @@ const BookTile = ({
           </Typography>
         </CardContent>
       </CardActionArea>
-      <CardActions className="flex flex-col">
+      <CardActions sx={{ height: 170 }} className="flex flex-col">
         {chapters &&
           chapters
             .slice(-2)

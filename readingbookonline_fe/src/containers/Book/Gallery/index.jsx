@@ -14,16 +14,21 @@ import { getAPI } from "@/utils/request";
 
 import { getItem } from "@/utils/localStorage";
 import { USER_INFO } from "@/utils/constants";
-import { Fab } from "@mui/material";
+import { Fab, IconButton } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteDialog from "./DeleteDialog";
 
 const BookListPage = () => {
   const router = useRouter();
   const [user, setUser] = useState({});
   const [bookList, setBookList] = useState([]);
+  const [button, setButton] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [bookId, setBookId] = useState();
   const [totalPage, setTotalPage] = useState();
   const [totaItem, setTotalItem] = useState();
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,15 +76,43 @@ const BookListPage = () => {
               <div className="min-h-[25vh] content-center"> No data Found </div>
             ) : (
               bookList.map((book, index) => (
-                <BookTile
-                  key={index}
-                  bookId={book.id}
-                  imageUrl={book.cover}
-                  title={book.title}
-                  author={book.author.name}
-                  chapters={book.chapters}
-                  className="flex flex-col rounded-none w-[200px]"
-                />
+                <div key={index} className="relative">
+                  {button && (
+                    <IconButton
+                      onClick={() => {
+                        setOpenDialog((prev) => !prev);
+                        setBookId(book.id);
+                      }}
+                      className="absolute z-10" // Position it top right
+                      sx={{
+                        top: "11px",
+                        left: "180px",
+                        backgroundColor: "rgba(255, 255, 255, 0.8)", // Optional: semi-transparent background
+                        "&:hover": {
+                          backgroundColor: "red",
+                        },
+                      }}
+                    >
+                      <ClearIcon
+                        sx={{
+                          color: "red",
+                          fontSize: "15px",
+                          "&:hover": {
+                            color: "white",
+                          },
+                        }}
+                      />
+                    </IconButton>
+                  )}
+                  <BookTile
+                    bookId={book.id}
+                    imageUrl={book.cover}
+                    title={book.title}
+                    author={book.author.name}
+                    chapters={book.chapters}
+                    className="flex flex-col rounded-none w-[200px]"
+                  />
+                </div>
               ))
             )}
           </div>
@@ -114,11 +147,21 @@ const BookListPage = () => {
                 outline: "4px solid red",
               },
             }}
+            onClick={() => {
+              setButton((prev) => !prev);
+            }}
           >
             <DeleteIcon />
           </Fab>
         </div>
       </div>
+      <React.Fragment>
+        <DeleteDialog
+          open={openDialog}
+          handleClose={() => setOpenDialog((prev) => !prev)}
+          bookID={bookId}
+        />
+      </React.Fragment>
     </main>
   );
 };
