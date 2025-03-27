@@ -1,5 +1,4 @@
 import { getBookInfoData } from "@/utils/actions/bookAction";
-import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
 import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
 import {
   Box,
@@ -12,7 +11,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const theme = createTheme({
@@ -56,15 +55,64 @@ export default function ChapterSelection({ bookID, chapterID }) {
   const { bookData, loading } = useSelector((state) => state.bookInfo);
   const [chapterList, setChapterList] = useState([]);
 
+  const getCurrentChapterIndex = useCallback(() => {
+    if (
+      !chapterList ||
+      !Array.isArray(chapterList) ||
+      chapterList.length === 0
+    ) {
+      return -1;
+    }
+    return chapterList.findIndex((chapter) => +chapter?.id === +chapterID);
+  }, [chapterList, chapterID]);
+
+  // Use useMemo to store the result
+  const currentChapterIndex = useMemo(
+    () => getCurrentChapterIndex(),
+    [getCurrentChapterIndex]
+  );
+
+  const prevChapter =
+    chapterList && currentChapterIndex > 0
+      ? chapterList[currentChapterIndex - 1]
+      : null;
+  const nextChapter =
+    chapterList && currentChapterIndex < chapterList.length - 1
+      ? chapterList[currentChapterIndex + 1]
+      : null;
+  console.log(chapterList);
+  console.log(currentChapterIndex);
+  console.log(prevChapter?.id);
+  console.log(nextChapter?.id);
+
   const handleChapterChange = (event) => {
     setChapterValue(event.target.value);
   };
 
-  const handleChapterClick = async (chapterId) => {
+  const handleClickChapter = async (chapterID) => {
     dispatch(resetInfoChapterState());
-    await router.push(`/chapter?name=${chapterId}`);
+    await router.push(`/chapter?name=${chapterID}`);
   };
 
+  const handleNavigateChapter = useCallback(
+    async (chapterId) => {
+      if (!chapterId) return;
+
+      try {
+        dispatch(resetInfoChapterState());
+        await router.push(`/chapter?name=${chapterId}`);
+        setChapterValue(chapterId); // Update the select value
+      } catch (error) {
+        console.error("Error navigating to chapter:", error);
+      }
+    },
+    [dispatch, router]
+  );
+
+  const handleClickMangaInfo = async () => {
+    dispatch(resetInfoChapterState());
+    await router.push(`/book?number=${bookID}`);
+  };
   useEffect(() => {
     if (bookID) {
       dispatch(getBookInfoData(bookID));
@@ -77,7 +125,7 @@ export default function ChapterSelection({ bookID, chapterID }) {
     setChapterValue(chapterID);
     setChapterList(bookData.chapters);
   }, [bookData, loading, chapterID]);
-  
+
   return (
     <>
       <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -96,19 +144,39 @@ export default function ChapterSelection({ bookID, chapterID }) {
                 <MenuItem
                   key={chapter.id}
                   value={chapter.id}
-                  onClick={() => handleChapterClick(chapter.id)}
+                  onClick={() => handleClickChapter(chapter.id)}
                 >
-                  Chapter {chapter.id}
+                  Chapter {chapter.chapter}
                 </MenuItem>
               ))}
           </Select>
         </FormControl>
       </Box>
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <ActionButton size="small">Prev</ActionButton>
-        <ActionButton size="small">Next</ActionButton>
-        <ActionButton size="small">Manga Info</ActionButton>
-      </Box>
+      <>
+        {chapterList && chapterList.length > 1 && (
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {prevChapter && (
+              <ActionButton
+                size="small"
+                onClick={() => handleNavigateChapter(prevChapter?.id)}
+              >
+                Prev
+              </ActionButton>
+            )}
+            {nextChapter && (
+              <ActionButton
+                size="small"
+                onClick={() => handleNavigateChapter(nextChapter?.id)}
+              >
+                Next
+              </ActionButton>
+            )}
+          </Box>
+        )}
+        <ActionButton size="small" onClick={handleClickMangaInfo}>
+          Manga Info
+        </ActionButton>
+      </>
     </>
   );
 }

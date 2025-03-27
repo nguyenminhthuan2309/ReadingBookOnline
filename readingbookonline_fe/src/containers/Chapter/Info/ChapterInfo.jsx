@@ -233,16 +233,19 @@ function ChapterInfo() {
           </Paper>
 
           {/* Bottom Chapter Navigation */}
-          {/* <Box
+          <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 3,
+              mb: 2,
             }}
           >
-            <ChapterSelection />
-          </Box> */}
+            <ChapterSelection
+              bookID={cachedData ? cachedData?.id : null}
+              chapterID={chapterId ? chapterId : 0}
+            />
+          </Box>
         </div>
       </div>
     </main>
