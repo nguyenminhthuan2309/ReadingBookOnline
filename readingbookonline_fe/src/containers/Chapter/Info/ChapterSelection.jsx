@@ -80,10 +80,6 @@ export default function ChapterSelection({ bookID, chapterID }) {
     chapterList && currentChapterIndex < chapterList.length - 1
       ? chapterList[currentChapterIndex + 1]
       : null;
-  console.log(chapterList);
-  console.log(currentChapterIndex);
-  console.log(prevChapter?.id);
-  console.log(nextChapter?.id);
 
   const handleChapterChange = (event) => {
     setChapterValue(event.target.value);
@@ -112,6 +108,30 @@ export default function ChapterSelection({ bookID, chapterID }) {
   const handleClickMangaInfo = async () => {
     dispatch(resetInfoChapterState());
     await router.push(`/book?number=${bookID}`);
+  };
+
+  const generateNavigateButton = () => {
+    if (!chapterList || chapterList.length === 0) return null;
+    return (
+      <>
+        {prevChapter && (
+          <ActionButton
+            size="small"
+            onClick={() => handleNavigateChapter(prevChapter?.id)}
+          >
+            Prev
+          </ActionButton>
+        )}
+        {nextChapter && (
+          <ActionButton
+            size="small"
+            onClick={() => handleNavigateChapter(nextChapter?.id)}
+          >
+            Next
+          </ActionButton>
+        )}
+      </>
+    );
   };
   useEffect(() => {
     if (bookID) {
@@ -153,29 +173,12 @@ export default function ChapterSelection({ bookID, chapterID }) {
         </FormControl>
       </Box>
       <>
-        {chapterList && chapterList.length > 1 && (
-          <Box sx={{ display: "flex", gap: 1 }}>
-            {prevChapter && (
-              <ActionButton
-                size="small"
-                onClick={() => handleNavigateChapter(prevChapter?.id)}
-              >
-                Prev
-              </ActionButton>
-            )}
-            {nextChapter && (
-              <ActionButton
-                size="small"
-                onClick={() => handleNavigateChapter(nextChapter?.id)}
-              >
-                Next
-              </ActionButton>
-            )}
-          </Box>
-        )}
-        <ActionButton size="small" onClick={handleClickMangaInfo}>
-          Manga Info
-        </ActionButton>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {generateNavigateButton()}
+          <ActionButton size="small" onClick={handleClickMangaInfo}>
+            Manga Info
+          </ActionButton>
+        </Box>
       </>
     </>
   );
