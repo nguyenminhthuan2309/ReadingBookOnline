@@ -22,13 +22,14 @@ function MangaSPage() {
       dispatch(resetState());
     };
   }, [dispatch]);
-  
+
   useEffect(() => {
     if (bookId) {
       dispatch(getBookInfoData(bookId));
     }
   }, [bookId]);
-  
+
+  console.log("bookInfo", bookInfos);
 
   return (
     <main className="rounded-none">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
@@ -19,20 +19,25 @@ import {
   RadioGroup,
   TextField,
 } from "@mui/material";
-import { createBook } from "@/utils/actions/bookAction";
+import { editBook, getBookInfoData } from "@/utils/actions/bookAction";
+import { useSearchParams } from "next/navigation";
 
 const schema = yup.object().shape({
   title: yup.string().required("Title không được để trống"),
-  description: yup.string().required("Description is required"),
 });
 
 function BookBasicInfo() {
   const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+  const bookId = searchParams.get("number");
   const { loading } = useSelector((state) => state.uploadImage);
+  const { bookData } = useSelector((state) => state.bookInfo);
+
   const { data: genres, isLoading } = useGenres();
   const {
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
@@ -40,20 +45,20 @@ function BookBasicInfo() {
 
   const [imageUrl, setImageUrl] = useState(null);
   const [bookType, setBookType] = useState(1);
-  const [status, setStatus] = useState(1);
+  const [accessStatus, setAccessStatus] = useState(1);
   const [selectedGenres, setSelectedGenres] = useState([]);
-  const [publicStatus, setPublicStatus] = useState(1);
+  const [progressStatus, setProgressStatus] = useState(1);
 
   const handleBookTypeChange = (event) => {
     setBookType(event.target.value);
   };
 
-  const handleStatusChange = (event) => {
-    setStatus(event.target.value);
+  const handleAcessStatusChange = (event) => {
+    setAccessStatus(event.target.value);
   };
 
-  const handlePublicStatusChange = (event) => {
-    setPublicStatus(event.target.value);
+  const handleProgressStatusChange = (event) => {
+    setProgressStatus(event.target.value);
   };
 
   const handleGenreChange = (genreId) => (event) => {
@@ -86,15 +91,38 @@ function BookBasicInfo() {
     const formData = {
       ...data, // spread the form data (title and description)
       bookTypeId: +bookType, // add the other state values
-      accessStatusId: status,
+      accessStatusId: +accessStatus,
       ageRating: 12,
       categoryIds: selectedGenres,
-      progressStatusId: publicStatus,
+      progressStatusId: +progressStatus,
       cover: imageUrl || "", // add the uploaded image URL
     };
 
-    dispatch(createBook(formData));
+    dispatch(editBook(bookId, formData));
   };
+
+  useEffect(() => {
+    if (
+      !bookData ||
+      !bookData.cover ||
+      !bookData.bookType ||
+      !bookData.accessStatus ||
+      !bookData.progressStatus ||
+      !bookData.categories
+    )
+      return;
+    setImageUrl(bookData.cover);
+    setBookType(bookData.bookType?.id);
+    setAccessStatus(bookData.accessStatus?.id);
+    setProgressStatus(bookData.progressStatus?.id);
+    setSelectedGenres(() => bookData?.categories.map((item) => item.id));
+    reset({ title: bookData.title, description: bookData.description });
+  }, [bookData]);
+
+  useEffect(() => {
+    if (!bookId) return;
+    dispatch(getBookInfoData(bookId));
+  }, [dispatch]);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
@@ -197,7 +225,7 @@ function BookBasicInfo() {
             </RadioGroup>
           </FormControl>
         </div>
-
+        {/* 
         {+bookType === 1 && (
           <div className="mt-14">
             <FormControl>
@@ -277,7 +305,7 @@ function BookBasicInfo() {
               </RadioGroup>
             </FormControl>
           </div>
-        )}
+        )} */}
 
         <h2 className="mt-14 max-md:mt-10">Genre(s):</h2>
         <div className="flex flex-wrap gap-3.5 mr-5 w-full">
@@ -323,19 +351,19 @@ function BookBasicInfo() {
                 value={1}
                 control={<Radio />}
                 label="On Going"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
               <FormControlLabel
                 value={2}
                 control={<Radio />}
                 label="Completed"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
               <FormControlLabel
                 value={3}
                 control={<Radio />}
                 label="Dropped"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
             </RadioGroup>
           </FormControl>
@@ -387,13 +415,13 @@ function BookBasicInfo() {
                 value={1}
                 control={<Radio />}
                 label="Public"
-                onChange={handlePublicStatusChange}
+                onChange={handleAcessStatusChange}
               />
               <FormControlLabel
                 value={2}
                 control={<Radio />}
                 label="Private"
-                onChange={handlePublicStatusChange}
+                onChange={handleAcessStatusChange}
               />
             </RadioGroup>
           </FormControl>
@@ -408,13 +436,7 @@ function BookBasicInfo() {
             type="submit"
             className="grow shrink-0 px-16 py-6 rounded-xl basis-0 bg-slate-600 w-fit max-md:px-5 max-md:max-w-full"
           >
-            Create new manga
-          </button>
-          <button
-            type="button"
-            className="grow shrink-0 px-16 py-6 bg-amber-600 rounded-xl basis-0 w-fit max-md:px-5 max-md:max-w-full"
-          >
-            Continue to add chapter
+            Update book
           </button>
         </div>
       </form>

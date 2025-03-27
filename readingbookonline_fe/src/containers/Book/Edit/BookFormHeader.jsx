@@ -19,7 +19,7 @@ function BookFormHeader() {
       <Button sx={{ width: "fit-content" }} onClick={handelRediect}>
         <KeyboardBackspaceIcon sx={{ fontSize: "48px", color: "#000" }} />
       </Button>
-      <span className="self-center text-xl font-semibold">ADD NEW BOOK</span>
+      <span className="self-center text-xl font-semibold">EDIT BOOK</span>
     </header>
   );
 }

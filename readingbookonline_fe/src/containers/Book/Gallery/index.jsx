@@ -26,9 +26,14 @@ const BookListPage = () => {
   const router = useRouter();
   const [user, setUser] = useState({});
   const [bookList, setBookList] = useState([]);
-  const [button, setButton] = useState(false);
+  
+  const [deleteButton, setDeleteButton] = useState(false);
+  const [bookTitle, setBookTitle] = useState("");
+  const [editButton, setEditButton] = useState(false);
+  
   const [openDialog, setOpenDialog] = useState(false);
   const [bookId, setBookId] = useState();
+  
   const [totalPage, setTotalPage] = useState();
   const [totaItem, setTotalItem] = useState();
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +49,68 @@ const BookListPage = () => {
       setTotalItem(totalItems);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const generateDeleteButton = (bookId, bookTitle) => {
+    if (deleteButton) {
+      return (
+        <IconButton
+          onClick={() => {
+            setOpenDialog((prev) => !prev);
+            setBookId(bookId);
+            setBookTitle(bookTitle);
+          }}
+          className="absolute z-10" // Position it top right
+          sx={{
+            top: "11px",
+            left: "180px",
+            backgroundColor: "rgba(255, 255, 255, 0.8)", // Optional: semi-transparent background
+            "&:hover": {
+              backgroundColor: "red",
+            },
+          }}
+        >
+          <ClearIcon
+            sx={{
+              color: "red",
+              fontSize: "15px",
+              "&:hover": {
+                color: "white",
+              },
+            }}
+          />
+        </IconButton>
+      );
+    }
+  };
+
+  const generateEditButton = (bookId) => {
+    if (editButton) {
+      return (
+        <IconButton
+          onClick={() => {
+            router.push(`/book/edit?number=${bookId}`);
+          }}
+          className="top-2 absolute z-10"
+          sx={{
+            backgroundColor: "white",
+            "&:hover": {
+              backgroundColor: "#DE741C",
+            },
+          }}
+        >
+          <EditIcon
+            sx={{
+              color: "#DE741C",
+              fontSize: "15px",
+              "&:hover": {
+                color: "white",
+              },
+            }}
+          />
+        </IconButton>
+      );
     }
   };
 
@@ -77,33 +144,8 @@ const BookListPage = () => {
             ) : (
               bookList.map((book, index) => (
                 <div key={index} className="relative">
-                  {button && (
-                    <IconButton
-                      onClick={() => {
-                        setOpenDialog((prev) => !prev);
-                        setBookId(book.id);
-                      }}
-                      className="absolute z-10" // Position it top right
-                      sx={{
-                        top: "11px",
-                        left: "180px",
-                        backgroundColor: "rgba(255, 255, 255, 0.8)", // Optional: semi-transparent background
-                        "&:hover": {
-                          backgroundColor: "red",
-                        },
-                      }}
-                    >
-                      <ClearIcon
-                        sx={{
-                          color: "red",
-                          fontSize: "15px",
-                          "&:hover": {
-                            color: "white",
-                          },
-                        }}
-                      />
-                    </IconButton>
-                  )}
+                  {generateDeleteButton(book.id, book.title)}
+                  {generateEditButton(book.id)}
                   <BookTile
                     bookId={book.id}
                     imageUrl={book.cover}
@@ -134,8 +176,11 @@ const BookListPage = () => {
             sx={{
               backgroundColor: "white",
               "&:hover": {
-                outline: "4px solid yellow",
+                outline: "4px solid #DE741C",
               },
+            }}
+            onClick={() => {
+              setEditButton((prev) => !prev);
             }}
           >
             <EditIcon />
@@ -148,7 +193,7 @@ const BookListPage = () => {
               },
             }}
             onClick={() => {
-              setButton((prev) => !prev);
+              setDeleteButton((prev) => !prev);
             }}
           >
             <DeleteIcon />
@@ -160,6 +205,7 @@ const BookListPage = () => {
           open={openDialog}
           handleClose={() => setOpenDialog((prev) => !prev)}
           bookID={bookId}
+          bookTitle={bookTitle}
         />
       </React.Fragment>
     </main>

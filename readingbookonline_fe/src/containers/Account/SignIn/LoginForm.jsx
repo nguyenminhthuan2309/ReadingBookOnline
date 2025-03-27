@@ -11,7 +11,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import InputField from "@/components/RenderInput";
 import ActionButton from "./ActionButton";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
-import { handleAuthenticate } from "@/utils/actions/authAction";
+import { handleAuthenticate, verifyCode } from "@/utils/actions/authAction";
 import { useSearchParams } from "next/navigation";
 
 import { getAPI } from "@/utils/request";
@@ -48,17 +48,10 @@ export const LoginForm = () => {
     reset();
   };
 
-  // useEffect(() => {
-  //   if (!token) return;
-  //   try {
-  //     const url = authAPI.verifyToken(token);
-  //     const response = getAPI(url);
-  //     console.log(response);
-  //   } catch (err) {
-  //     throw new err
-  //     ShowNotify(ERROR, err.response.data.msg)
-  //   }
-  // }, [token]);
+  useEffect(() => {
+    if (!token) return;
+    dispatch(verifyCode(token));
+  }, [token]);
 
   return (
     <div className="self-center">

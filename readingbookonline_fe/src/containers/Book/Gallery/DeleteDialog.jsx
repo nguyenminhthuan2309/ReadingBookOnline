@@ -10,7 +10,7 @@ import { deleteBook } from "@/utils/actions/bookAction";
 import PropTypes from "prop-types";
 import { useRouter } from "next/router";
 
-const DeleteDialog = ({ open, handleClose, bookID }) => {
+const DeleteDialog = ({ open, handleClose, bookID, bookTitle }) => {
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -36,7 +36,7 @@ const DeleteDialog = ({ open, handleClose, bookID }) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Do you want to delete {bookID}
+            Do you want to delete {bookTitle}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

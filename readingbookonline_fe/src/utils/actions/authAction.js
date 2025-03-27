@@ -10,7 +10,7 @@ import {
   loginFail,
   logout,
 } from "../redux/slices/authReducer/loginReducer";
-import { postAPI } from "../request";
+import { getAPI, postAPI } from "../request";
 
 import { authAPI } from "@/app/common/api";
 import Router from "next/router";
@@ -119,6 +119,21 @@ export const checkToken = (email, otp) => {
     } catch (error) {
       console.log(error);
       dispatch(verifyTokenFail());
+      ShowNotify(ERROR, error.response.data.msg);
+    }
+  };
+};
+
+export const verifyCode = (code) => {
+  return async (dispatch) => {
+    dispatch(verifyTokenRequest());
+    const url = authAPI.verifyCode(code);
+    try{
+      const response = await getAPI(url);
+      dispatch(verifyTokenSuccess(response.data));
+      ShowNotify(SUCESSS, "Your account has been verified");
+    }catch(error){
+      dispatch(verifyTokenFail(error.response.data.msg));
       ShowNotify(ERROR, error.response.data.msg);
     }
   };

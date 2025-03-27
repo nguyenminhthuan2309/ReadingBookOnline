@@ -5,7 +5,7 @@ const authAPI = {
   login: `${API_GATEWAY}/auth/login`,
   forgotPassword: `${API_GATEWAY}/user/reset-password`,
   verifyOTP: `${API_GATEWAY}/user/verify-reset-password`,
-  verifyToken: (token) => `${API_GATEWAY}/user/verify?token=${token}`,
+  verifyCode: (code) => `${API_GATEWAY}/user/verify?token=${code}`,
 };
 const userAPI = {};
 
@@ -15,6 +15,7 @@ const bookAPI = {
   getBookById: (id) => `${API_GATEWAY}/book/${id}`,
   getBookGenre: `${API_GATEWAY}/book/category?limit=42&page=1`,
   createBook: `${API_GATEWAY}/book`,
+  editBook: (id) => `${API_GATEWAY}/book/${id}`,
   deleteBook: (id) => `${API_GATEWAY}/book/${id}`,
 };
 

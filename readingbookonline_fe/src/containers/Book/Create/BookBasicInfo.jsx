@@ -39,20 +39,20 @@ function BookBasicInfo() {
 
   const [imageUrl, setImageUrl] = useState(null);
   const [bookType, setBookType] = useState(1);
-  const [status, setStatus] = useState(1);
+  const [accessStatus, setAccessStatus] = useState(1);
   const [selectedGenres, setSelectedGenres] = useState([]);
-  const [publicStatus, setPublicStatus] = useState(1);
+  const [progressStatus, setProgressStatus] = useState(1);
 
   const handleBookTypeChange = (event) => {
     setBookType(event.target.value);
   };
 
-  const handleStatusChange = (event) => {
-    setStatus(event.target.value);
+  const handleAccessStatusChange = (event) => {
+    setAccessStatus(event.target.value);
   };
 
-  const handlePublicStatusChange = (event) => {
-    setPublicStatus(event.target.value);
+  const handleProgressStatusChange = (event) => {
+    setProgressStatus(event.target.value);
   };
 
   const handleGenreChange = (genreId) => (event) => {
@@ -82,10 +82,10 @@ function BookBasicInfo() {
     const formData = {
       ...data, // spread the form data (title and description)
       bookTypeId: +bookType, // add the other state values
-      accessStatusId: status,
+      accessStatusId: +accessStatus,
       ageRating: 12,
       categoryIds: selectedGenres,
-      progressStatusId: publicStatus,
+      progressStatusId: +progressStatus,
       cover: imageUrl || "", // add the uploaded image URL
     };
 
@@ -101,7 +101,10 @@ function BookBasicInfo() {
               {loading ? (
                 <CircularProgress />
               ) : (
-                <img src={!imageUrl ? "/images/placeholder.png": imageUrl} alt="book" />
+                <img
+                  src={!imageUrl ? "/images/placeholder.png" : imageUrl}
+                  alt="book"
+                />
               )}
             </div>
             <div className="w-full">
@@ -194,7 +197,7 @@ function BookBasicInfo() {
           </FormControl>
         </div>
 
-        {+bookType === 1 && (
+        {/* {+bookType === 1 && (
           <div className="mt-14">
             <FormControl>
               <FormLabel id="demo-row-radio-buttons-group-label">
@@ -273,7 +276,7 @@ function BookBasicInfo() {
               </RadioGroup>
             </FormControl>
           </div>
-        )}
+        )} */}
 
         <h2 className="mt-14 max-md:mt-10">Genre(s):</h2>
         <div className="flex flex-wrap gap-3.5 mr-5 w-full">
@@ -319,19 +322,19 @@ function BookBasicInfo() {
                 value={1}
                 control={<Radio />}
                 label="On Going"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
               <FormControlLabel
                 value={2}
                 control={<Radio />}
                 label="Completed"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
               <FormControlLabel
                 value={3}
                 control={<Radio />}
                 label="Dropped"
-                onChange={handleStatusChange}
+                onChange={handleProgressStatusChange}
               />
             </RadioGroup>
           </FormControl>
@@ -383,13 +386,13 @@ function BookBasicInfo() {
                 value={1}
                 control={<Radio />}
                 label="Public"
-                onChange={handlePublicStatusChange}
+                onChange={handleAccessStatusChange}
               />
               <FormControlLabel
                 value={2}
                 control={<Radio />}
                 label="Private"
-                onChange={handlePublicStatusChange}
+                onChange={handleAccessStatusChange}
               />
             </RadioGroup>
           </FormControl>

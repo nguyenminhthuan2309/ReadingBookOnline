@@ -26,7 +26,7 @@ const editBookSlice = createSlice({
         state.bookData = action.payload;
         state.error = null;
       })
-      .addCase("getBookbyId/error", (state, action) => {
+      .addCase("getBookbyId/fail", (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
