@@ -54,6 +54,10 @@ export class AuthService {
         excludeExtraneousValues: true,
       });
 
+      const expiresInSeconds = 60 * 60 * 8;
+      const issuedAt = Math.floor(Date.now() / 1000);
+      const expirationTime = issuedAt + expiresInSeconds;
+
       const accessToken = await this.jwtService.signAsync(
         instanceToPlain(payload),
         { secret: this.jwtSecret },
@@ -61,7 +65,7 @@ export class AuthService {
 
       this.loggerService.info('User logged in', 'AuthService.login');
 
-      return { accessToken, user: payload };
+      return { accessToken, expiresIn: expirationTime, user: payload };
     } catch (error) {
       this.loggerService.err(error.message, 'AuthService.login');
 

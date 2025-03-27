@@ -15,5 +15,6 @@ export class LoginDto {
 
 export class LoginResponseDto {
   accessToken: string;
+  expiresIn?: number;
   user: UserResponseDto;
 }
