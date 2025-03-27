@@ -4,12 +4,11 @@ import { Header } from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";
 import ReviewSection from "./ReviewSection";
-import { bookAPI } from "@/app/common/api";
-import { getAPI } from "@/utils/request";
 import { useSearchParams } from "next/navigation";
 import { getBookInfoData } from "@/utils/actions/bookAction";
 import { useDispatch, useSelector } from "react-redux";
 import { CircularProgress } from "@mui/material";
+import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
 
 function MangaSPage() {
   const dispatch = useDispatch();
@@ -18,11 +17,18 @@ function MangaSPage() {
   const bookInfos = useSelector((state) => state.bookInfo.bookData);
   const loading = useSelector((state) => state.bookInfo.loading);
 
+  
   useEffect(() => {
     if (bookId) {
       dispatch(getBookInfoData(bookId));
     }
   }, [bookId]);
+  
+  useEffect(() => {
+    return () => {
+      dispatch(resetState());
+    };
+  }, [dispatch]);
 
   return (
     <main className="rounded-none">

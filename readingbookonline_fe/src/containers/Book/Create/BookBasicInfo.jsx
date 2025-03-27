@@ -101,7 +101,7 @@ function BookBasicInfo() {
               {loading ? (
                 <CircularProgress />
               ) : (
-                <img src={imageUrl} alt="book" />
+                <img src={!imageUrl ? "/images/placeholder.png": imageUrl} alt="book" />
               )}
             </div>
             <div className="w-full">

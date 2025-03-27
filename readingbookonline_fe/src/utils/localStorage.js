@@ -20,6 +20,16 @@ export const setItem = (item, value) => {
   }
 };
 
+export const removeItem = (item) => {
+  try {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(item);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 export const clearAllItem = () => {
   try {
     if (typeof window !== "undefined") {

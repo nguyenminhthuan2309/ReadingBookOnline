@@ -1,153 +1,128 @@
-import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import {
   Box,
-  Button,
-  createTheme,
-  FormControl,
-  IconButton,
-  MenuItem,
   Paper,
-  Select,
-  styled,
 } from "@mui/material";
 import Image from "next/image";
 import React, { useCallback, useEffect, useState } from "react";
 
 import * as docx from "docx-preview";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
+import { getChapterById } from "@/utils/actions/chapterAction";
+import { ERROR } from "@/utils/constants";
+import { ShowNotify } from "@/components/Notification";
+import { resetState } from "@/utils/redux/slices/chapterReducer/infoChapter";
+import ChapterSelection from "./ChapterSelection";
+import { getItem, setItem } from "@/utils/localStorage";
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#3b5998",
-    },
-    secondary: {
-      main: "#ff7f50",
-    },
-    background: {
-      default: "#ffd8cc",
-    },
-  },
-  typography: {
-    fontFamily: ["Roboto", "Arial", "sans-serif"].join(","),
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-        },
-      },
-    },
-  },
-});
-
-const ActionButton = styled(Button)(({ theme }) => ({
-  backgroundColor: "#3b5998",
-  color: "white",
-  "&:hover": {
-    backgroundColor: "#2d4373",
-  },
-}));
-
-const textData =
-  "https://res.cloudinary.com/dty33i3mu/raw/upload/v1742927675/document/document_4_1742927673163.docx";
 function ChapterInfo() {
-
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const chapterId = searchParams.get("name");
+  const[url, setUrl] = useState("");
 
-  const [chapterValue, setChapterValue] = useState(3);
   const [filePreview, setFilePreview] = useState("");
-  const [fileUrl, setFileUrl] = useState(textData);
 
-  const chapters = [
-    { id: 1, title: "Chapter 1: The Beginning" },
-    { id: 2, title: "Chapter 2: The Journey" },
-    { id: 3, title: "Chapter 3: The Challenge" },
-    { id: 4, title: "Chapter 4: The Revelation" },
-    { id: 5, title: "Chapter 5: The Conclusion" },
-  ];
-
-  const handleChapterChange = (event) => {
-    setChapterValue(event.target.value);
-  };
-
-  console.log("chapterId", chapterId);
-
-  const NavigationButtons = () => (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <ActionButton size="small">Prev</ActionButton>
-      <ActionButton size="small">Next</ActionButton>
-      <ActionButton size="small">Manga Info</ActionButton>
-    </Box>
-  );
-  // Chapter selector component for reuse
-  const ChapterSelector = () => (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <FormControl
-        variant="outlined"
-        size="small"
-        sx={{ minWidth: 200, bgcolor: "white", borderRadius: 1 }}
-      >
-        <Select
-          value={chapterValue}
-          onChange={handleChapterChange}
-          displayEmpty
-        >
-          <MenuItem value="" disabled>
-            <em>Chapter Sample</em>
-          </MenuItem>
-          {chapters.map((chapter) => (
-            <MenuItem key={chapter.id} value={chapter.id}>
-              {chapter.title}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
+  const { ChapterData, loading } = useSelector(
+    (state) => state.infoChapter
   );
 
-  const handleFileURL = useCallback(
-    async (fileURL) => {
-      try {
-        const response = await fetch(fileURL);
-        if (!response.ok) {
-          throw new Error("Failed to fetch file");
-        }
+  const handleFileURL = useCallback(async (fileURL) => {
+    try {
+      const response = await fetch(fileURL, {
+        method: "GET",
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        },
+        cache: "no-cache", // Prevent caching issues
+      });
 
-        const contentType = response.headers.get("content-type");
-
-        if (
-          contentType !==
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ) {
-          throw new Error("File không đúng định dạng .docx");
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        const container = document.createElement("div");
-
-        await docx.renderAsync(arrayBuffer, container, container, {
-          className: "docx",
-        });
-
-        setFilePreview(container.innerHTML);
-      } catch (error) {
-        console.error("Error reading docx:", error);
-        setFilePreview("Error reading file content");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    },
-    [fileUrl]
-  );
+      const contentType = response.headers.get("content-type");
+      // Check if we actually got a docx file
+      if (!contentType?.includes("officedocument.wordprocessingml.document")) {
+        ShowNotify(ERROR, "File không đúng định dạng .docx");
+        return;
+      }
+      // Get the blob first
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error("Empty file received");
+      }
+
+      const container = document.createElement("div");
+
+      await docx.renderAsync(arrayBuffer, container, container, {
+        className: "docx",
+      });
+
+      if (container.innerHTML) {
+        setFilePreview(container.innerHTML);
+      } else {
+        throw new Error("Failed to render document");
+      }
+    } catch (error) {
+      console.error("Error details:", error);
+      setFilePreview("Error reading file content");
+      ShowNotify(ERROR, "Không thể đọc file. Vui lòng thử lại sau.");
+    }
+  }, []);
+
+ useEffect(() => {
+   return () => {
+     localStorage.removeItem(`chapter-${chapterId}`);
+     dispatch(resetState());
+   };
+ }, [dispatch, chapterId]);
 
   useEffect(() => {
-    if (fileUrl) {
-      handleFileURL(fileUrl);
+    if (chapterId) {
+      const savedData = getItem(`chapter-${chapterId}`);
+      if (savedData) {
+        setUrl(savedData.content);
+        if (savedData.content) {
+          handleFileURL(savedData.content);
+        }
+      }
+      dispatch(getChapterById(chapterId));
     }
-  }, [handleFileURL]);
+  }, [chapterId]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (loading) return;
+        if (!ChapterData) {
+          const savedData = localStorage.getItem(`chapter-${chapterId}`);
+          if (savedData) {
+            setUrl(savedData.content);
+            if (savedData.content) {
+              await handleFileURL(savedData.content);
+            }
+          }
+          return;
+        }
+
+        const { data } = ChapterData;
+        if (!data || !data.content) return;
+
+        // Cache the data
+        setItem(`chapter-${chapterId}`, JSON.stringify(data));
+
+        setUrl(data.content);
+        if (!url) return;
+        await handleFileURL(url);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, [ChapterData, loading, handleFileURL, url, chapterId]);
 
   return (
     <main className="rounded-none">
@@ -161,8 +136,7 @@ function ChapterInfo() {
               mb: 2,
             }}
           >
-            <ChapterSelector />
-            <NavigationButtons />
+            <ChapterSelection />
           </Box>
 
           {/* Decorative Divider */}
@@ -260,8 +234,7 @@ function ChapterInfo() {
               mb: 3,
             }}
           >
-            <ChapterSelector />
-            <NavigationButtons />
+            <ChapterSelection />
           </Box>
         </div>
       </div>

@@ -19,6 +19,7 @@ const bookAPI = {
 
 const chapterAPI = {
   createChapter: (bookId) => `${API_GATEWAY}/book/chapter/${bookId}`,
+  getChapterById: (chapterId) => `${API_GATEWAY}/book/chatper/${chapterId}`,
 };
 
 const uploadAPI = {
