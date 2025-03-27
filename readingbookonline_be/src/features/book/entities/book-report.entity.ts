@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  JoinColumn,
 } from 'typeorm';
 import { Book } from './book.entity';
 
@@ -24,10 +25,12 @@ export class BookReport {
 
   @Index('idx_book_report_user')
   @ManyToOne(() => User, (user) => user.reports)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Index('idx_book_report_book')
-  @ManyToOne(() => Book, (book) => book.reports)
+  @ManyToOne(() => Book, (book) => book.reports, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'book_id' })
   book: Book;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })

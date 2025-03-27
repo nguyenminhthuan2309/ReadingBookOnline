@@ -22,7 +22,7 @@ export class BookReview {
   user: User;
 
   @Index('idx_book_review_book')
-  @ManyToOne(() => Book, (book) => book.reviews)
+  @ManyToOne(() => Book, (book) => book.reviews, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'book_id' })
   book: Book;
 

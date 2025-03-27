@@ -47,7 +47,7 @@ import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination
 import { AdminGuard } from '@core/auth/admin.guard';
 import { GetBookTypeDto } from './dto/book-type.dto';
 import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.dto';
-import { UpdateBookStatusDto } from './entities/book-status.dto';
+import { UpdateBookStatusDto } from './dto/book-status.dto';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 
 @Controller('book')
