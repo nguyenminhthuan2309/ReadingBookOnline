@@ -532,6 +532,8 @@ export class BookService {
         book: { id: book.id },
       });
 
+      await this.cacheService.deletePattern('books:*');
+
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookChapterService.createChapter');
@@ -570,6 +572,8 @@ export class BookService {
         price: dto.price,
       });
 
+      await this.cacheService.deletePattern('books:*');
+
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookChapterService.updateChapter');
@@ -603,6 +607,9 @@ export class BookService {
         `Chapter with id ${chapterId} deleted`,
         'BookChapterService.deleteChapter',
       );
+
+      await this.cacheService.deletePattern('books:*');
+
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookChapterService.deleteChapter');
