@@ -1,7 +1,4 @@
-import {
-  Box,
-  Paper,
-} from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import Image from "next/image";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -11,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { getChapterById } from "@/utils/actions/chapterAction";
 import { ERROR } from "@/utils/constants";
 import { ShowNotify } from "@/components/Notification";
-import { resetState } from "@/utils/redux/slices/chapterReducer/infoChapter";
+import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
 import ChapterSelection from "./ChapterSelection";
 import { getItem, setItem } from "@/utils/localStorage";
 
@@ -19,79 +16,80 @@ function ChapterInfo() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const chapterId = searchParams.get("name");
-  const[url, setUrl] = useState("");
+  const [cachedData, setCachedData] = useState(null);
 
   const [filePreview, setFilePreview] = useState("");
 
-  const { ChapterData, loading } = useSelector(
-    (state) => state.infoChapter
-  );
+  const { ChapterData, loading } = useSelector((state) => state.infoChapter);
 
-  const handleFileURL = useCallback(async (fileURL) => {
-    try {
-      const response = await fetch(fileURL, {
-        method: "GET",
-        headers: {
-          "Content-Type":
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        },
-        cache: "no-cache", // Prevent caching issues
-      });
+  const handleFileURL = useCallback(
+    async (fileURL) => {
+      console.log("fileURL", fileURL);
+      setFilePreview("");
+      try {
+        const response = await fetch(fileURL, {
+          method: "GET",
+          headers: {
+            "Content-Type":
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          },
+          cache: "no-cache", // Prevent caching issues
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get("content-type");
+        // Check if we actually got a docx file
+        if (
+          !contentType?.includes("officedocument.wordprocessingml.document")
+        ) {
+          ShowNotify(ERROR, "File không đúng định dạng .docx");
+          return;
+        }
+        // Get the blob first
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+
+        if (arrayBuffer.byteLength === 0) {
+          throw new Error("Empty file received");
+        }
+
+        const container = document.createElement("div");
+
+        await docx.renderAsync(arrayBuffer, container, container, {
+          className: "docx",
+        });
+
+        if (container.innerHTML) {
+          setFilePreview(container.innerHTML);
+        } else {
+          throw new Error("Failed to render document");
+        }
+      } catch (error) {
+        console.error("Error details:", error);
+        setFilePreview("Error reading file content");
+        ShowNotify(ERROR, "Không thể đọc file. Vui lòng thử lại sau.");
       }
-      const contentType = response.headers.get("content-type");
-      // Check if we actually got a docx file
-      if (!contentType?.includes("officedocument.wordprocessingml.document")) {
-        ShowNotify(ERROR, "File không đúng định dạng .docx");
-        return;
-      }
-      // Get the blob first
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error("Empty file received");
-      }
-
-      const container = document.createElement("div");
-
-      await docx.renderAsync(arrayBuffer, container, container, {
-        className: "docx",
-      });
-
-      if (container.innerHTML) {
-        setFilePreview(container.innerHTML);
-      } else {
-        throw new Error("Failed to render document");
-      }
-    } catch (error) {
-      console.error("Error details:", error);
-      setFilePreview("Error reading file content");
-      ShowNotify(ERROR, "Không thể đọc file. Vui lòng thử lại sau.");
-    }
-  }, []);
-
- useEffect(() => {
-   return () => {
-     localStorage.removeItem(`chapter-${chapterId}`);
-     dispatch(resetState());
-   };
- }, [dispatch, chapterId]);
+    },
+    []
+  ); 
 
   useEffect(() => {
+    setFilePreview("");
+    setCachedData(null);
+    dispatch(resetInfoChapterState());
     if (chapterId) {
       const savedData = getItem(`chapter-${chapterId}`);
       if (savedData) {
-        setUrl(savedData.content);
+        setCachedData(savedData.book);
         if (savedData.content) {
           handleFileURL(savedData.content);
         }
       }
       dispatch(getChapterById(chapterId));
     }
-  }, [chapterId]);
+  }, [chapterId, dispatch]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,7 +98,7 @@ function ChapterInfo() {
         if (!ChapterData) {
           const savedData = localStorage.getItem(`chapter-${chapterId}`);
           if (savedData) {
-            setUrl(savedData.content);
+            setCachedData(savedData.book);
             if (savedData.content) {
               await handleFileURL(savedData.content);
             }
@@ -109,20 +107,26 @@ function ChapterInfo() {
         }
 
         const { data } = ChapterData;
-        if (!data || !data.content) return;
+        if (!data || !data.content || !data.book) return;
 
-        // Cache the data
         setItem(`chapter-${chapterId}`, JSON.stringify(data));
-
-        setUrl(data.content);
-        if (!url) return;
-        await handleFileURL(url);
+        setCachedData(data.book);
+        await handleFileURL(data.content);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
-  }, [ChapterData, loading, handleFileURL, url, chapterId]);
+  }, [ChapterData, loading, handleFileURL, chapterId]);
+
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem(`chapter-${chapterId}`);
+      dispatch(resetInfoChapterState());
+      setFilePreview("");
+      setCachedData(null);
+    };
+  }, [dispatch, chapterId]);
 
   return (
     <main className="rounded-none">
@@ -136,7 +140,10 @@ function ChapterInfo() {
               mb: 2,
             }}
           >
-            <ChapterSelection />
+            <ChapterSelection
+              bookID={cachedData ? cachedData?.id : null}
+              chapterID={chapterId ? chapterId : 0}
+            />
           </Box>
 
           {/* Decorative Divider */}
@@ -226,7 +233,7 @@ function ChapterInfo() {
           </Paper>
 
           {/* Bottom Chapter Navigation */}
-          <Box
+          {/* <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -235,7 +242,7 @@ function ChapterInfo() {
             }}
           >
             <ChapterSelection />
-          </Box>
+          </Box> */}
         </div>
       </div>
     </main>

@@ -17,6 +17,11 @@ function MangaSPage() {
   const bookInfos = useSelector((state) => state.bookInfo.bookData);
   const loading = useSelector((state) => state.bookInfo.loading);
 
+  useEffect(() => {
+    return () => {
+      dispatch(resetState());
+    };
+  }, [dispatch]);
   
   useEffect(() => {
     if (bookId) {
@@ -24,11 +29,6 @@ function MangaSPage() {
     }
   }, [bookId]);
   
-  useEffect(() => {
-    return () => {
-      dispatch(resetState());
-    };
-  }, [dispatch]);
 
   return (
     <main className="rounded-none">

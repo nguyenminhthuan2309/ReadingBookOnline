@@ -47,7 +47,7 @@ function ChapterList({ chapters, bookId }) {
             key={index}
             className="mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
           >
-            <Button sx={{ textTransform: "none", width: "100%" }} onClick={() => router.push(`/chapter?name=${chapter.id}`)}>
+            <Button  sx={{ textTransform: "none", width: "100%" }} onClick={() => router.push(`/chapter?name=${chapter.id}`)}>
               <div className="flex flex-wrap gap-5 w-full justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
                 <h4 className="text-black">
                   Chapter {chapter.chapter}

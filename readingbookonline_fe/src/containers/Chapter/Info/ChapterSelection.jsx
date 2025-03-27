@@ -1,5 +1,19 @@
-import { Box, Button, createTheme, FormControl, MenuItem, Select, styled } from "@mui/material";
-import React, { useState } from "react";
+import { getBookInfoData } from "@/utils/actions/bookAction";
+import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
+import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
+import {
+  Box,
+  Button,
+  createTheme,
+  FormControl,
+  MenuItem,
+  Select,
+  styled,
+} from "@mui/material";
+import { useRouter } from "next/router";
+import PropTypes from "prop-types";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 const theme = createTheme({
   palette: {
@@ -35,52 +49,71 @@ const ActionButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-export default function ChapterSelection() {
+export default function ChapterSelection({ bookID, chapterID }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const [chapterValue, setChapterValue] = useState(0);
+  const { bookData, loading } = useSelector((state) => state.bookInfo);
+  const [chapterList, setChapterList] = useState([]);
 
-  const [chapterValue, setChapterValue] = useState(3);
-  const chapters = [
-    { id: 1, title: "Chapter 1: The Beginning" },
-    { id: 2, title: "Chapter 2: The Journey" },
-    { id: 3, title: "Chapter 3: The Challenge" },
-    { id: 4, title: "Chapter 4: The Revelation" },
-    { id: 5, title: "Chapter 5: The Conclusion" },
-  ];
+  const handleChapterChange = (event) => {
+    setChapterValue(event.target.value);
+  };
 
-   const handleChapterChange = (event) => {
-     setChapterValue(event.target.value);
-   };
+  const handleChapterClick = async (chapterId) => {
+    dispatch(resetInfoChapterState());
+    await router.push(`/chapter?name=${chapterId}`);
+  };
 
-  const NavigationButtons = () => (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <ActionButton size="small">Prev</ActionButton>
-      <ActionButton size="small">Next</ActionButton>
-      <ActionButton size="small">Manga Info</ActionButton>
-    </Box>
-  );
+  useEffect(() => {
+    if (bookID) {
+      dispatch(getBookInfoData(bookID));
+    }
+  }, [bookID]);
 
-  const ChapterSelector = () => (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <FormControl
-        variant="outlined"
-        size="small"
-        sx={{ minWidth: 200, bgcolor: "white", borderRadius: 1 }}
-      >
-        <Select
-          value={chapterValue}
-          onChange={handleChapterChange}
-          displayEmpty
+  useEffect(() => {
+    if (loading) return;
+    if (!bookData || !bookData.chapters || !chapterID) return;
+    setChapterValue(chapterID);
+    setChapterList(bookData.chapters);
+  }, [bookData, loading, chapterID]);
+  
+  return (
+    <>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <FormControl
+          variant="outlined"
+          size="small"
+          sx={{ minWidth: 200, bgcolor: "white", borderRadius: 1 }}
         >
-          <MenuItem value="" disabled>
-            <em>Chapter Sample</em>
-          </MenuItem>
-          {chapters.map((chapter) => (
-            <MenuItem key={chapter.id} value={chapter.id}>
-              {chapter.title}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
+          <Select
+            value={chapterValue}
+            onChange={handleChapterChange}
+            displayEmpty
+          >
+            {chapterList &&
+              chapterList.map((chapter) => (
+                <MenuItem
+                  key={chapter.id}
+                  value={chapter.id}
+                  onClick={() => handleChapterClick(chapter.id)}
+                >
+                  Chapter {chapter.id}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+      </Box>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <ActionButton size="small">Prev</ActionButton>
+        <ActionButton size="small">Next</ActionButton>
+        <ActionButton size="small">Manga Info</ActionButton>
+      </Box>
+    </>
   );
-    return <><ChapterSelector/><NavigationButtons/></>;
 }
+
+ChapterSelection.propTypes = {
+  bookID: PropTypes.number,
+  chapterID: PropTypes.number,
+};

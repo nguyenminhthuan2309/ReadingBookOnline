@@ -12,7 +12,6 @@ import {
   infoChapterFail,
   infoChapterRequest,
   infoChapterSuccess,
-  resetState,
 } from "../redux/slices/chapterReducer/infoChapter";
 
 export const createChapter = (bookId, chapterData) => {
@@ -34,7 +33,6 @@ export const createChapter = (bookId, chapterData) => {
 
 export const getChapterById = (chapterId) => {
   return async (dispatch) => {
-    dispatch(resetState());
     dispatch(infoChapterRequest());
     const url = chapterAPI.getChapterById(chapterId);
     try {

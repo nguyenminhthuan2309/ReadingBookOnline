@@ -34,7 +34,6 @@ const BookListPage = () => {
     try {
       const response = await getAPI(url);
       const { data, totalPages, totalItems } = response.data.data;
-      console.log(response);
       setBookList(data);
       setTotalPage(totalPages);
       setTotalItem(totalItems);

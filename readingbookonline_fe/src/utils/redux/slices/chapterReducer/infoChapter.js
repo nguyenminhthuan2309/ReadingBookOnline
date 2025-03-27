@@ -8,7 +8,7 @@ const infoChapterSlice = createSlice({
     error: null,
   },
   reducers: {
-    resetState: (state) => {
+    resetInfoChapterState: (state) => {
       state.loading = false;
       state.ChapterData = {};
       state.error = null;
@@ -36,5 +36,5 @@ export const infoChapterRequest = () => ({ type: "infoChapter/request" });
 export const infoChapterSuccess = (data) => ({ type: "infoChapter/success", payload: data });
 export const infoChapterFail = (error) => ({ type: "infoChapter/fail", payload: error });
 
-export const { resetState } = infoChapterSlice.actions;
+export const { resetInfoChapterState } = infoChapterSlice.actions;
 export default infoChapterSlice.reducer;
