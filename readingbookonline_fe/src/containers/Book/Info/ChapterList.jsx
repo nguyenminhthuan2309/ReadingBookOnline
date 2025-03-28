@@ -1,19 +1,77 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { useRouter } from "next/router";
 
 import moment from "moment";
 import PropTypes from "prop-types";
-import { Button } from "@mui/material";
+import { Button, IconButton } from "@mui/material";
 
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-// import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteDialog from "./DeleteDialog";
 
 function ChapterList({ chapters, bookId }) {
   const router = useRouter();
+  const [showEditButton, setShowEditButton] = useState(false);
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [chapterID, setChapterID] = useState(null);
+  const [chapterTitle, setChapterTitle] = useState(null);
+
   const reversedChapters = chapters ? [...chapters].reverse() : [];
+
+  const handleShowEditButton = () => {
+    setShowEditButton((prev) => !prev);
+  };
+  const handleShowDeleteButton = () => {
+    setShowDeleteButton((prev) => !prev);
+  };
+
+  const handleOpenDeleteDialog = () => {
+    setOpenDeleteDialog((prev) => !prev);
+  };
+
+  const generateDeleteButton = useCallback(
+    (chapterID, chapterTitle) => {
+      if (!showDeleteButton) return null;
+
+      const handleDelete = (e) => {
+        e.stopPropagation();
+        setChapterID(chapterID);
+        setChapterTitle(chapterTitle);
+        handleOpenDeleteDialog();
+      };
+
+      return (
+        <IconButton onClick={handleDelete}>
+          <DeleteIcon sx={{ color: "black", fontSize: "2rem" }} />
+        </IconButton>
+      );
+    },
+    [showDeleteButton, handleOpenDeleteDialog]
+  );
+
+  const generateEditButton = useCallback(
+    (chapterID) => {
+      if (!showEditButton) return null;
+
+      const handleEdit = (e) => {
+        e.stopPropagation();
+        setChapterID(chapterID);
+      };
+
+      return (
+        <IconButton onClick={handleEdit}>
+          <EditIcon sx={{ color: "black", fontSize: "2rem" }} />
+        </IconButton>
+      );
+    },
+    [showEditButton]
+  );
+
   return (
     <section className="mt-24 max-md:mt-10">
       <header className="flex justify-between gap-5 items-center ml-4">
@@ -24,19 +82,22 @@ function ChapterList({ chapters, bookId }) {
           <h3 className="text-3xl leading-loose text-black">
             Chapter Releases
           </h3>
-          <Button>
+          <IconButton>
             <SwapVertIcon sx={{ color: "black" }} />
-          </Button>
+          </IconButton>
         </div>
         <div className="flex gap-2">
-          <Button
+          <IconButton
             onClick={() => router.push(`/chapter/create?bookNumber=${bookId}`)}
           >
             <AddCircleOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
-          </Button>
-          <Button>
+          </IconButton>
+          <IconButton onClick={handleShowEditButton}>
+            <EditIcon sx={{ color: "black", fontSize: "2rem" }} />
+          </IconButton>
+          <IconButton onClick={handleShowDeleteButton}>
             <DeleteOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
-          </Button>
+          </IconButton>
         </div>
       </header>
       <hr className="border-b border-black" />
@@ -45,9 +106,12 @@ function ChapterList({ chapters, bookId }) {
         {reversedChapters.map((chapter, index) => (
           <article
             key={index}
-            className="mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
+            className="flex flex-row mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
           >
-            <Button  sx={{ textTransform: "none", width: "100%" }} onClick={() => router.push(`/chapter?name=${chapter.id}`)}>
+            <Button
+              sx={{ textTransform: "none", width: "100%" }}
+              onClick={() => router.push(`/chapter?name=${chapter.id}`)}
+            >
               <div className="flex flex-wrap gap-5 w-full justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
                 <h4 className="text-black">
                   Chapter {chapter.chapter}
@@ -58,9 +122,19 @@ function ChapterList({ chapters, bookId }) {
                 </time>
               </div>
             </Button>
+            {generateEditButton(chapter.id)}
+            {generateDeleteButton(chapter.id, chapter.title)}
           </article>
         ))}
       </div>
+      <React.Fragment>
+        <DeleteDialog
+          open={openDeleteDialog}
+          handleClose={handleOpenDeleteDialog}
+          chapterID={chapterID}
+          chapterTitle={chapterTitle}
+        />
+      </React.Fragment>
     </section>
   );
 }
