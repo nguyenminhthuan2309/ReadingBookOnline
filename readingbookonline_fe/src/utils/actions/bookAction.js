@@ -68,7 +68,6 @@ export const editBook = (id, bookData) => {
       const response = await putAPI(url, bookData);
       dispatch(editBookSuccess(bookData));
       ShowNotify(SUCESSS, "Edit book successfully");
-      Router.push('/book/gallery')
       return response;
     }catch(error){
       dispatch(editBookFail(error))

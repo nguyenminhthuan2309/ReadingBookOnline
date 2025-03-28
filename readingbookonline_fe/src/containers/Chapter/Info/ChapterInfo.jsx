@@ -20,11 +20,10 @@ function ChapterInfo() {
 
   const [filePreview, setFilePreview] = useState("");
 
-  const { ChapterData, loading } = useSelector((state) => state.infoChapter);
+  const { chapterData, loading } = useSelector((state) => state.infoChapter);
 
   const handleFileURL = useCallback(
     async (fileURL) => {
-      console.log("fileURL", fileURL);
       setFilePreview("");
       try {
         const response = await fetch(fileURL, {
@@ -95,7 +94,7 @@ function ChapterInfo() {
     const fetchData = async () => {
       try {
         if (loading) return;
-        if (!ChapterData) {
+        if (!chapterData) {
           const savedData = localStorage.getItem(`chapter-${chapterId}`);
           if (savedData) {
             setCachedData(savedData.book);
@@ -106,7 +105,7 @@ function ChapterInfo() {
           return;
         }
 
-        const { data } = ChapterData;
+        const { data } = chapterData;
         if (!data || !data.content || !data.book) return;
 
         setItem(`chapter-${chapterId}`, JSON.stringify(data));
@@ -117,7 +116,7 @@ function ChapterInfo() {
       }
     };
     fetchData();
-  }, [ChapterData, loading, handleFileURL, chapterId]);
+  }, [chapterData, loading, handleFileURL, chapterId]);
 
   useEffect(() => {
     return () => {

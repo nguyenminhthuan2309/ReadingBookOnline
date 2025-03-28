@@ -21,8 +21,10 @@ const DeleteDialog = ({ open, handleClose, chapterID, chapterTitle }) => {
   const handleDelete = useCallback(
     async (id) => {
       try {
-        await dispatch(deleteChapter(id));
-        router.reload();
+        const response = await dispatch(deleteChapter(id));   
+        if (response.payload) {
+          router.reload();
+        }
       } catch (error) {
         console.log(error);
       }

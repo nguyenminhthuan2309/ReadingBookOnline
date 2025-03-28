@@ -122,7 +122,7 @@ function BookBasicInfo() {
   useEffect(() => {
     if (!bookId) return;
     dispatch(getBookInfoData(bookId));
-  }, [dispatch]);
+  }, [dispatch, bookId]);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">

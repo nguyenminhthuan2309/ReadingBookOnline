@@ -29,8 +29,6 @@ function MangaSPage() {
     }
   }, [bookId]);
 
-  console.log("bookInfo", bookInfos);
-
   return (
     <main className="rounded-none">
       <div className="flex flex-col w-full max-md:max-w-full">

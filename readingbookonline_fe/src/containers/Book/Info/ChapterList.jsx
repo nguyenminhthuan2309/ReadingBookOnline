@@ -60,7 +60,7 @@ function ChapterList({ chapters, bookId }) {
 
       const handleEdit = (e) => {
         e.stopPropagation();
-        setChapterID(chapterID);
+        router.push(`/chapter/edit?number=${chapterID}`);
       };
 
       return (
