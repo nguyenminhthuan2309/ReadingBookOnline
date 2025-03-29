@@ -3,7 +3,7 @@ import { Header } from "@/layouts/Header";
 import { NoticesSection } from "./NoticesSection";
 import { RecommendedBooks } from "./RecommendBooks";
 import { LatestUpdates } from "./LatestUpdates";
-import MostViewedBooks from "./MostViewedBooks";
+import { MostViewedBooks } from "./MostViewedBooks";
 
 export const HomePage = () => {
   return (
@@ -12,10 +12,8 @@ export const HomePage = () => {
         <Header />
         <NoticesSection />
         <RecommendedBooks />
-        <div className="flex flex-wrap gap-10 items-start mt-14 max-md:mt-10 max-md:max-w-full">
-          <LatestUpdates />
-          <MostViewedBooks />
-        </div>
+        <MostViewedBooks />
+        <LatestUpdates />
       </div>
     </div>
   );

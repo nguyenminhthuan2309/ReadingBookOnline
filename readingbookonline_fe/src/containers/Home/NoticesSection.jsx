@@ -1,3 +1,5 @@
+import React from "react";
+
 export const NoticesSection = () => {
   return (
     <section className="flex flex-col px-3.5 pt-4 pb-2.5 mt-9 max-w-full text-black bg-orange-100 rounded-xl border-4 border-amber-600 border-solid w-[1287px]">

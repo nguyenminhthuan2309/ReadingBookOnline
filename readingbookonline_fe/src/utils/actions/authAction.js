@@ -110,16 +110,18 @@ export const checkToken = (email, otp) => {
     dispatch(verifyTokenRequest());
     const url = authAPI.verifyOTP;
     try {
-      await postAPI(url, { email, otp });
+      const response = await postAPI(url, { email, otp });
       dispatch(verifyTokenSuccess());
       ShowNotify(
         SUCESSS,
         "Your password has successfully reseted. Please check email for new password"
       );
+      console.log(response);
+      return response;
     } catch (error) {
       console.log(error);
-      dispatch(verifyTokenFail());
-      ShowNotify(ERROR, error.response.data.msg);
+      dispatch(verifyTokenFail(error));
+      ShowNotify(ERROR, error.response.msg);
     }
   };
 };

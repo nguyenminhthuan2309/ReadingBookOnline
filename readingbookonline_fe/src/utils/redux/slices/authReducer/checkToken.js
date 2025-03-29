@@ -24,11 +24,11 @@ const verifyTokenSlice = createSlice({
       })
       .addCase("verifyToken/success", (state, action) => {
          state.loading = false;
-         state.email = action.payload.email;
-         state.token = action.payload.token;
+         state.email = action.payload?.email;
+         state.token = action.payload?.token;
          state.error = null;
       })
-      .addCase("verifyToken/error", (state, action) => {
+      .addCase("verifyToken/fail", (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Home from "@/containers/Home";
+import Home from "@/containers/Home/Loadable";
 import AdminPage from "@/containers/Admin/Users";
 import { USER_INFO } from "@/utils/constants";
 
