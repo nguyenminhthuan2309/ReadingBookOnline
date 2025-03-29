@@ -133,7 +133,7 @@ export class BookController {
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Xóa chương sách' })
-  @Delete('/chatper/:chapterId')
+  @Delete('/chapter/:chapterId')
   async deleteChapter(
     @Param('chapterId') chapterId: number,
     @Req() req,
@@ -144,7 +144,7 @@ export class BookController {
     return this.bookService.deleteChapter(chapterId, author);
   }
 
-  @Get('/chatper/:chapterId')
+  @Get('/chapter/:chapterId')
   @ApiOperation({ summary: 'Lấy thông tin chương theo ID' })
   @ApiResponse({
     status: 200,
