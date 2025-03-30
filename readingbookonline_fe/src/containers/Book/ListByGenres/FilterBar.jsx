@@ -14,30 +14,36 @@ const FilterBar = ({ itemLength }) => {
   const sortType = searchParams.get("sortType");
   const [sortTypeValue, setSortTypeValue] = useState(sortType === "DESC");
 
-  const handleChangeSortBy = useCallback((e, value) => {
-    const query = { ...router.query, sortBy: value };
-    router.push({
-      pathname: router.pathname,
-      query,
-    });
-  }, []);
+  const handleChangeSortBy = useCallback(
+    (value) => {
+      if (value === sortBy) {
+        const { sortBy, ...restQuery } = router.query;
+        router.push(
+          {
+            pathname: router.pathname,
+            query: restQuery,
+          },
+          undefined,
+          { shallow: true }
+        );
+        return;
+      }
+      const query = {
+        ...router.query,
+        sortBy: value,
+      };
 
-  useEffect(() => {
-    const query = {
-      ...router.query,
-      sortType: sortTypeValue ? "DESC" : "ASC",
-    };
-
-    router.push({
-      pathname: router.pathname,
-      query,
-    });
-  }, [sortTypeValue]);
-
-  const handleChangeSortType = useCallback((e) => {
-    e.stopPropagation();
-    setSortTypeValue((prev) => !prev);
-  }, []);
+      router.push(
+        {
+          pathname: router.pathname,
+          query,
+        },
+        undefined,
+        { shallow: true }
+      );
+    },
+    [router, sortBy]
+  );
 
   return (
     <div className="flex flex-wrap gap-5 justify-between mt-12 w-full max-md:mt-10 max-md:max-w-full">
@@ -48,19 +54,15 @@ const FilterBar = ({ itemLength }) => {
         <p className="self-start text-2xl leading-loose text-black basis-auto">
           {itemLength} Result(s)
         </p>
-        <IconButton onClick={handleChangeSortType}>
-          <SwapVertIcon />
-        </IconButton>
       </div>
       <div className="flex flex-wrap gap-10 justify-between items-center self-start text-xl leading-10 text-stone-400 max-md:max-w-full">
         <span className="self-stretch my-auto text-black">Order by:</span>
         <Tabs
-          value={sortBy}
+          value={sortBy || false}
           sx={{
             "& .Mui-selected": { color: "black", opacity: 1 },
             "& .MuiTabs-indicator": { display: "none" },
-          }}  
-          onChange={handleChangeSortBy}
+          }}
           centered
         >
           <Tab
@@ -72,6 +74,7 @@ const FilterBar = ({ itemLength }) => {
               fontSize: "18px",
             }}
             value="latestChapter"
+            onClick={() => handleChangeSortBy("latestChapter")}
           />
           <Tab
             label="A-Z"
@@ -82,6 +85,7 @@ const FilterBar = ({ itemLength }) => {
               fontSize: "18px",
             }}
             value="title"
+            onClick={() => handleChangeSortBy("title")}
           />
           <Tab
             label="Most Views"
@@ -92,6 +96,7 @@ const FilterBar = ({ itemLength }) => {
               fontSize: "18px",
             }}
             value="views"
+            onClick={() => handleChangeSortBy("views")}
           />
         </Tabs>
       </div>

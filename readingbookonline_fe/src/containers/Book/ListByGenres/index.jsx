@@ -13,33 +13,26 @@ import Stack from "@mui/material/Stack";
 // import Pagination from "./Pagination";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
-import { useGenres } from "@/utils/useGenre";
 import {
-  Checkbox,
   FormControl,
   FormControlLabel,
-  FormGroup,
   FormLabel,
   Radio,
   RadioGroup,
 } from "@mui/material";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/router";
 
 const BookListPage = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const pageNumber = searchParams.get("page");
   const sortBy = searchParams.get("sortBy");
   const sortType = searchParams.get("sortType");
+  const genre = searchParams.get("genre");
+  const [pageNumber, setPageNumber] = useState(1);
   const [progress, setProgress] = useState(0);
 
   const [bookList, setBookList] = useState([]);
   const [totalPage, setTotalPage] = useState();
   const [totaItem, setTotalItem] = useState();
-  const [genreList, setGenreList] = useState([]);
-
-  const { data: genres, isLoading } = useGenres();
 
   const getBookData = useCallback(async () => {
     let url;
@@ -47,6 +40,9 @@ const BookListPage = () => {
       url = bookAPI.getBook(20, pageNumber);
     } else {
       url = bookAPI.getBook(20, 1);
+    }
+    if (genre) {
+      url += `&categoryId=${genre}`;
     }
     if (+progress !== 0) {
       url += `&progressStatusId=${progress}`;
@@ -56,11 +52,6 @@ const BookListPage = () => {
     }
     if (sortType) {
       url += `&sortType=${sortType}`;
-    }
-    if (genreList.length > 0) {
-      genreList.forEach((genre) => {
-        url += `&categoryId=${genre}`;
-      });
     }
 
     try {
@@ -72,23 +63,10 @@ const BookListPage = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [genreList, pageNumber, sortBy, sortType, progress]);
-
-  const handleGenreChange = (genreId) => {
-    setGenreList((prev) => {
-      if (prev.includes(genreId)) {
-        return prev.filter((id) => id !== genreId);
-      }
-      return [...prev, genreId];
-    });
-  };
+  }, [pageNumber, sortBy, sortType, progress, genre]);
 
   const handleChangePage = useCallback((e, value) => {
-    const query = { ...router.query, page: value };
-    router.push({
-      pathname: router.pathname,
-      query,
-    });
+    setPageNumber(value);
   }, []);
 
   const handleProgressStatusChange = (event) => {
@@ -153,35 +131,6 @@ const BookListPage = () => {
                   />
                 </RadioGroup>
               </FormControl>
-              <FormGroup sx={{ mt: 2 }}>
-                <FormLabel id="demo-radio-buttons-group-label">
-                  Genre(s)
-                </FormLabel>
-                {isLoading ? (
-                  <div className="animate-pulse">
-                    {[1, 2, 3, 4].map((n) => (
-                      <div key={n} className="h-8 bg-gray-200 rounded mb-2" />
-                    ))}
-                  </div>
-                ) : (
-                  genres?.map((genre) => (
-                    <FormControlLabel
-                      key={genre.id}
-                      control={
-                        <Checkbox
-                          checked={genreList.includes(genre.id)}
-                          onChange={() => handleGenreChange(genre.id)}
-                          size="small"
-                        />
-                      }
-                      label={
-                        <span className="text-sm text-black">{genre.name}</span>
-                      }
-                      className="mb-1"
-                    />
-                  ))
-                )}
-              </FormGroup>
             </div>
 
             {/* Right Side - Main Content */}

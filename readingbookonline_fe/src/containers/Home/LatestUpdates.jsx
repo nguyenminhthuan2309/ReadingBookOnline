@@ -3,26 +3,35 @@ import BookTile from "@/components/BookItem";
 import { bookAPI } from "@/app/common/api";
 import { getAPI } from "@/utils/request";
 import { Pagination, Stack } from "@mui/material";
+import { useRouter } from "next/router";
 
 export const LatestUpdates = () => {
+  const router = useRouter();
   const [bookList, setBookList] = useState([]);
   const [totalPage, setTotalPage] = useState();
-  const [currentPage, setCurrentPage] = useState(1);
 
   const getBookData = useCallback(async () => {
-    const url = bookAPI.getBook(18, currentPage);
+    let url = bookAPI.getBook(20, 1);
+    url += "&sortBy=latestChapter&sortType=DESC";
     try {
       const response = await getAPI(url);
       const { data, totalPages } = response.data.data;
+
       setBookList(data);
       setTotalPage(totalPages);
     } catch (error) {
       console.log(error);
     }
-  },[currentPage]);
+  }, []);
 
-  const handleChangePage = (event, value) => {
-    setCurrentPage(value);
+  const handleChangePage = async (event, value) => {
+    try {
+      await router.push(
+        `/book_list?page=${value}&sortBy=latestChapter&sortType=DESC`
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
@@ -40,11 +49,6 @@ export const LatestUpdates = () => {
             <h2 className="self-start text-3xl leading-loose text-black">
               Latest Updates
             </h2>
-          </div>
-          <div className="flex gap-10 text-xl leading-10 text-black">
-            <span>Order by:</span>
-            <button className="text-stone-400">A-Z</button>
-            <button>rating</button>
           </div>
         </div>
         <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
@@ -71,7 +75,7 @@ export const LatestUpdates = () => {
             },
           }}
           count={totalPage}
-          page={currentPage}
+          page={1}
           onChange={handleChangePage}
         />
       </Stack>

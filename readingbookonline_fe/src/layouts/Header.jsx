@@ -80,7 +80,7 @@ export const Header = () => {
       </header>
       <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black border-b border-black">
         <ul className="flex flex-wrap gap-7 items-start">
-          <li className="w-[180px]">
+          {/* <li className="w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book_list?page=${RECENTLY_READ}`)}
@@ -88,8 +88,8 @@ export const Header = () => {
             >
               <span className="text-2xl hover:underline">Recently read</span>
             </Typography>
-          </li>
-          <li className="w-[180px]">
+          </li> */}
+          {/* <li className="w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book_list?page=${COMPLETED}`)}
@@ -97,7 +97,7 @@ export const Header = () => {
             >
               <span className="text-2xl hover:underline">Completed</span>
             </Typography>
-          </li>
+          </li> */}
           <li className="w-[180px]">
             <Typography
               variant="body1"
@@ -119,7 +119,7 @@ export const Header = () => {
               <span className="text-2xl hover:underline">Gallery</span>
             </Typography>
           </li>
-          <li className="w-[180px]">
+          {/* <li className="w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book_list?page=${FAVORITES}`)}
@@ -127,7 +127,7 @@ export const Header = () => {
             >
               <span className="text-2xl hover:underline">Favorite(s)</span>
             </Typography>
-          </li>
+          </li> */}
         </ul>
       </nav>
     </div>

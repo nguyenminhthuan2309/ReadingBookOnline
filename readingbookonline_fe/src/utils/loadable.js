@@ -1,10 +1,23 @@
-import React, { lazy, Suspense } from "react";
+import React, {
+  lazy,
+  Suspense,
+  startTransition,
+  useState,
+  useEffect,
+} from "react";
 
 const loadable = (importFunc, { fallback = null } = { fallback: null }) => {
   const LazyComponent = lazy(importFunc);
 
   return function LoadableComponent(props) {
-    // Return a proper component
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+      startTransition(() => {
+        setIsClient(true);
+      });
+    }, []);
+
     return (
       <Suspense
         fallback={
@@ -15,7 +28,7 @@ const loadable = (importFunc, { fallback = null } = { fallback: null }) => {
           )
         }
       >
-        <LazyComponent {...props} />
+        {isClient ? <LazyComponent {...props} /> : null}
       </Suspense>
     );
   };

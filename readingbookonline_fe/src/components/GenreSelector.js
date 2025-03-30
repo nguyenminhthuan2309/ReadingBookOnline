@@ -13,7 +13,7 @@ import Grid from "@mui/material/Grid2";
 export default function GenrePopover() {
   const [anchorEl, setAnchorEl] = useState(null);
   const { data: genres, isLoading } = useGenres();
-  //   const router = useRouter();
+    const router = useRouter();
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -23,7 +23,7 @@ export default function GenrePopover() {
   };
 
   const handleGenreClick = (genreId) => {
-    // router.push(`/list?genre=${genreId}`);
+    router.push(`/book/category?genre=${genreId}`);
     handleClose();
   };
 
@@ -65,7 +65,7 @@ export default function GenrePopover() {
                     "&:hover": { color: "blue" },
                   }}
                   onClick={() => {
-                    console.log(`Chọn thể loại: ${genre.name}`);
+                    handleGenreClick(genre.id);
                     handleClose();
                   }}
                 >
