@@ -125,7 +125,8 @@ export class BookService {
         .leftJoinAndSelect('book.accessStatus', 'accessStatus')
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
-        .leftJoinAndSelect('bcr.category', 'category');
+        .leftJoinAndSelect('bcr.category', 'category')
+        .leftJoinAndSelect('book.chapters', 'chapters');
 
       if (userId) {
         qb.andWhere('author.id = :userId', { userId });
