@@ -212,15 +212,6 @@ export class BookService {
     try {
       const cachedKey = `book:detail:${bookId}`;
 
-      await this.databaseService
-        .queryBuilder(this.bookRepository, 'book')
-        .update(Book)
-        .set({
-          views: () => 'views + 1',
-        })
-        .where('id = :bookId', { bookId })
-        .execute();
-
       const cachedBook = await this.cacheService.get(cachedKey);
       if (cachedBook) {
         return JSON.parse(cachedBook);
@@ -241,8 +232,17 @@ export class BookService {
       const book = await qb.getOne();
 
       if (!book) {
-        throw new NotFoundException('Không tìm thấy sách');
+        throw new NotFoundException('Book not found');
       }
+
+      await this.databaseService
+        .queryBuilder(this.bookRepository, 'book')
+        .update(Book)
+        .set({
+          views: () => 'views + 1',
+        })
+        .where('id = :bookId', { bookId })
+        .execute();
 
       const ratingResult = await this.databaseService
         .queryBuilder(this.bookReviewRepository, 'review')
@@ -647,7 +647,7 @@ export class BookService {
       );
 
       if (!chapter) {
-        throw new NotFoundException('Không tìm thấy chương');
+        throw new NotFoundException('Chapter not found');
       }
 
       return plainToInstance(GetBookChapterDto, chapter, {

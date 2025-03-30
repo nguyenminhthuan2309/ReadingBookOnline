@@ -53,7 +53,7 @@ export class CreateBookDto {
     description: 'Danh sách các ID của thể loại',
   })
   @IsArray()
-  @ArrayNotEmpty()
+  @ArrayNotEmpty({ message: 'Book must have at least 1 category' })
   @Transform(
     ({ value }) => (Array.isArray(value) ? value.map(Number) : [Number(value)]),
     { toClassOnly: true },

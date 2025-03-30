@@ -30,7 +30,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         typeof exceptionResponse === 'object' &&
         exceptionResponse !== null
       ) {
-        message = exceptionResponse['message'] || message;
+        message = Array.isArray(exceptionResponse['message'])
+          ? exceptionResponse['message'][0]
+          : exceptionResponse['message'] || message;
         errorData = exceptionResponse['error'] || null;
       }
     } else if (exception instanceof JsonWebTokenError) {
