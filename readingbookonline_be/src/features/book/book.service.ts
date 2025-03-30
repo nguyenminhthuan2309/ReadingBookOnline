@@ -125,8 +125,7 @@ export class BookService {
         .leftJoinAndSelect('book.accessStatus', 'accessStatus')
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
-        .leftJoinAndSelect('bcr.category', 'category')
-        .leftJoinAndSelect('book.chapters', 'chapters');
+        .leftJoinAndSelect('bcr.category', 'category');
 
       if (userId) {
         qb.andWhere('author.id = :userId', { userId });
@@ -146,7 +145,16 @@ export class BookService {
         });
       }
       if (categoryId && categoryId.length > 0) {
-        qb.andWhere('category.id IN (:...categoryId)', { categoryId });
+        qb.andWhere(
+          `book.id IN (
+            SELECT bcr.book_id
+            FROM book_category_relation bcr
+            WHERE bcr.category_id IN (:...categoryId)
+            GROUP BY bcr.book_id
+            HAVING COUNT(DISTINCT bcr.category_id) = :categoryCount
+          )`,
+          { categoryId, categoryCount: categoryId.length },
+        );
       }
       if (search) {
         qb.andWhere(
@@ -167,8 +175,6 @@ export class BookService {
         qb.orderBy('book.title', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.UPDATED_AT) {
         qb.orderBy('book.updatedAt', sortType as SortTypeOptions);
-      } else if (sortBy === SortByOptions.LATEST_CHAPTER) {
-        qb.addOrderBy('chapters.updatedAt', sortType as SortTypeOptions);
       }
 
       qb.skip((page - 1) * limit).take(limit);
@@ -532,6 +538,10 @@ export class BookService {
         book: { id: book.id },
       });
 
+      await this.databaseService.update(this.bookRepository, book.id, {
+        updatedAt: new Date(),
+      });
+
       await this.cacheService.deletePattern('books:*');
 
       return true;
@@ -572,6 +582,10 @@ export class BookService {
         price: dto.price,
       });
 
+      await this.databaseService.update(this.bookRepository, chapter.book.id, {
+        updatedAt: new Date(),
+      });
+
       await this.cacheService.deletePattern('books:*');
 
       return true;
@@ -607,6 +621,10 @@ export class BookService {
         `Chapter with id ${chapterId} deleted`,
         'BookChapterService.deleteChapter',
       );
+
+      await this.databaseService.update(this.bookRepository, chapter.book.id, {
+        updatedAt: new Date(),
+      });
 
       await this.cacheService.deletePattern('books:*');
 
@@ -852,6 +870,12 @@ export class BookService {
       const dtos = plainToInstance(BookChapterCommentResponseDto, data, {
         excludeExtraneousValues: true,
       }) as BookChapterCommentResponseDto[];
+
+      for (const dto of dtos) {
+        dto.totalChildComments = await this.bookChapterCommentRepository.count({
+          where: { parent: { id: dto.id } },
+        });
+      }
 
       return {
         totalItems,

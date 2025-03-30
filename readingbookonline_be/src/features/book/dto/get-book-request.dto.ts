@@ -16,7 +16,6 @@ export enum SortByOptions {
   TITLE = 'title',
   VIEWS = 'views',
   UPDATED_AT = 'updatedAt',
-  LATEST_CHAPTER = 'latestChapter',
 }
 
 export enum SortTypeOptions {

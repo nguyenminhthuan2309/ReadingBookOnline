@@ -76,4 +76,11 @@ export class BookChapterCommentResponseDto {
   @Expose()
   @Type(() => BookChapterCommentResponseDto)
   children?: BookChapterCommentResponseDto[];
+
+  @Expose()
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Tổng số bình luận con',
+  })
+  totalChildComments: number;
 }
