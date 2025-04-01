@@ -15,7 +15,7 @@ import { handleAuthenticate, verifyCode } from "@/utils/actions/authAction";
 import { useSearchParams } from "next/navigation";
 
 import { getAPI } from "@/utils/request";
-import { authAPI } from "@/app/common/api";
+import { authAPI } from "@/common/api";
 import { ShowNotify } from "@/components/Notification";
 import { ERROR } from "@/utils/constants";
 

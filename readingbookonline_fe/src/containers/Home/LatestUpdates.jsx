@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import BookTile from "@/components/BookItem";
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import { Pagination, Stack } from "@mui/material";
 import { useRouter } from "next/router";
@@ -12,7 +12,7 @@ export const LatestUpdates = () => {
 
   const getBookData = useCallback(async () => {
     let url = bookAPI.getBook(20, 1);
-    url += "&sortBy=latestChapter&sortType=DESC";
+    url += "&sortBy=updatedAt&sortType=DESC";
     try {
       const response = await getAPI(url);
       const { data, totalPages } = response.data.data;
@@ -27,7 +27,7 @@ export const LatestUpdates = () => {
   const handleChangePage = async (event, value) => {
     try {
       await router.push(
-        `/book_list?page=${value}&sortBy=latestChapter&sortType=DESC`
+        `/book_list?page=${value}&sortBy=updatedAt&sortType=DESC`
       );
     } catch (error) {
       console.log(error);
@@ -53,7 +53,7 @@ export const LatestUpdates = () => {
         </div>
         <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
       </header>
-      <div className="flex flex-wrap gap-10 w-full justify-between items-start mt-12 max-md:mt-10">
+      <div className="flex flex-wrap px-18 gap-10 w-full justify-between items-start mt-12 max-md:mt-10">
         {bookList &&
           bookList.map((book, index) => (
             <BookTile
@@ -63,7 +63,7 @@ export const LatestUpdates = () => {
               title={book.title}
               author={book.author.name}
               chapters={book.chapters}
-              className="flex flex-col mb-8 rounded-none w-[200px]"
+              className="flex flex-col rounded-none w-[200px]"
             />
           ))}
       </div>

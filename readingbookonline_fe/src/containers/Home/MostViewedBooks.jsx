@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import BookTile from "@/components/BookItem";
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 
 export const MostViewedBooks = () => {
@@ -36,17 +36,18 @@ export const MostViewedBooks = () => {
       </header>
       <hr className="flex shrink-0 max-w-full h-px border-b border-black bg-zinc-300 bg-opacity-0 w-[1521px]" />
       <div className="flex flex-wrap gap-10 justify-between items-center mt-6 w-full text-4xl text-black max-w-[1521px] max-md:max-w-full">
-        {bookList && bookList.map((book, index) => (
-          <BookTile
-            key={index}
-            bookId={book.id}
-            imageUrl={book.cover}
-            title={book.title}
-            author={book.author?.name}
-            className="self-stretch pr-1.5 pb-9 my-auto w-[200px]"
-            chapters={book.chapters}
-          />
-        ))}
+        {bookList &&
+          bookList.map((book, index) => (
+            <BookTile
+              key={index}
+              bookId={book.id}
+              imageUrl={book.cover}
+              title={book.title}
+              author={book.author?.name}
+              className="self-stretch pr-1.5 pb-9 my-auto w-[200px]"
+              chapters={book.chapters}
+            />
+          ))}
       </div>
     </section>
   );

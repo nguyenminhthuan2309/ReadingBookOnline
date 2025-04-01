@@ -1,4 +1,4 @@
-import { chapterAPI } from "@/app/common/api";
+import { chapterAPI } from "@/common/api";
 import {
   createChapterFail,
   createChapterRequest,
@@ -63,12 +63,12 @@ export const deleteChapter = (chapterId) => {
     try {
       const response = await deleteAPI(url);
       dispatch(deleteChapterSuccess());
-      ShowNotify(SUCESSS, "Delete chapter successfully");
+      await ShowNotify(SUCESSS, "Delete chapter successfully");
+      Router.reload();
       return response;
     } catch (error) {
       dispatch(deleteChapterFail(error));
       await ShowNotify(ERROR, error.response.data.msg);
-      Router.reload();
     }
   };
 };
@@ -80,11 +80,11 @@ export const editChapter = (chapterId, chapterData) => {
     try {
       const response = await putAPI(url, chapterData);
       dispatch(editBookSuccess(response.data));
-      ShowNotify(SUCESSS, "Edit chapter successfully");
+      await ShowNotify(SUCESSS, "Edit chapter successfully");
       return response;
     } catch (error) {
       dispatch(editBookFail(error));
-      ShowNotify(ERROR, error.response.data.data);
+      await ShowNotify(ERROR, error.response.data.data);
     }
   };
 };

@@ -344,7 +344,7 @@ function BookBasicInfo() {
               row
               aria-labelledby="demo-row-radio-buttons-group-label"
               name="row-radio-buttons-group"
-              defaultValue={1}
+              value={progressStatus}
               className="flex flex-wrap gap-10"
             >
               <FormControlLabel

@@ -11,7 +11,7 @@ import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 
 // import Pagination from "./Pagination";
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import { useGenres } from "@/utils/useGenre";
 import {

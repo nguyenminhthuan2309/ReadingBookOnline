@@ -125,7 +125,8 @@ function ChapterBasicInfo() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        ShowNotify(ERROR, `HTTP error! status: ${response.data.code}`);
+        return;
       }
       const contentType = response.headers.get("content-type");
       // Check if we actually got a docx file
@@ -138,7 +139,8 @@ function ChapterBasicInfo() {
       const arrayBuffer = await blob.arrayBuffer();
 
       if (arrayBuffer.byteLength === 0) {
-        throw new Error("Empty file received");
+        ShowNotify(ERROR, "Empty file received");
+        return;
       }
 
       const container = document.createElement("div");
@@ -150,7 +152,8 @@ function ChapterBasicInfo() {
       if (container.innerHTML) {
         setFilePreview(container.innerHTML);
       } else {
-        throw new Error("Failed to render document");
+        ShowNotify(ERROR, "Failed to render document");
+        return;
       }
     } catch (error) {
       console.error("Error details:", error);

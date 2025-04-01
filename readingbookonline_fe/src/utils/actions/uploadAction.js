@@ -1,4 +1,4 @@
-import { uploadAPI } from "@/app/common/api";
+import { uploadAPI } from "@/common/api";
 import {
   uploadImageFail,
   uploadImageRequest,
@@ -7,7 +7,11 @@ import {
 import { postAPI } from "../request";
 import { ShowNotify } from "@/components/Notification";
 import { ERROR, INFO, SUCESSS } from "../constants";
-import { uploadFileFail, uploadFileRequest, uploadFileSuccess } from "../redux/slices/uploadReducer/uploadFile";
+import {
+  uploadFileFail,
+  uploadFileRequest,
+  uploadFileSuccess,
+} from "../redux/slices/uploadReducer/uploadFile";
 
 export const uploadImage = (file) => {
   return async (dispatch) => {

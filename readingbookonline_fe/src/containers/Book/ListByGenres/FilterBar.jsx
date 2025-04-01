@@ -73,8 +73,8 @@ const FilterBar = ({ itemLength }) => {
               textTransform: "none",
               fontSize: "18px",
             }}
-            value="latestChapter"
-            onClick={() => handleChangeSortBy("latestChapter")}
+            value="updatedAt"
+            onClick={() => handleChangeSortBy("updatedAt")}
           />
           <Tab
             label="A-Z"

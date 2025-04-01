@@ -343,6 +343,7 @@ function ChapterBasicInfo() {
               </>
             )}
           </div>
+
           <FormControl>
             <FormLabel id="demo-row-radio-buttons-group-label">
               <span className="text-black text-[18px]">After submit:</span>

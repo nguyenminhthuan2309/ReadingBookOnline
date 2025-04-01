@@ -9,7 +9,7 @@ import FilterBar from "./FilterBar";
 import BookTile from "@/components/BookItem";
 
 import Pagination from "./Pagination";
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 
 import { getItem } from "@/utils/localStorage";
@@ -26,14 +26,14 @@ const BookListPage = () => {
   const router = useRouter();
   const [user, setUser] = useState({});
   const [bookList, setBookList] = useState([]);
-  
+
   const [deleteButton, setDeleteButton] = useState(false);
   const [bookTitle, setBookTitle] = useState("");
   const [editButton, setEditButton] = useState(false);
-  
+
   const [openDialog, setOpenDialog] = useState(false);
   const [bookId, setBookId] = useState();
-  
+
   const [totalPage, setTotalPage] = useState();
   const [totaItem, setTotalItem] = useState();
   const [currentPage, setCurrentPage] = useState(1);
