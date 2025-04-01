@@ -240,6 +240,7 @@ export class BookService {
         .update(Book)
         .set({
           views: () => 'views + 1',
+          updatedAt: () => 'updated_at',
         })
         .where('id = :bookId', { bookId })
         .execute();
