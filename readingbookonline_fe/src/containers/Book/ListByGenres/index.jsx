@@ -27,6 +27,7 @@ const BookListPage = () => {
   const sortBy = searchParams.get("sortBy");
   const sortType = searchParams.get("sortType");
   const genre = searchParams.get("genre");
+  const search = searchParams.get("search");
   const [pageNumber, setPageNumber] = useState(1);
   const [progress, setProgress] = useState(0);
 
@@ -47,10 +48,13 @@ const BookListPage = () => {
     if (+progress !== 0) {
       url += `&progressStatusId=${progress}`;
     }
-    if (sortBy) {
+    if (!!search) {
+      url += `&search=${search}`;
+    }
+    if (!!sortBy) {
       url += `&sortBy=${sortBy}`;
     }
-    if (sortType) {
+    if (!!sortType) {
       url += `&sortType=${sortType}`;
     }
 
@@ -63,7 +67,7 @@ const BookListPage = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [pageNumber, sortBy, sortType, progress, genre]);
+  }, [pageNumber, sortBy, sortType, progress, genre, search]);
 
   const handleChangePage = useCallback((e, value) => {
     setPageNumber(value);
