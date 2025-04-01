@@ -311,8 +311,24 @@ export class BookController {
     @Query() pagination: PaginationRequestDto,
   ) {
     const author = req.user;
-
     return this.bookService.getReadingHistory(author, pagination);
+  }
+
+  // @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy thống kê lịch sử đọc sách (top 6 cuốn mỗi khoảng thời gian)',
+  })
+  @ApiQuery({
+    name: 'timeRange',
+    enum: ['daily', 'weekly', 'monthly'],
+    description: 'Khoảng thời gian thống kê',
+    required: false,
+  })
+  @Get('reading-history/chart')
+  async getReadingHistoryChart(
+    @Query('timeRange') timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<any[]> {
+    return await this.bookService.getReadingHistoryChart(timeRange);
   }
 
   @ApiOperation({ summary: 'Lấy chi tiết sách' })

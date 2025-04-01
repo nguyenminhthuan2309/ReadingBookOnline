@@ -12,6 +12,7 @@ import { BookModule } from '@features/book/book.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from '@core/auth/auth.module';
 import { CloudinaryModule } from '@core/cloudinary/cloudinary.module';
+import { TrackerModule } from '@features/tracker/tracker.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CloudinaryModule } from '@core/cloudinary/cloudinary.module';
     UserModule,
     BookModule,
     AuthModule,
+    TrackerModule,
     CloudinaryModule,
   ],
   controllers: [AppController],

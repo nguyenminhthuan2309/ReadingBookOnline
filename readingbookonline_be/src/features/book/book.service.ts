@@ -62,6 +62,7 @@ import {
 } from './dto/create-book-reading-history.dto';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
+import { format, parseISO } from 'date-fns';
 
 @Injectable()
 export class BookService {
@@ -1121,6 +1122,82 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.updateBookStatuses');
+      throw error;
+    }
+  }
+
+  async getReadingHistoryChart(
+    timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<{ time: string; books: { title: string; count: number }[] }[]> {
+    try {
+      let dateFormat = 'YYYY-MM-DD';
+      let whereClause = '';
+
+      if (timeRange === 'daily') {
+        dateFormat = 'YYYY-MM-DD';
+        whereClause = `WHERE brh.created_at >= CURRENT_DATE - INTERVAL '30 days'`;
+      } else if (timeRange === 'weekly') {
+        dateFormat = 'IYYY-IW';
+        whereClause = `WHERE brh.created_at >= CURRENT_DATE - INTERVAL '14 weeks'`;
+      } else if (timeRange === 'monthly') {
+        dateFormat = 'YYYY-MM';
+        whereClause = `WHERE brh.created_at >= CURRENT_DATE - INTERVAL '12 months'`;
+      }
+
+      const query = `
+       SELECT 
+        to_char(brh.created_at, $1) as time,
+        b.title,
+        COUNT(brh.id) AS count
+      FROM book_reading_history brh
+      JOIN book b ON brh.book_id = b.id
+      ${whereClause}
+      GROUP BY time, b.id
+      ORDER BY time DESC, count DESC`;
+
+      const rawResult: any[] = await this.databaseService.executeRawQuery(
+        query,
+        [dateFormat],
+      );
+
+      const groupedData = rawResult.reduce(
+        (acc: Record<string, { title: string; count: number }[]>, row) => {
+          const time = row.time;
+          if (!acc[time]) {
+            acc[time] = [];
+          }
+          acc[time].push({
+            title: row.title,
+            count: Number(row.count),
+          });
+          return acc;
+        },
+        {},
+      );
+
+      const chartData = Object.keys(groupedData).map((element) => {
+        let formattedTime = element;
+        if (timeRange === 'daily') {
+          formattedTime = format(parseISO(element), 'dd-MM-yyyy');
+        } else if (timeRange === 'weekly') {
+          const [year, week] = element.split('-');
+          formattedTime = `Tuần ${week}-${year}`;
+        } else if (timeRange === 'monthly') {
+          formattedTime = format(parseISO(element), 'MM-yyyy');
+        }
+
+        const sortedBooks = groupedData[element]
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6);
+        return { time: formattedTime, books: sortedBooks };
+      });
+
+      return chartData;
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookService.getReadingHistoryChart',
+      );
       throw error;
     }
   }
