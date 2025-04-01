@@ -1,4 +1,4 @@
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import {
   createBookFail,
   createBookRequest,
@@ -16,7 +16,11 @@ import {
   getBookbyIdRequest,
   getBookbyIdSuccess,
 } from "../redux/slices/bookReducer/editBook";
-import { deleteBookFail, deleteBookRequest, deleteBookSuccess } from "../redux/slices/bookReducer/deleteBook";
+import {
+  deleteBookFail,
+  deleteBookRequest,
+  deleteBookSuccess,
+} from "../redux/slices/bookReducer/deleteBook";
 
 export const createBook = (bookData) => {
   return async (dispatch) => {
@@ -69,9 +73,9 @@ export const editBook = (id, bookData) => {
       dispatch(editBookSuccess(bookData));
       ShowNotify(SUCESSS, "Edit book successfully");
       return response;
-    }catch(error){
-      dispatch(editBookFail(error))
-      ShowNotify(ERROR, error.response.data.msg)
+    } catch (error) {
+      dispatch(editBookFail(error));
+      ShowNotify(ERROR, error.response.data.msg);
     }
   };
 };
@@ -84,8 +88,9 @@ export const deleteBook = (id) => {
       const response = await deleteAPI(url);
       dispatch(deleteBookSuccess());
       ShowNotify(SUCESSS, "Delete book successfully");
+      Router.reload();
       return response;
-    } catch(error){
+    } catch (error) {
       dispatch(deleteBookFail(error.response.data.msg));
       ShowNotify(ERROR, error.response.data.msg);
     }

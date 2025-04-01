@@ -17,7 +17,6 @@ const DeleteDialog = ({ open, handleClose, bookID, bookTitle }) => {
   const handleDelete = useCallback(async (id) => {
     try {
       await dispatch(deleteBook(id));
-      router.reload();
     } catch (error) {
       console.log(error);
     }

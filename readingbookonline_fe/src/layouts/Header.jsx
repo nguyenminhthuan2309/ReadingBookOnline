@@ -19,6 +19,11 @@ import { getItem } from "@/utils/localStorage";
 export const Header = () => {
   const router = useRouter();
   const [user, setUser] = useState();
+  const [search, setSearch] = useState("");
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+  };
 
   useEffect(() => {
     const userInfo = getItem(USER_INFO);
@@ -43,8 +48,9 @@ export const Header = () => {
               type="search"
               placeholder="SEARCH . . ."
               className="bg-transparent outline-none"
+              onChange={handleSearch}
             />
-            <IconButton>
+            <IconButton onClick={()=>router.push(`/book_list?search=${search}`)}>
               <SearchIcon />
             </IconButton>
           </div>

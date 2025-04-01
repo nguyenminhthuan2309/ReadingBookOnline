@@ -23,7 +23,7 @@ const BookTile = ({
 }) => {
   const router = useRouter();
   const handleBookClick = () => {
-    if(!bookId) return;
+    if (!bookId) return;
     router.push(`/book?number=${encodeURIComponent(bookId)}`);
   };
   const handleChapterClick = (event, chapter) => {
@@ -35,7 +35,16 @@ const BookTile = ({
     <Card sx={{ backgroundColor: "transparent" }} className={`${className}`}>
       <CardActionArea onClick={handleBookClick}>
         <CardMedia
-          sx={{ height: 295 }}
+          className="justify-items-center"
+          sx={{
+            height: 250,
+            width: 200,
+            objectFit: "fill",
+            backgroundSize: "100% 100%", // Forces background to stretch
+            "&.MuiCardMedia-root": {
+              objectFit: "fill",
+            },
+          }}
           image={imageUrl}
           title={`${title} cover`}
         />

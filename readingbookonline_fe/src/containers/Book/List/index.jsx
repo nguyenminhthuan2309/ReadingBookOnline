@@ -11,7 +11,7 @@ import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 
 // import Pagination from "./Pagination";
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import { useGenres } from "@/utils/useGenre";
 import {
@@ -32,6 +32,7 @@ const BookListPage = () => {
   const pageNumber = searchParams.get("page");
   const sortBy = searchParams.get("sortBy");
   const sortType = searchParams.get("sortType");
+  const search = searchParams.get("search");
   const [progress, setProgress] = useState(0);
 
   const [bookList, setBookList] = useState([]);
@@ -48,13 +49,16 @@ const BookListPage = () => {
     } else {
       url = bookAPI.getBook(20, 1);
     }
+    if (!!search) {
+      url += `&search=${search}`;
+    }
     if (+progress !== 0) {
       url += `&progressStatusId=${progress}`;
     }
-    if (sortBy) {
+    if (!!sortBy) {
       url += `&sortBy=${sortBy}`;
     }
-    if (sortType) {
+    if (!!sortType) {
       url += `&sortType=${sortType}`;
     }
     if (genreList.length > 0) {
@@ -72,7 +76,7 @@ const BookListPage = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [genreList, pageNumber, sortBy, sortType, progress]);
+  }, [genreList, pageNumber, sortBy, sortType, progress, search]);
 
   const handleGenreChange = (genreId) => {
     setGenreList((prev) => {

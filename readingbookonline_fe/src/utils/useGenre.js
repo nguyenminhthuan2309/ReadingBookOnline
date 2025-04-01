@@ -1,4 +1,4 @@
-import { bookAPI } from "@/app/common/api";
+import { bookAPI } from "@/common/api";
 import { useQuery } from "@tanstack/react-query";
 import { getAPI } from "./request";
 

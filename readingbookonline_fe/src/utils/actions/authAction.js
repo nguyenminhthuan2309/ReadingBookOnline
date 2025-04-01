@@ -12,9 +12,16 @@ import {
 } from "../redux/slices/authReducer/loginReducer";
 import { getAPI, postAPI } from "../request";
 
-import { authAPI } from "@/app/common/api";
+import { authAPI } from "@/common/api";
 import Router from "next/router";
-import { ACCESS_TOKEN, ERROR, INFO, SUCESSS, USER_INFO } from "../constants";
+import {
+  ACCESS_TOKEN,
+  ERROR,
+  EXPIRED_IN,
+  INFO,
+  SUCESSS,
+  USER_INFO,
+} from "../constants";
 import {
   verifyTokenFail,
   verifyTokenRequest,
@@ -34,8 +41,9 @@ export const handleAuthenticate = (formdata) => {
       const response = await postAPI(url, formdata);
       if (response && response.data) {
         dispatch(loginSuccess());
-        const { accessToken, user } = response.data.data;
+        const { accessToken, user, expiresIn } = response.data.data;
         localStorage.setItem(ACCESS_TOKEN, accessToken);
+        localStorage.setItem(EXPIRED_IN, expiresIn);
         localStorage.setItem(
           USER_INFO,
           JSON.stringify({
@@ -130,11 +138,11 @@ export const verifyCode = (code) => {
   return async (dispatch) => {
     dispatch(verifyTokenRequest());
     const url = authAPI.verifyCode(code);
-    try{
+    try {
       const response = await getAPI(url);
       dispatch(verifyTokenSuccess(response.data));
       ShowNotify(SUCESSS, "Your account has been verified");
-    }catch(error){
+    } catch (error) {
       dispatch(verifyTokenFail(error.response.data.msg));
       ShowNotify(ERROR, error.response.data.msg);
     }
