@@ -16,11 +16,11 @@ import {
 export const uploadImage = (file) => {
   return async (dispatch) => {
     dispatch(uploadImageRequest());
-    ShowNotify(INFO, "Uploading file...");
     const url = uploadAPI.uploadImage;
     try {
+      ShowNotify(INFO, "Uploading file...");
       const response = await postAPI(url, file);
-      dispatch(uploadImageSuccess());
+      dispatch(uploadImageSuccess(response.data));
       ShowNotify(SUCESSS, "Upload file successfully");
       return response.data;
     } catch (error) {
@@ -33,11 +33,11 @@ export const uploadImage = (file) => {
 export const uploadFile = (file) => {
   return async (dispatch) => {
     dispatch(uploadFileRequest());
-    ShowNotify(INFO, "Uploading file...");
     const url = uploadAPI.uploadFile;
     try {
+      ShowNotify(INFO, "Uploading file...");
       const response = await postAPI(url, file);
-      dispatch(uploadFileSuccess());
+      dispatch(uploadFileSuccess(response.data));
       ShowNotify(SUCESSS, "Upload file successfully");
       return response.data;
     } catch (error) {

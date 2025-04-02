@@ -1,20 +1,26 @@
 import * as React from "react";
+
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
+
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Divider from "@mui/material/Divider";
+
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Settings from "@mui/icons-material/Settings";
+
 import Logout from "@mui/icons-material/Logout";
 import PropTypes from "prop-types";
 import { useRouter } from "next/router";
+
 import { getRandomColor } from "./getRandomColor";
 import { handleLogout } from "@/utils/actions/authAction";
 import { useDispatch } from "react-redux";
-
+import PaidIcon from "@mui/icons-material/Paid";
+import { Button } from "@mui/material";
 export default function AccountMenu({ name }) {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -29,6 +35,11 @@ export default function AccountMenu({ name }) {
 
   const handleClickLogOut = () => {
     dispatch(handleLogout());
+  };
+
+  const handleClickPurchase = (e) => {
+    e.stopPropagation();
+    router.push("/account/purchases");
   };
 
   return (
@@ -63,8 +74,8 @@ export default function AccountMenu({ name }) {
               filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
               mt: 1.5,
               "& .MuiAvatar-root": {
-                width: 32,
-                height: 32,
+                width: 50,
+                height: 50,
                 ml: -0.5,
                 mr: 1,
               },
@@ -86,6 +97,23 @@ export default function AccountMenu({ name }) {
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
+        <MenuItem
+          sx={{ display: "flex", justifyContent: "space-between", gap: "10px" }}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <span>Coin</span>
+            <div className="flex items-center gap-2">
+              <PaidIcon sx={{ color: "gold" }} />
+              <span>1000</span>
+            </div>
+          </div>
+          <Button sx={{ textTransform: "none", zIndex: 10 }} onClick={handleClickPurchase}>
+            <span className="bg-amber-400 p-2 rounded-lg text-white">
+              Purchase for coin
+            </span>
+          </Button>
+        </MenuItem>
+        <Divider />
         <MenuItem
           onClick={() => {
             router.push(`/account/info`);

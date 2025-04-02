@@ -52,7 +52,7 @@ export const handleAuthenticate = (formdata) => {
             avatar: user.avatar,
             email: user.email,
             name: user.name,
-            userRole: user.role,
+            role: user.role,
             status: user.status,
           })
         );
@@ -63,7 +63,7 @@ export const handleAuthenticate = (formdata) => {
         }
       }
     } catch (error) {
-      dispatch(loginFail());
+      dispatch(loginFail(error.response.data));
       ShowNotify(ERROR, error.response.data.msg);
     }
   };
@@ -83,8 +83,8 @@ export const registerAccount = (formdata) => {
     const url = authAPI.register;
     try {
       const response = await postAPI(url, formdata);
-      dispatch(registerSuccess());
       if (response && response.data) {
+        dispatch(registerSuccess(response.data));
         ShowNotify(
           SUCESSS,
           "A email has been sent please check your email to verify your account",
@@ -92,7 +92,7 @@ export const registerAccount = (formdata) => {
         );
       }
     } catch (error) {
-      dispatch(registerFail());
+      dispatch(registerFail(error.response.data));
       ShowNotify(ERROR, error.response.data.msg);
     }
   };
@@ -103,11 +103,13 @@ export const handleForgotPassword = (email) => {
     dispatch(forgotPasswordRequest());
     const url = authAPI.forgotPassword;
     try {
-      await postAPI(url, email);
-      dispatch(forgotPasswordSuccess());
-      ShowNotify(INFO, "A email has been sent please check your email");
+      const response = await postAPI(url, email);
+      if (response && response.data) {
+        dispatch(forgotPasswordSuccess(response.data));
+        ShowNotify(INFO, "A email has been sent please check your email");
+      }
     } catch (error) {
-      dispatch(forgotPasswordFail());
+      dispatch(forgotPasswordFail(error.response.data));
       ShowNotify(ERROR, error.response.data.msg);
     }
   };
@@ -119,17 +121,17 @@ export const checkToken = (email, otp) => {
     const url = authAPI.verifyOTP;
     try {
       const response = await postAPI(url, { email, otp });
-      dispatch(verifyTokenSuccess());
-      ShowNotify(
-        SUCESSS,
-        "Your password has successfully reseted. Please check email for new password"
-      );
-      console.log(response);
+      if (response && response.data) {
+        dispatch(verifyTokenSuccess(response.data));
+        ShowNotify(
+          SUCESSS,
+          "Your password has successfully reseted. Please check email for new password"
+        );
+      }
       return response;
     } catch (error) {
-      console.log(error);
       dispatch(verifyTokenFail(error));
-      ShowNotify(ERROR, error.response.msg);
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };
@@ -140,8 +142,10 @@ export const verifyCode = (code) => {
     const url = authAPI.verifyCode(code);
     try {
       const response = await getAPI(url);
-      dispatch(verifyTokenSuccess(response.data));
-      ShowNotify(SUCESSS, "Your account has been verified");
+      if (response && response.data) {
+        dispatch(verifyTokenSuccess(response.data));
+        ShowNotify(SUCESSS, "Your account has been verified");
+      }
     } catch (error) {
       dispatch(verifyTokenFail(error.response.data.msg));
       ShowNotify(ERROR, error.response.data.msg);

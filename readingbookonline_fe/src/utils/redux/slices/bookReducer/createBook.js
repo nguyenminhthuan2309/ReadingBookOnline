@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const createBookSlice = createSlice({
@@ -21,20 +22,35 @@ const createBookSlice = createSlice({
         state.error = null;
       })
       .addCase("createBook/success", (state, action) => {
-        state.loading = false;
-        state.bookData = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.bookData = action.payload || {};
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.bookData = {};
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("createBook/error", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });
 
 export const createBookRequest = () => ({ type: "createBook/request" });
-export const createBookSuccess = () => ({ type: "createBook/success" });
-export const createBookFail = () => ({ type: "createBook/fail" });
+export const createBookSuccess = (data) => ({ type: "createBook/success", payload: data });
+export const createBookFail = (data) => ({ type: "createBook/fail", payload: data });
 
 export const { resetState } = createBookSlice.actions;
 export default createBookSlice.reducer;

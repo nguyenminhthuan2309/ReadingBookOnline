@@ -50,8 +50,9 @@ export const getChapterById = (chapterId) => {
       dispatch(infoChapterSuccess(response.data));
       return response;
     } catch (error) {
+      console.log("action error", error);
       dispatch(infoChapterFail(error));
-      ShowNotify(ERROR, error.response.data.msg);
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };
@@ -67,6 +68,7 @@ export const deleteChapter = (chapterId) => {
       Router.reload();
       return response;
     } catch (error) {
+      console.log("action error", error);
       dispatch(deleteChapterFail(error));
       await ShowNotify(ERROR, error.response.data.msg);
     }

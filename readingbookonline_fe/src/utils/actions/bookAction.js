@@ -28,12 +28,15 @@ export const createBook = (bookData) => {
     const url = bookAPI.createBook;
     try {
       const response = await postAPI(url, bookData);
-      dispatch(createBookSuccess());
-      ShowNotify(SUCESSS, "Create book successfully");
-      Router.push("/book/gallery");
-      return response;
+      if (response && response.data) {
+        dispatch(createBookSuccess(response.data));
+        ShowNotify(SUCESSS, "Create book successfully");
+        Router.push("/book/gallery");
+        return response;
+      }
     } catch (error) {
       const { msg } = error.response.data;
+      dispatch(createBookFail(msg));
       if (Array.isArray(msg)) {
         msg.forEach((item) => {
           ShowNotify(ERROR, item);
@@ -41,7 +44,6 @@ export const createBook = (bookData) => {
       } else {
         ShowNotify(ERROR, msg);
       }
-      dispatch(createBookFail());
     }
   };
 };
@@ -91,7 +93,7 @@ export const deleteBook = (id) => {
       Router.reload();
       return response;
     } catch (error) {
-      dispatch(deleteBookFail(error.response.data.msg));
+      dispatch(deleteBookFail(error));
       ShowNotify(ERROR, error.response.data.msg);
     }
   };

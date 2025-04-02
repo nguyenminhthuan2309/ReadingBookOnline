@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Header } from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";

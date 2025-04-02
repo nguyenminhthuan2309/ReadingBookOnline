@@ -19,7 +19,7 @@ const SearchBar = () => {
     } else {
       delete query.search;
     }
-
+  
     router.push(
       {
         pathname: router.pathname,

@@ -50,7 +50,15 @@ export const Header = () => {
               className="bg-transparent outline-none"
               onChange={handleSearch}
             />
-            <IconButton onClick={()=>router.push(`/book_list?search=${search}`)}>
+            <IconButton
+              onClick={() => {
+                if (!!search) {
+                  router.push(`/book_list?search=${encodeURIComponent(search)}`);
+                } else {
+                  router.push(`/book_list`);
+                }
+              }}
+            >
               <SearchIcon />
             </IconButton>
           </div>

@@ -23,23 +23,35 @@ const deleteBookSlice = createSlice({
         state.error = null;
       })
       .addCase("deleteBook/success", (state, action) => {
-        state.loading = false;
-        state.isDeleted = true;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.isDeleted = action.payload || false;
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.isDeleted = false;
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("deleteBook/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });
 
 export const deleteBookRequest = () => ({ type: "deleteBook/request" });
-export const deleteBookSuccess = () => ({ type: "deleteBook/success" });
-export const deleteBookFail = (data) => ({
-  type: "deleteBook/fail",
-  payload: data,
-});
+export const deleteBookSuccess = (data) => ({ type: "deleteBook/success", payload: data });
+export const deleteBookFail = (data) => ({ type: "deleteBook/fail", payload: data });
 
 export const { resetState } = deleteBookSlice.actions;
-export default deleteBookSlice.reducer;
+export default deleteBookSlice.reducer; 

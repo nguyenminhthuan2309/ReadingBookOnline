@@ -1,13 +1,17 @@
 import axios from "axios";
-import { ACCESS_TOKEN } from "./constants";
+import { ACCESS_TOKEN, ERROR, EXPIRED_IN, USER_INFO } from "./constants";
+import { ShowNotify } from "@/components/Notification";
 
 export const instance = axios.create({});
 
 instance.interceptors.request.use(
   async (config) => {
     const access_token = localStorage.getItem(ACCESS_TOKEN);
-    if (!access_token) {
+    const user_info = localStorage.getItem(USER_INFO);
+    const expired_in = localStorage.getItem(EXPIRED_IN);
+    if (!access_token || !user_info || !expired_in) {
       config.headers.Authorization = "";
+      localStorage.clear();
     } else {
       config.headers.Authorization = `Bearer ${access_token}`;
     }
@@ -31,6 +35,15 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   async (response) => {
+    const expiresIn = localStorage.getItem(EXPIRED_IN);
+    const now = new Date().getTime();
+    const nowInSeconds = Math.floor(now / 1000);
+    const isExpired = expiresIn && nowInSeconds > expiresIn;
+    if (isExpired) {
+      localStorage.clear();
+      await ShowNotify(ERROR, "Token expired, please login again");
+      window.location.href = "/";
+    }
     return response;
   },
   async (error) => {
@@ -40,16 +53,19 @@ instance.interceptors.response.use(
 
       switch (code) {
         case 401:
+          await ShowNotify(ERROR, "Unauthorized");
           window.location.href = "/";
           return Promise.reject(error);
         case 403:
           window.location.replace("/forbidden");
+          console.log("here request error", error);
           return Promise.reject(error);
         case 404:
           window.location.replace("/not-found");
           return Promise.reject(error);
         case 400:
           console.log("network error", error);
+          // window.location.replace("/error-network");
           return Promise.reject(error);
         case 500:
           window.location.replace("/error-network");
@@ -65,45 +81,43 @@ instance.interceptors.response.use(
   }
 );
 
-export const getAPI = (url) => {
+export const getAPI = (url, config = {}) => {
   return instance
-    .get(url)
+    .get(url, config)
     .then((res) => res)
-    .catch((err)   => {
-      return Promise.reject(err);
-    });
-};
-export const postAPI = (url, options, config) => {
-  return instance
-    .post(url, options, config)
-    .then((res) => res)
-    .catch((err) => {
-      return Promise.reject(err);
-    });
-};
-export const putAPI = (url, options) => {
-  return instance
-    .put(url, options)
-    .then((res) => res)
-    .catch((err) => {
-      return Promise.reject(err);
-    });
+    .catch((err) => handleAPIError(err));
 };
 
-export const patchAPI = (url, options) => {
+export const postAPI = (url, data, config = {}) => {
   return instance
-    .patch(url, options)
+    .post(url, data, config)
     .then((res) => res)
-    .catch((err) => {
-      return Promise.reject(err);
-    });
+    .catch((err) => handleAPIError(err));
 };
 
-export const deleteAPI = (url, options, config) => {
+export const putAPI = (url, data, config = {}) => {
   return instance
-    .delete(url, options, config)
+    .put(url, data, config)
     .then((res) => res)
-    .catch((err) => {
-      return Promise.reject(err);
-    });
+    .catch((err) => handleAPIError(err));
+};
+
+export const patchAPI = (url, data, config = {}) => {
+  return instance
+    .patch(url, data, config)
+    .then((res) => res)
+    .catch((err) => handleAPIError(err));
+};
+
+export const deleteAPI = (url, config = {}) => {
+  return instance
+    .delete(url, config)
+    .then((res) => res)
+    .catch((err) => handleAPIError(err));
+};
+
+// ✅ Common Error Handling Function
+const handleAPIError = (err) => {
+  console.error("API Error:", err.response?.status, err.message);
+  return err.response ? Promise.reject(err.response) : Promise.reject(err);
 };

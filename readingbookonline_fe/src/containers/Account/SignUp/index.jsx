@@ -9,7 +9,7 @@ const SignUpPage = () => {
       <Header />
       <section className="flex justify-center px-5 py-20">
         <div className="p-9 w-full bg-white rounded-xl max-w-[1052px]">
-          <h1 className="text-3xl">SIGN UP</h1>
+          <h1 className="text-3xl text-black">SIGN UP</h1>
           <SignUpForm />
         </div>
       </section>

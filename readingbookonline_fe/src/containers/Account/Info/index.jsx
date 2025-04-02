@@ -19,6 +19,12 @@ const AccountPage = () => {
               <div className="ml-5 w-[76%] max-md:ml-0 max-md:w-full">
                 <div className="w-full max-md:mt-8 max-md:max-w-full">
                   <UserProfile />
+                  <div className="mt-5 text-2xl text-black">
+                    User&apos;s purchase history
+                  </div>
+                  <div className="mt-5 text-2xl text-black">
+                    User&apos;s coin usage
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const registerSlice = createSlice({
@@ -22,21 +23,35 @@ const registerSlice = createSlice({
       state.error = null;
     })
     .addCase("register/success", (state, action) => {
-      state.loading = false;
-      state.registerData = action.payload;
-      state.error = null;
-    }
-    )
-    .addCase("register/error", (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
+      try {
+        state.loading = false;
+        if (action && action.payload) {
+          state.registerData = action.payload || {};
+        }
+        state.error = null;
+      } catch (error) {
+        state.loading = false;
+        state.registerData = {};
+        state.error = "Invalid payload format";
+      }
+    })
+    .addCase("register/fail", (state, action) => {
+      try {
+        state.loading = false;
+        if (action && action.payload) {
+          state.error = action.payload;
+        }
+      } catch (error) {
+        state.loading = false;
+        state.error = "Invalid payload format";
+      }
     });
 }
 });
 
 export const registerRequest = () => ({ type: "register/request" });
-export const registerSuccess = () => ({ type: "register/success" });
-export const registerFail = () => ({ type: "register/fail" });
+export const registerSuccess = (data) => ({ type: "register/success", payload: data });
+export const registerFail = (data) => ({ type: "register/fail", payload: data });
 
 export const { resetState } = registerSlice.actions;
 export default registerSlice.reducer;

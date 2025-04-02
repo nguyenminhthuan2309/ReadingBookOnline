@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const checkCodeSlice = createSlice({
@@ -23,14 +24,30 @@ const checkCodeSlice = createSlice({
         state.error = null;
       })
       .addCase("checkCode/success", (state, action) => {
-        state.loading = false;
-        state.code = action.payload
-        state.isVerify = true;
-        state.error = null;
+        try {
+          state.loading = false;
+          // Safely handle the code value with validation
+          state.code = action?.payload ? String(action.payload).trim() : "";
+          state.isVerify = true;
+          state.error = null;
+        } catch (error) {
+          // Fallback to safe state if something goes wrong
+          state.loading = false;
+          state.code = "";
+          state.isVerify = false;
+          state.error = "Invalid code format";
+        }
       })
       .addCase("checkCode/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });

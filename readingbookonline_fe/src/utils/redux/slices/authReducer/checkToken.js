@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const verifyTokenSlice = createSlice({
@@ -23,14 +24,31 @@ const verifyTokenSlice = createSlice({
         state.error = null;
       })
       .addCase("verifyToken/success", (state, action) => {
-         state.loading = false;
-         state.email = action.payload?.email;
-         state.token = action.payload?.token;
-         state.error = null;
+         try {
+           state.loading = false;
+           // Safely access and validate payload
+           if (action && action.payload) {
+             state.email = action.payload.email || "";
+             state.token = action.payload.token || "";
+           }
+           state.error = null;
+         } catch (error) {
+           state.loading = false;
+           state.email = "";
+           state.token = "";
+           state.error = "Invalid payload format";
+         }
       })
       .addCase("verifyToken/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       })
   },
 });

@@ -8,7 +8,9 @@ import verifyCodeReducer from "./slices/authReducer/checkCode"
 
 import bookReducer from "./slices/bookReducer/editBook"
 import deleteBookReducer from "./slices/bookReducer/deleteBook"
+
 import infoChapterReducer from "./slices/chapterReducer/infoChapter"
+import deleteChapterReducer from "./slices/chapterReducer/deleteChapter"
 
 import uploadImageRducer from "./slices/uploadReducer/uploadImage";
 
@@ -21,7 +23,8 @@ export default configureStore({
     verifyCode: verifyCodeReducer,
     bookInfo: bookReducer,
     deleteBook: deleteBookReducer,
-    uploadImage: uploadImageRducer,
     infoChapter: infoChapterReducer,
+    deleteChapter: deleteChapterReducer,
+    uploadImage: uploadImageRducer,
   },
 });

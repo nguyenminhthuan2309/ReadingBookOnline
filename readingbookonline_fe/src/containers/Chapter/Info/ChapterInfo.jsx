@@ -97,18 +97,33 @@ function ChapterInfo() {
       try {
         if (loading) return;
         if (!chapterData) {
-          const savedData = localStorage.getItem(`chapter-${chapterId}`);
-          if (savedData) {
-            setCachedData(savedData.book);
-            if (savedData.content) {
-              await handleFileURL(savedData.content);
+          // No data yet, try to use cached data if available
+          try {
+            const savedDataString = localStorage.getItem(
+              `chapter-${chapterId}`
+            );
+            if (savedDataString) {
+              const savedData = JSON.parse(savedDataString);
+              if (savedData && savedData.book) {
+                setCachedData(savedData.book);
+              }
+              if (savedData && savedData.content) {
+                await handleFileURL(savedData.content);
+              }
             }
+          } catch (e) {
+            console.error("Error parsing cached data:", e);
           }
           return;
         }
 
-        const { data } = chapterData;
-        if (!data || !data.content || !data.book) return;
+        // If chapterData exists but is empty, return early
+        if (Object.keys(chapterData).length === 0) {
+          return;
+        }
+
+        const  data  = chapterData?.data;
+        if (!data ||!data.content || !data.book) return;
 
         setItem(`chapter-${chapterId}`, JSON.stringify(data));
         setCachedData(data.book);

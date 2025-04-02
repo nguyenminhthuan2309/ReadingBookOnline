@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const infoChapterSlice = createSlice({
@@ -21,26 +22,56 @@ const infoChapterSlice = createSlice({
         state.error = null;
       })
       .addCase("infoChapter/success", (state, action) => {
-        state.loading = false;
-        state.chapterData = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;  
+          if (action && action.payload) {
+            state.chapterData = action.payload || {};
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.chapterData = {};
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("infoChapter/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("editChapter/request", (state, action) => {
         state.loading = true;
         state.error = null;
       })
       .addCase("editChapter/success", (state, action) => {
-        state.loading = false;
-        state.chapterData = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.chapterData = action.payload || {};
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.chapterData = {};
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("editChapter/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });

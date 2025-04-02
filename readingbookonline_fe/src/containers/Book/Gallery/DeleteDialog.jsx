@@ -31,7 +31,7 @@ const DeleteDialog = ({ open, handleClose, bookID, bookTitle }) => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          {"Use Google's location service?"}
+          {"NOTICE!!"}
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
@@ -60,6 +60,7 @@ DeleteDialog.propTypes = {
   open: PropTypes.bool,
   handleClose: PropTypes.func,
   bookID: PropTypes.number,
+  bookTitle: PropTypes.string,
 };
 
 export default DeleteDialog;

@@ -22,26 +22,56 @@ const editBookSlice = createSlice({
         state.error = null;
       })
       .addCase("getBookbyId/success", (state, action) => {
-        state.loading = false;
-        state.bookData = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.bookData = action.payload || {};
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.bookData = {};
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("getBookbyId/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("editBook/request", (state, action) => {
         state.loading = true;
         state.error = null;
       })
       .addCase("editBook/success", (state, action) => {
-        state.loading = false;
-        state.bookData = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.bookData = action.payload || {};
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.bookData = {};
+          state.error = "Invalid payload format";
+        }
       })
-      .addCase("editBook/error", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase("editBook/fail", (state, action) => {
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });

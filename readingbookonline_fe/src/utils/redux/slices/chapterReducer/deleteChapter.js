@@ -23,19 +23,37 @@ const deleteChapterSlice = createSlice({
         state.error = null;
       })
       .addCase("deleteChapter/success", (state, action) => {
-        state.loading = false;
-        state.isDeleted = true;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.isDeleted = action.payload || false;
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.isDeleted = false;
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("deleteChapter/fail", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });
 
 export const deleteChapterRequest = () => ({ type: "deleteChapter/request" });
-export const deleteChapterSuccess = () => ({ type: "deleteChapter/success" });
+export const deleteChapterSuccess = (data) => ({
+  type: "deleteChapter/success",
+  payload: data,
+});
 export const deleteChapterFail = (data) => ({
   type: "deleteChapter/fail",
   payload: data,

@@ -53,28 +53,28 @@ const SignUpForm = () => {
       className="mx-auto mt-20 max-w-[730px]"
     >
       <div className="flex flex-col gap-4">
-        <span>EMAIL</span>
+        <span className="text-black">EMAIL</span>
         <InputField
           name={"email"}
           control={control}
           type={"text"}
           placeholder={"Nhập email . . ."}
         />
-        <span>NAME</span>
+        <span className="text-black">NAME</span>
         <InputField
           name={"name"}
           control={control}
           type={"text"}
           placeholder={"Nhập Name . . ."}
         />
-        <span>PASSWORD</span>
+        <span className="text-black">PASSWORD</span>
         <InputField
           name={"password"}
           control={control}
           type={"password"}
           placeholder={"Nhập password . . ."}
         />
-        <span>RE-ENTER PASSWORD</span>
+        <span className="text-black">RE-ENTER PASSWORD</span>
         <InputField
           name={"reEnterPassword"}
           control={control}

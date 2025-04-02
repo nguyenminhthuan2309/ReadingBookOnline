@@ -55,7 +55,7 @@ export const ForgotPasswordDialog = ({ open, close }) => {
 
   return (
     <div>
-      <Dialog open={open} onClose={close}>
+      <Dialog open={open}>
         <form onSubmit={handleSubmit(handleSendEmail)}>
           <DialogTitle>Forgot password?</DialogTitle>
           <DialogContent>

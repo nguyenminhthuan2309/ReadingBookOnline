@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const forgotPasswordSlice = createSlice({
@@ -21,13 +22,30 @@ const forgotPasswordSlice = createSlice({
         state.error = null;
       })
       .addCase("forgotPassword/success", (state, action) => {
-        state.loading = false;
-        state.email = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          // Safely access and validate payload
+          if (action && action.payload) {
+            state.email = action.payload.email || "";
+          }
+          state.error = null;
+        } catch (error) {
+          // Fallback to initial state if something goes wrong
+          state.loading = false;
+          state.email = "";
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("forgotPassword/error", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       })
   },
 });

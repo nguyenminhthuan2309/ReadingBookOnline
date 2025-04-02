@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
 const uploadImageSlice = createSlice({
@@ -21,13 +22,28 @@ const uploadImageSlice = createSlice({
         state.error = null;
       })
       .addCase("uploadImage/success", (state, action) => {
-        state.loading = false;
-        state.imageURL = action.payload;
-        state.error = null;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.imageURL = action.payload;
+          }
+          state.error = null;
+        } catch (error) {
+          state.loading = false;
+          state.imageURL = "";
+          state.error = "Invalid payload format";
+        }
       })
       .addCase("uploadImage/error", (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        try {
+          state.loading = false;
+          if (action && action.payload) {
+            state.error = action.payload;
+          }
+        } catch (error) {
+          state.loading = false;
+          state.error = "Invalid payload format";
+        }
       });
   },
 });

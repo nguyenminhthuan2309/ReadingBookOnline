@@ -27,6 +27,8 @@ import * as docx from "docx-preview";
 import { uploadFile } from "@/utils/actions/uploadAction";
 import { createChapter } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
+import { ShowNotify } from "@/components/Notification";
+import { ERROR } from "@/utils/constants";
 
 const schema = yup.object().shape({
   number: yup
@@ -104,6 +106,7 @@ function ChapterBasicInfo() {
       };
       reader.readAsText(file);
     } else {
+      ShowNotify(ERROR, "Preview not available for this file type");
       setFilePreview("Preview not available for this file type");
     }
   };
