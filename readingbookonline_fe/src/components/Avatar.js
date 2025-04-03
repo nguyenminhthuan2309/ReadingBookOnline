@@ -14,7 +14,7 @@ import Settings from "@mui/icons-material/Settings";
 
 import Logout from "@mui/icons-material/Logout";
 import PropTypes from "prop-types";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 import { getRandomColor } from "./getRandomColor";
 import { handleLogout } from "@/utils/actions/authAction";
@@ -107,7 +107,10 @@ export default function AccountMenu({ name }) {
               <span>1000</span>
             </div>
           </div>
-          <Button sx={{ textTransform: "none", zIndex: 10 }} onClick={handleClickPurchase}>
+          <Button
+            sx={{ textTransform: "none", zIndex: 10 }}
+            onClick={handleClickPurchase}
+          >
             <span className="bg-amber-400 p-2 rounded-lg text-white">
               Purchase for coin
             </span>

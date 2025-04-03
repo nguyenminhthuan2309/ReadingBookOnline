@@ -7,7 +7,10 @@ const authAPI = {
   verifyOTP: `${API_GATEWAY}/user/verify-reset-password`,
   verifyCode: (code) => `${API_GATEWAY}/user/verify?token=${code}`,
 };
-const userAPI = {};
+const userAPI = {
+  editUser: `${API_GATEWAY}/user`,
+  changePassword: `${API_GATEWAY}/user/update-password`,
+};
 
 const bookAPI = {
   getBook: (limitNumber, pageNumber) =>
@@ -46,7 +49,16 @@ const commentAPI = {
     `${API_GATEWAY}/book/chapter-comment?limit=${limit}&page=${page}&chapterId=${chapterId}`,
   editComment: (commentId) =>
     `${API_GATEWAY}/book/chapter-comment/${commentId}`,
-  deleteComment: (commentId) => `${API_GATEWAY}/book/chapter-comment/${commentId}`,
+  deleteComment: (commentId) =>
+    `${API_GATEWAY}/book/chapter-comment/${commentId}`,
 };
 
-export { authAPI, userAPI, bookAPI, chapterAPI, uploadAPI, reviewAPI, commentAPI };
+export {
+  authAPI,
+  userAPI,
+  bookAPI,
+  chapterAPI,
+  uploadAPI,
+  reviewAPI,
+  commentAPI,
+};

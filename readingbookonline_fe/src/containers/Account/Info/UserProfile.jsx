@@ -5,13 +5,20 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import { Avatar, Badge, Button, IconButton } from "@mui/material";
 import { getRandomColor } from "@/components/getRandomColor";
 import { getItem } from "@/utils/localStorage";
+import { useRouter } from "next/router";
+import ChangePasswordDialog from "./changePasswordDialog";
 
 const UserProfile = () => {
+  const router = useRouter();
   const [user, setUser] = useState();
+  const [openChangePasswordDialog, setOpenChangePasswordDialog] = useState(false);
 
   useEffect(() => {
     const userInfo = getItem(USER_INFO);
-    if (!userInfo) return;
+    if (!userInfo) {
+      router.push("/");
+      return;
+    }
     setUser(userInfo);
   }, []);
 
@@ -30,6 +37,7 @@ const UserProfile = () => {
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             >
               <Avatar
+                src={user && user.avatar}
                 sx={{
                   width: 132,
                   height: 132,
@@ -37,7 +45,7 @@ const UserProfile = () => {
                   bgcolor: getRandomColor(),
                 }}
               >
-                {user && user.name.slice(0, 1).toUpperCase()}
+                {user && !user.avatar ? user.name.slice(0, 1).toUpperCase() : null}
               </Avatar>
             </Badge>
           </div>
@@ -49,17 +57,23 @@ const UserProfile = () => {
               <IconButton>
                 <DriveFileRenameOutlineIcon />
               </IconButton>
-              <Button sx={{ textTransform: null }}>
+              <Button sx={{ textTransform: null }} onClick={() => setOpenChangePasswordDialog(true)}>
                 <span className="px-4 py-1.5 rounded-xl text-white bg-[#3F3D6E]">
                   Reset Password
                 </span>
               </Button>
             </div>
-            <p className="px-5 pt-4 pb-20 mt-2 text-lg bg-white rounded-3xl max-md:mr-2.5 max-md:max-w-full"></p>
+            <span className="px-1 text-lg text-black/50">Email: {user && user.email}</span>
+            <span className="px-1 text-lg text-black/50">B/day:  {user && user.birthDate}</span>
           </div>
-          
         </>
       )}
+      <React.Fragment>
+        <ChangePasswordDialog
+          open={openChangePasswordDialog}
+          handleClose={() => setOpenChangePasswordDialog(false)}
+        />
+      </React.Fragment>
     </section>
   );
 };

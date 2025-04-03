@@ -5,11 +5,10 @@ import { useSelector } from "react-redux";
 import { getItem } from "@/utils/localStorage";
 import { USER_INFO } from "@/utils/constants";
 import { Button, Pagination, Stack } from "@mui/material";
-import { useRouter } from "next/router";
+import { useRouter, useSearchParams } from "next/navigation";
 import { commentAPI, reviewAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import CommentWithoutRating from "@/components/CommentWithoutRating";
-import { useSearchParams } from "next/navigation";
 
 function CommentSection() {
   const router = useRouter();
