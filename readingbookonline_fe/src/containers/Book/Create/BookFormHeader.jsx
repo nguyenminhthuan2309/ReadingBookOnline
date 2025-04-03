@@ -14,6 +14,7 @@ function BookFormHeader() {
       router.push("/book/gallery");
     }
   }, []);
+
   return (
     <header className="flex flex-col gap-2 pb-14">
       <Button sx={{ width: "fit-content" }} onClick={handelRediect}>

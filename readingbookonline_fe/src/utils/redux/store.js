@@ -22,6 +22,9 @@ import createCommentReducer from "./slices/commentReducer/createComment"
 import deleteCommentReducer from "./slices/commentReducer/deleteComment"
 import editCommentReducer from "./slices/commentReducer/editComment"
 
+import editInfoReducer from "./slices/userReducer/editInfoReducer"
+import changePasswordReducer from "./slices/userReducer/changePasswordReducer"
+
 export default configureStore({
   reducer: {
     login: loginReducer,
@@ -40,5 +43,7 @@ export default configureStore({
     createComment: createCommentReducer,
     deleteComment: deleteCommentReducer,
     editComment: editCommentReducer,
+    editInfo: editInfoReducer,
+    changePassword: changePasswordReducer,
   },
 });

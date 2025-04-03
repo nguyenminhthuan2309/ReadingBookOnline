@@ -7,11 +7,13 @@ import { getRandomColor } from "@/components/getRandomColor";
 import { getItem } from "@/utils/localStorage";
 import { useRouter } from "next/router";
 import ChangePasswordDialog from "./changePasswordDialog";
+import EditInfoDialog from "./editInfoDialog";
 
 const UserProfile = () => {
   const router = useRouter();
   const [user, setUser] = useState();
   const [openChangePasswordDialog, setOpenChangePasswordDialog] = useState(false);
+  const [openEditInfoDialog, setOpenEditInfoDialog] = useState(false);
 
   useEffect(() => {
     const userInfo = getItem(USER_INFO);
@@ -39,8 +41,8 @@ const UserProfile = () => {
               <Avatar
                 src={user && user.avatar}
                 sx={{
-                  width: 132,
-                  height: 132,
+                  width: 100,
+                  height: 100,
                   fontSize: 62,
                   bgcolor: getRandomColor(),
                 }}
@@ -54,7 +56,7 @@ const UserProfile = () => {
               <h1 className="grow self-stretch text-4xl text-black">
                 {user && user.name}
               </h1>
-              <IconButton>
+              <IconButton onClick={() => setOpenEditInfoDialog(true)}>
                 <DriveFileRenameOutlineIcon />
               </IconButton>
               <Button sx={{ textTransform: null }} onClick={() => setOpenChangePasswordDialog(true)}>
@@ -64,11 +66,15 @@ const UserProfile = () => {
               </Button>
             </div>
             <span className="px-1 text-lg text-black/50">Email: {user && user.email}</span>
-            <span className="px-1 text-lg text-black/50">B/day:  {user && user.birthDate}</span>
           </div>
         </>
       )}
       <React.Fragment>
+        <EditInfoDialog
+          open={openEditInfoDialog}
+          handleClose={() => setOpenEditInfoDialog(false)}
+          userInfo={user}
+        />
         <ChangePasswordDialog
           open={openChangePasswordDialog}
           handleClose={() => setOpenChangePasswordDialog(false)}

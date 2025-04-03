@@ -1,33 +1,65 @@
-import React, { useCallback } from "react";
-
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
+"use client";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { useDispatch } from "react-redux";
+import { useForm } from "react-hook-form";
+import * as yup from "yup";
+
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import InputField from "@/components/RenderInput";
 import PropTypes from "prop-types";
-import { useRouter } from "next/router";
+import { uploadImage } from "@/utils/actions/uploadAction";
+import { editInfo } from "@/utils/actions/userAction";
 
-import { deleteChapter } from "@/utils/actions/chapterAction";
+const schema = yup.object().shape({
+  name: yup.string().required("Name không được để trống"),
+});
 
-const DeleteDialog = ({ open, handleClose, chapterID, chapterTitle }) => {
+const EditInfoDialog = ({ open, handleClose, userInfo }) => {
+  const { handleSubmit, control, reset } = useForm({
+    resolver: yupResolver(schema),
+  });
+
   const dispatch = useDispatch();
-  const router = useRouter();
+  const [imageUrl, setImageUrl] = useState("");
 
-  const handleDelete = useCallback(
-    async (id) => {
+  const handleChangeInfo = useCallback(
+    (formData) => {
       try {
-        await dispatch(deleteChapter(id));
+        if (formData && formData.name) {
+          dispatch(editInfo({ name: formData.name, avatar: imageUrl }));
+        }
+        reset();
+        handleClose();
       } catch (error) {
         console.log(error);
       }
     },
-    [dispatch, router]
+    [dispatch, imageUrl]
   );
+
+  const handleUploadFile = async (data) => {
+    try {
+      if (!data) return;
+      const imageData = new FormData();
+      imageData.append("file", data);
+      const res = await dispatch(uploadImage(imageData));
+      if (res && res.data) {
+        setImageUrl(res.data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!userInfo || !userInfo.name) return;
+    reset({
+      name: userInfo.name,
+    });
+    setImageUrl(userInfo.avatar);
+  }, [userInfo, reset]);
 
   return (
     <>
@@ -37,35 +69,90 @@ const DeleteDialog = ({ open, handleClose, chapterID, chapterTitle }) => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">{"NOTICE!!"}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">{"CHANGE INFO"}</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Do you want to delete {chapterTitle}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              handleDelete(chapterID);
-              handleClose();
-            }}
+          <form
+            onSubmit={handleSubmit(handleChangeInfo)}
+            className="mx-auto w-[400px]"
           >
-            Agree
-          </Button>
-          <Button onClick={handleClose} autoFocus>
-            Cancel
-          </Button>
-        </DialogActions>
+            <div className="flex flex-col gap-4">
+              <label className="relative">
+                <div className="flex flex-col justify-self-center">
+                  <div
+                    className="relative rounded-full overflow-hidden cursor-pointer"
+                    style={{ width: `200px`, height: `200px` }}
+                  >
+                    {!imageUrl ? (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">
+                          Upload
+                        </span>
+                      </div>
+                    ) : (
+                      <img
+                        src={imageUrl}
+                        alt="Avatar"
+                        className="object-cover w-full h-full"
+                      />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg"
+                    className="hidden"
+                    onChange={(e) => {
+                      const selectedFile = e.target.files[0];
+                      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+                      if (!selectedFile) {
+                        return;
+                      }
+
+                      // Convert sizes to MB for easier comparison in logs
+                      const fileSizeInMB = selectedFile.size / (1024 * 1024);
+                      const maxSizeInMB = maxSize / (1024 * 1024);
+
+                      if (fileSizeInMB > maxSizeInMB) {
+                        alert(
+                          `File is too large. Your file is ${fileSizeInMB.toFixed(
+                            2
+                          )}MB. Maximum size is ${maxSizeInMB}MB`
+                        );
+                        e.target.value = "";
+                        return;
+                      }
+                      handleUploadFile(selectedFile);
+                    }}
+                  />
+                </div>
+              </label>
+              <span className="text-black">NAME</span>
+              <InputField
+                name={"name"}
+                control={control}
+                type={"text"}
+                placeholder={"Nhập name . . ."}
+              />
+            </div>
+            <div className="flex gap-24 mt-12">
+              <Button sx={{ textTransform: "none" }} type="submit">
+                <span className="h-9 text-xl pt-1 text-white bg-amber-600 rounded-xl w-[231px]">
+                  Change Information
+                </span>
+              </Button>
+              <Button onClick={handleClose} autoFocus>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );
 };
 
-DeleteDialog.propTypes = {
-  open: PropTypes.bool,
-  handleClose: PropTypes.func,
-  chapterID: PropTypes.number,
-  chapterTitle: PropTypes.string,
+EditInfoDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  handleClose: PropTypes.func.isRequired,
+  userInfo: PropTypes.object.isRequired,
 };
-
-export default DeleteDialog;
+export default EditInfoDialog;

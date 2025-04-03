@@ -9,7 +9,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
 } from "@mui/material";
@@ -70,29 +69,29 @@ const ChangePasswordDialog = ({ open, handleClose }) => {
         <DialogContent>
           <form
             onSubmit={handleSubmit(handleChangePassword)}
-            className="mx-auto mt-20 w-[400px]"
+            className="mx-auto w-[500px]"
           >
-            <div className="flex flex-col gap-4">
-              <span className="text-black">OLD PASSWORD</span>
+            <div className="flex flex-col gap-2">
+              <span className="text-black">Old Password</span>
               <InputField
                 name={"oldPassword"}
                 control={control}
                 type={"password"}
-                placeholder={"Nhập old password . . ."}
+                placeholder={"Enter old password . . ."}
               />
-              <span className="text-black">PASSWORD</span>
+              <span className="text-black">Password</span>
               <InputField
                 name={"password"}
                 control={control}
                 type={"password"}
-                placeholder={"Nhập password . . ."}
+                placeholder={"Enter password . . ."}
               />
-              <span className="text-black">RE-ENTER PASSWORD</span>
+              <span className="text-black">Re-Enter Password</span>
               <InputField
                 name={"reEnterPassword"}
                 control={control}
                 type={"password"}
-                placeholder={"Nhập password . . ."}
+                placeholder={"Enter password . . ."}
               />
             </div>
             <div className="flex gap-24 mt-12">
