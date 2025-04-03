@@ -2,6 +2,7 @@
 import React from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
+import { Rating } from "@mui/material";
 
 // import EditNoteIcon from "@mui/icons-material/EditNote";
 
@@ -18,15 +19,14 @@ function MangaDetails({ bookInfo }) {
                 alt={`${bookInfo.cover} cover`}
                 className="object-contain w-full aspect-[0.74]"
               />
-              <div className="flex mt-7 max-md:mr-1">
-                {[...Array(5)].map((_, index) => (
-                  <img
-                    key={index}
-                    src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/e4abf2b6c2c8da314772db8bc3d960a407763939e3c814e42a8e60c453761995?placeholderIfAbsent=true"
-                    alt="Star Rating"
-                    className="object-contain shrink-0 aspect-[0.84] w-[43px]"
-                  />
-                ))}
+              <div className="flex mt-7 justify-center max-md:mr-1">
+                <Rating
+                  name="read-only"
+                  value={bookInfo.rating}
+                  readOnly
+                  precision={0.5}
+                  sx={{ fontSize: "2.5rem" }}
+                />
               </div>
             </div>
           </aside>

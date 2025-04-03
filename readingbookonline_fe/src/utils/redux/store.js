@@ -14,6 +14,14 @@ import deleteChapterReducer from "./slices/chapterReducer/deleteChapter"
 
 import uploadImageRducer from "./slices/uploadReducer/uploadImage";
 
+import createReviewReducer from "./slices/reviewReducer/createReview"
+import deleteReviewReducer from "./slices/reviewReducer/deleteReview"
+import editReviewReducer from "./slices/reviewReducer/editReview"
+
+import createCommentReducer from "./slices/commentReducer/createComment"
+import deleteCommentReducer from "./slices/commentReducer/deleteComment"
+import editCommentReducer from "./slices/commentReducer/editComment"
+
 export default configureStore({
   reducer: {
     login: loginReducer,
@@ -26,5 +34,11 @@ export default configureStore({
     infoChapter: infoChapterReducer,
     deleteChapter: deleteChapterReducer,
     uploadImage: uploadImageRducer,
+    createReview: createReviewReducer,
+    deleteReview: deleteReviewReducer,
+    editReview: editReviewReducer,
+    createComment: createCommentReducer,
+    deleteComment: deleteCommentReducer,
+    editComment: editCommentReducer,
   },
 });

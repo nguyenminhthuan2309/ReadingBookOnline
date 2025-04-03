@@ -1,40 +1,40 @@
 /* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
-const createBookSlice = createSlice({
-  name: "createBookData",
+const editCommentSlice = createSlice({
+  name: "editCommentData",
   initialState: {
     loading: false,
-    bookData: {},
+    commentData: {},
     error: null,
   },
   reducers: {
     resetState: (state) => {
       state.loading = false;
-      state.bookData = {};
+      state.commentData = {};
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase("createBook/request", (state, action) => {
+      .addCase("editComment/request", (state, action) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase("createBook/success", (state, action) => {
+      .addCase("editComment/success", (state, action) => {
         try {
           state.loading = false;
           if (action && action.payload) {
-            state.bookData = action.payload || {};
+            state.commentData = action.payload || {};
           }
           state.error = null;
         } catch (error) {
           state.loading = false;
-          state.bookData = {};
+          state.commentData = {};
           state.error = "Invalid payload format";
         }
       })
-      .addCase("createBook/fail", (state, action) => {
+      .addCase("editComment/fail", (state, action) => {
         try {
           state.loading = false;
           if (action && action.payload) {
@@ -48,9 +48,15 @@ const createBookSlice = createSlice({
   },
 });
 
-export const createBookRequest = () => ({ type: "createBook/request" });
-export const createBookSuccess = (data) => ({ type: "createBook/success", payload: data });
-export const createBookFail = (data) => ({ type: "createBook/fail", payload: data });
+export const editCommentRequest = () => ({ type: "editComment/request" });
+export const editCommentSuccess = (data) => ({
+  type: "editComment/success",
+  payload: data,
+});
+export const editCommentFail = (data) => ({
+  type: "editComment/fail",
+  payload: data,
+});
 
-export const { resetState } = createBookSlice.actions;
-export default createBookSlice.reducer;
+export const { resetState } = editCommentSlice.actions;
+export default editCommentSlice.reducer;
