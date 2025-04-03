@@ -1,4 +1,4 @@
-import { reviewAPI } from "@/common/api";
+import { commentAPI, reviewAPI } from "@/common/api";
 
 import { deleteAPI, postAPI, putAPI } from "../request";
 import { ShowNotify } from "@/components/Notification";
@@ -12,7 +12,7 @@ export const createComment = (chapterId, commentData) => {
   return async (dispatch) => {
     dispatch(createCommentRequest());
     try {
-      const url = reviewAPI.createReview(chapterId);
+      const url = commentAPI.createComment(chapterId);
       const response = await postAPI(url, commentData);
       dispatch(createCommentSuccess());
       return response;
@@ -27,7 +27,7 @@ export const editComment = (commentId, commentData) => {
   return async (dispatch) => {
     dispatch(editCommentRequest());
     try {
-      const url = reviewAPI.editReview(commentId);
+      const url = commentAPI.editComment(commentId);
       const response = await putAPI(url, commentData);
       if (response && response.data) {
         dispatch(editCommentSuccess(response.data));
@@ -45,7 +45,7 @@ export const deleteComment = (commentId) => {
   return async (dispatch) => {
     dispatch(deleteCommentRequest());
     try {
-      const url = reviewAPI.deleteReview(commentId);
+      const url = commentAPI.deleteComment(commentId);
       const response = await deleteAPI(url);
       dispatch(deleteCommentSuccess());
       return response;

@@ -4,6 +4,7 @@ import React from "react";
 
 import { Header } from "@/layouts/Header";
 import ChapterInfo from "./ChapterInfo";
+import CommentSection from "./CommentSection";
 
 export default function ChapterInfoPage() {
   return (
@@ -11,6 +12,7 @@ export default function ChapterInfoPage() {
       <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
         <ChapterInfo />
+        <CommentSection />
       </div>
     </main>
   );
