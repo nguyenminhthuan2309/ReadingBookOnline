@@ -54,11 +54,7 @@ export class BookChapterCommentResponseDto {
     description: 'Thông tin của người viết bình luận',
   })
   @Expose()
-  @Transform(({ obj }) => ({
-    id: obj.user.id,
-    email: obj.user.email,
-    name: obj.user.name,
-  }))
+  @Type(() => AuthorDto)
   user: AuthorDto;
 
   @ApiPropertyOptional({

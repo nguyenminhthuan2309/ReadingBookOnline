@@ -776,15 +776,12 @@ export class BookService {
         }
       }
 
-      const commentEntity = this.databaseService.create(
-        this.bookChapterCommentRepository,
-        {
-          user,
-          chapter: { id: chapterId },
-          comment: dto.comment,
-          parent: dto.parentId ? { id: dto.parentId } : undefined,
-        },
-      );
+      await this.databaseService.create(this.bookChapterCommentRepository, {
+        user,
+        chapter: { id: chapterId },
+        comment: dto.comment,
+        parent: dto.parentId ? { id: dto.parentId } : undefined,
+      });
 
       return true;
     } catch (error) {
