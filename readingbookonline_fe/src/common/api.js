@@ -7,7 +7,10 @@ const authAPI = {
   verifyOTP: `${API_GATEWAY}/user/verify-reset-password`,
   verifyCode: (code) => `${API_GATEWAY}/user/verify?token=${code}`,
 };
-const userAPI = {};
+const userAPI = {
+  editUser: `${API_GATEWAY}/user`,
+  changePassword: `${API_GATEWAY}/user/update-password`,
+};
 
 const bookAPI = {
   getBook: (limitNumber, pageNumber) =>
@@ -30,4 +33,32 @@ const uploadAPI = {
   uploadImage: `${API_GATEWAY}/upload/image`,
   uploadFile: `${API_GATEWAY}/upload/file`,
 };
-export { authAPI, userAPI, bookAPI, chapterAPI, uploadAPI };
+
+const reviewAPI = {
+  createReview: (bookId) => `${API_GATEWAY}/book/book-review/${bookId}`,
+  getReview: (bookId, limit, page) =>
+    `${API_GATEWAY}/book/book-review?bookId=${bookId}&limit=${limit}&page=${page}`,
+  editReview: (reviewId) => `${API_GATEWAY}/book/book-review/${reviewId}`,
+  deleteReview: (reviewId) => `${API_GATEWAY}/book/book-review/${reviewId}`,
+};
+
+const commentAPI = {
+  createComment: (chapterId) =>
+    `${API_GATEWAY}/book/chapter-comment/${chapterId}`,
+  getComment: (chapterId, limit, page) =>
+    `${API_GATEWAY}/book/chapter-comment?limit=${limit}&page=${page}&chapterId=${chapterId}`,
+  editComment: (commentId) =>
+    `${API_GATEWAY}/book/chapter-comment/${commentId}`,
+  deleteComment: (commentId) =>
+    `${API_GATEWAY}/book/chapter-comment/${commentId}`,
+};
+
+export {
+  authAPI,
+  userAPI,
+  bookAPI,
+  chapterAPI,
+  uploadAPI,
+  reviewAPI,
+  commentAPI,
+};

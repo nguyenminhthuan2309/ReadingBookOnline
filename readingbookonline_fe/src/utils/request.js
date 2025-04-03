@@ -11,7 +11,9 @@ instance.interceptors.request.use(
     const expired_in = localStorage.getItem(EXPIRED_IN);
     if (!access_token || !user_info || !expired_in) {
       config.headers.Authorization = "";
-      localStorage.clear();
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(USER_INFO);
+      localStorage.removeItem(EXPIRED_IN);
     } else {
       config.headers.Authorization = `Bearer ${access_token}`;
     }

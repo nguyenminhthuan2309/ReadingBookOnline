@@ -2,18 +2,16 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import PropTypes from "prop-types";
-import { Button, Rating } from "@mui/material";
+import { Button } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { createReview, editReview } from "@/utils/actions/reviewAction";
 import { useRouter } from "next/router";
+import { createComment, editComment } from "@/utils/actions/commentAction";
 
-// Import ReactQuill chỉ trên client-side để tránh lỗi SSR của Next.js
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
+const TextEditor = ({ typeComment, id, defaultValue = "", cancel }) => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const [rating, setRating] = useState(5);
   const [value, setValue] = useState("");
   const quillRef = useRef(null);
 
@@ -30,12 +28,18 @@ const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
 
   const handleSave = useCallback(async () => {
     if (!value.trim()) return;
+    console.log("value", value);
 
     switch (typeComment) {
-      case "review": {
+      case "comment": {
         const res = await dispatch(
-          createReview(id, { rating, comment: value })
+          createComment(id, {
+            chapterId: id,
+            comment: value,
+            parentId: 0,
+          })
         );
+        console.log("res", res);
         if (res) {
           cancel();
         }
@@ -43,19 +47,21 @@ const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
         router.reload();
         break;
       }
-      case "editReview":{
-        const res = await dispatch(editReview(id, {rating, comment: value}))
-        if(res){
+      case "editComment": {
+        const res = await dispatch(
+          editComment(id, {comment: value })
+        );
+        if (res) {
           cancel()
         }
-        setValue("")
-        router.reload()
-        break
+        setValue("");
+        router.reload();
+        break;
       }
       default:
         break;
     }
-  }, [typeComment, value, rating]);
+  }, [value, typeComment, id]);
 
   useEffect(() => {
     if (!defaultValue) return;
@@ -64,16 +70,6 @@ const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
 
   return (
     <>
-      <div className="flex items-center gap-2 pt-10 ml-4">
-        <span className="text-black">Your Score:</span>
-        <Rating
-          name="simple-controlled"
-          value={rating}
-          onChange={(event, newValue) => {
-            setRating(newValue);
-          }}
-        />
-      </div>
       <div className="bg-white rounded-[10px] mt-2">
         <ReactQuill
           ref={quillRef}

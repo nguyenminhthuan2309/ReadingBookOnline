@@ -22,59 +22,54 @@ function ChapterInfo() {
 
   const { chapterData, loading } = useSelector((state) => state.infoChapter);
 
-  const handleFileURL = useCallback(
-    async (fileURL) => {
-      setFilePreview("");
-      try {
-        const response = await fetch(fileURL, {
-          method: "GET",
-          headers: {
-            "Content-Type":
-              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          },
-          cache: "no-cache", // Prevent caching issues
-        });
+  const handleFileURL = useCallback(async (fileURL) => {
+    setFilePreview("");
+    try {
+      const response = await fetch(fileURL, {
+        method: "GET",
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        },
+        cache: "no-cache", // Prevent caching issues
+      });
 
-        if (!response.ok) {
-          ShowNotify(ERROR, `HTTP error! status: ${response.data.code}`);
-          return;
-        }
-        const contentType = response.headers.get("content-type");
-        // Check if we actually got a docx file
-        if (
-          !contentType?.includes("officedocument.wordprocessingml.document")
-        ) {
-          ShowNotify(ERROR, "File không đúng định dạng .docx");
-          return;
-        }
-        // Get the blob first
-        const blob = await response.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-
-        if (arrayBuffer.byteLength === 0) {
-          ShowNotify(ERROR, "Empty file received");
-          return;
-        }
-
-        const container = document.createElement("div");
-
-        await docx.renderAsync(arrayBuffer, container, container, {
-          className: "docx",
-        });
-
-        if (container.innerHTML) {
-          setFilePreview(container.innerHTML);
-        } else {
-          ShowNotify(ERROR, "Failed to render document");
-        }
-      } catch (error) {
-        console.error("Error details:", error);
-        setFilePreview("Error reading file content");
-        ShowNotify(ERROR, "Không thể đọc file. Vui lòng thử lại sau.");
+      if (!response.ok) {
+        ShowNotify(ERROR, `HTTP error! status: ${response.data.code}`);
+        return;
       }
-    },
-    []
-  ); 
+      const contentType = response.headers.get("content-type");
+      // Check if we actually got a docx file
+      if (!contentType?.includes("officedocument.wordprocessingml.document")) {
+        ShowNotify(ERROR, "File không đúng định dạng .docx");
+        return;
+      }
+      // Get the blob first
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      if (arrayBuffer.byteLength === 0) {
+        ShowNotify(ERROR, "Empty file received");
+        return;
+      }
+
+      const container = document.createElement("div");
+
+      await docx.renderAsync(arrayBuffer, container, container, {
+        className: "docx",
+      });
+
+      if (container.innerHTML) {
+        setFilePreview(container.innerHTML);
+      } else {
+        ShowNotify(ERROR, "Failed to render document");
+      }
+    } catch (error) {
+      console.error("Error details:", error);
+      setFilePreview("Error reading file content");
+      ShowNotify(ERROR, "Không thể đọc file. Vui lòng thử lại sau.");
+    }
+  }, []);
 
   useEffect(() => {
     setFilePreview("");
@@ -122,8 +117,8 @@ function ChapterInfo() {
           return;
         }
 
-        const  data  = chapterData?.data;
-        if (!data ||!data.content || !data.book) return;
+        const data = chapterData?.data;
+        if (!data || !data.content || !data.book) return;
 
         setItem(`chapter-${chapterId}`, JSON.stringify(data));
         setCachedData(data.book);
@@ -137,7 +132,17 @@ function ChapterInfo() {
 
   useEffect(() => {
     return () => {
-      localStorage.removeItem(`chapter-${chapterId}`);
+      // Only clear if we're actually navigating away from the chapter
+      if (chapterId) {
+        const currentData = getItem(`chapter-${chapterId}`);
+        if (currentData) {
+          // Only remove if we're actually navigating away
+          const currentPath = window.location.pathname;
+          if (!currentPath.includes(`/chapter/${chapterId}`)) {
+            localStorage.removeItem(`chapter-${chapterId}`);
+          }
+        }
+      }
       dispatch(resetInfoChapterState());
       setFilePreview("");
       setCachedData(null);

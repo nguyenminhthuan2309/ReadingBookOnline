@@ -14,14 +14,14 @@ import Settings from "@mui/icons-material/Settings";
 
 import Logout from "@mui/icons-material/Logout";
 import PropTypes from "prop-types";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 import { getRandomColor } from "./getRandomColor";
 import { handleLogout } from "@/utils/actions/authAction";
 import { useDispatch } from "react-redux";
 import PaidIcon from "@mui/icons-material/Paid";
 import { Button } from "@mui/material";
-export default function AccountMenu({ name }) {
+export default function AccountMenu({ name="", avatar="" }) {
   const router = useRouter();
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -54,7 +54,7 @@ export default function AccountMenu({ name }) {
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32, bgcolor: getRandomColor() }}>
+            <Avatar src={avatar} sx={{ width: 32, height: 32, bgcolor: getRandomColor() }}>
               {name?.toUpperCase()}
             </Avatar>
           </IconButton>
@@ -107,7 +107,10 @@ export default function AccountMenu({ name }) {
               <span>1000</span>
             </div>
           </div>
-          <Button sx={{ textTransform: "none", zIndex: 10 }} onClick={handleClickPurchase}>
+          <Button
+            sx={{ textTransform: "none", zIndex: 10 }}
+            onClick={handleClickPurchase}
+          >
             <span className="bg-amber-400 p-2 rounded-lg text-white">
               Purchase for coin
             </span>
@@ -140,6 +143,6 @@ export default function AccountMenu({ name }) {
 }
 
 AccountMenu.propTypes = {
-  userId: PropTypes.number,
   name: PropTypes.string,
+  avatar: PropTypes.string,
 };

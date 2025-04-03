@@ -68,7 +68,7 @@ export const Header = () => {
             className="object-contain shrink-0 my-auto aspect-[0.86] w-[18px]"
           />
           {user ? (
-            <AccountMenu name={user && user.name?.slice(0, 1)} />
+            <AccountMenu name={user && user.name?.slice(0, 1)} avatar={user && user.avatar} />
           ) : (
             <div className="flex flex-wrap gap-5 py-2">
               <Button

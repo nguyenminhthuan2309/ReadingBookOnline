@@ -5,13 +5,22 @@ import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutli
 import { Avatar, Badge, Button, IconButton } from "@mui/material";
 import { getRandomColor } from "@/components/getRandomColor";
 import { getItem } from "@/utils/localStorage";
+import { useRouter } from "next/router";
+import ChangePasswordDialog from "./changePasswordDialog";
+import EditInfoDialog from "./editInfoDialog";
 
 const UserProfile = () => {
+  const router = useRouter();
   const [user, setUser] = useState();
+  const [openChangePasswordDialog, setOpenChangePasswordDialog] = useState(false);
+  const [openEditInfoDialog, setOpenEditInfoDialog] = useState(false);
 
   useEffect(() => {
     const userInfo = getItem(USER_INFO);
-    if (!userInfo) return;
+    if (!userInfo) {
+      router.push("/");
+      return;
+    }
     setUser(userInfo);
   }, []);
 
@@ -30,14 +39,15 @@ const UserProfile = () => {
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             >
               <Avatar
+                src={user && user.avatar}
                 sx={{
-                  width: 132,
-                  height: 132,
+                  width: 100,
+                  height: 100,
                   fontSize: 62,
                   bgcolor: getRandomColor(),
                 }}
               >
-                {user && user.name.slice(0, 1).toUpperCase()}
+                {user && !user.avatar ? user.name.slice(0, 1).toUpperCase() : null}
               </Avatar>
             </Badge>
           </div>
@@ -46,20 +56,30 @@ const UserProfile = () => {
               <h1 className="grow self-stretch text-4xl text-black">
                 {user && user.name}
               </h1>
-              <IconButton>
+              <IconButton onClick={() => setOpenEditInfoDialog(true)}>
                 <DriveFileRenameOutlineIcon />
               </IconButton>
-              <Button sx={{ textTransform: null }}>
+              <Button sx={{ textTransform: null }} onClick={() => setOpenChangePasswordDialog(true)}>
                 <span className="px-4 py-1.5 rounded-xl text-white bg-[#3F3D6E]">
                   Reset Password
                 </span>
               </Button>
             </div>
-            <p className="px-5 pt-4 pb-20 mt-2 text-lg bg-white rounded-3xl max-md:mr-2.5 max-md:max-w-full"></p>
+            <span className="px-1 text-lg text-black/50">Email: {user && user.email}</span>
           </div>
-          
         </>
       )}
+      <React.Fragment>
+        <EditInfoDialog
+          open={openEditInfoDialog}
+          handleClose={() => setOpenEditInfoDialog(false)}
+          userInfo={user}
+        />
+        <ChangePasswordDialog
+          open={openChangePasswordDialog}
+          handleClose={() => setOpenChangePasswordDialog(false)}
+        />
+      </React.Fragment>
     </section>
   );
 };

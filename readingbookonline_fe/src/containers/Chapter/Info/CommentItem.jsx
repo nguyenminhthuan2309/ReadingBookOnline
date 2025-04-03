@@ -17,14 +17,14 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-import SpoilerEditor from "@/components/CommentWithSpoilerTag";
-import { deleteReview } from "@/utils/actions/reviewAction";
+import CommentWithoutRating from "@/components/CommentWithoutRating";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import { USER_INFO } from "@/utils/constants";
 import { getItem } from "@/utils/localStorage";
+import { deleteComment } from "@/utils/actions/commentAction";
 
-function CommentItem({ user, comment, rating, id, userId }) {
+function CommentItem({ user, comment, id, userId }) {
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -61,7 +61,7 @@ function CommentItem({ user, comment, rating, id, userId }) {
 
   const handleDelete = useCallback(async () => {
     try {
-      const res = await dispatch(deleteReview(id));
+      const res = await dispatch(deleteComment(id));
       if (res) {
         router.reload();
       }
@@ -84,10 +84,9 @@ function CommentItem({ user, comment, rating, id, userId }) {
           {" "}
           {/* Added max-width */}
           <h4 className="text-lg truncate">{user}</h4>
-          <Rating value={rating} readOnly />
           {isEditing ? (
-            <SpoilerEditor
-              typeComment="editReview"
+            <CommentWithoutRating
+              typeComment="editComment"
               id={id}
               cancel={() => setIsEditing(false)}
               defaultValue={comment}
@@ -119,30 +118,30 @@ function CommentItem({ user, comment, rating, id, userId }) {
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
-            MenuListProps={{
-              "aria-labelledby": "comment-menu-button",
-            }}
-          >
-            <MenuItem
-              onClick={handleClickEdit}
-              sx={{
-                color: "black",
-                "&:hover": { backgroundColor: "#ffdfca" },
+              MenuListProps={{
+                "aria-labelledby": "comment-menu-button",
               }}
             >
-              <EditIcon sx={{ mr: 1, fontSize: 20 }} />
-              Edit Comment
-            </MenuItem>
-            <MenuItem
-              onClick={handleClickDelete}
-              sx={{
-                color: "red",
-                "&:hover": { backgroundColor: "#ffdfca" },
-              }}
-            >
-              <DeleteIcon sx={{ mr: 1, fontSize: 20 }} />
-              Delete Comment
-            </MenuItem>
+              <MenuItem
+                onClick={handleClickEdit}
+                sx={{
+                  color: "black",
+                  "&:hover": { backgroundColor: "#ffdfca" },
+                }}
+              >
+                <EditIcon sx={{ mr: 1, fontSize: 20 }} />
+                Edit Comment
+              </MenuItem>
+              <MenuItem
+                onClick={handleClickDelete}
+                sx={{
+                  color: "red",
+                  "&:hover": { backgroundColor: "#ffdfca" },
+                }}
+              >
+                <DeleteIcon sx={{ mr: 1, fontSize: 20 }} />
+                Delete Comment
+              </MenuItem>
             </Menu>
           )}
         </div>

@@ -1,18 +1,32 @@
-import React from "react";
+import React, { useCallback } from "react";
 import NoticesSidebar from "./NoticesSidebar";
 import UserProfile from "./UserProfile";
 
 import { Header } from "@/layouts/Header";
+import { useRouter } from "next/router";
+import { IconButton } from "@mui/material";
+import ArrowBack from "@mui/icons-material/ArrowBack";
 
 const AccountPage = () => {
+  const router = useRouter();
+
+  const handelRediect = useCallback(() => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }, []);
   return (
     <div className="rounded-none">
       <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
         <main className="flex flex-col self-center mt-10 w-full max-w-[1521px] max-md:mt-10 max-md:max-w-full">
-          <nav className="self-start text-3xl text-black">
-            <a href="/">Home</a>/<a href="/account">Account</a>
-          </nav>
+          <div className="self-start text-3xl text-black">
+            <IconButton onClick={handelRediect}>
+              <ArrowBack />
+            </IconButton>
+          </div>
           <div className="mt-7 max-md:max-w-full">
             <div className="flex gap-5 max-md:flex-col">
               <NoticesSidebar />
