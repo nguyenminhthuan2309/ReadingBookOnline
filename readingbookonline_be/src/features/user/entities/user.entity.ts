@@ -21,6 +21,7 @@ import { UserReport } from './user-report.entity';
 import { BookFollow } from '@features/book/entities/book-follow.entity';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { BookChapterComment } from '@features/book/entities/book-chapter-comment.entity';
+import { BookNotification } from '@features/book/entities/book-notification.entity';
 
 @Entity('user')
 export class User {
@@ -78,6 +79,9 @@ export class User {
 
   @OneToMany(() => UserReport, (report) => report.reporter)
   reportsMade: UserReport[];
+
+  @OneToMany(() => BookNotification, (notification) => notification.user)
+  notifications: BookNotification[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

@@ -16,6 +16,8 @@ import { BookProgressStatus } from './entities/book-progess-status.entity';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { BookChapterComment } from './entities/book-chapter-comment.entity';
 import { BookType } from './entities/book-type.entity';
+import { BookNotification } from './entities/book-notification.entity';
+import { BookNotificationModule } from '@core/gateway/book-notification.module';
 
 @Module({
   imports: [
@@ -33,8 +35,10 @@ import { BookType } from './entities/book-type.entity';
       BookReview,
       Book,
       BookChapterComment,
+      BookNotification,
     ]),
     forwardRef(() => UserModule),
+    BookNotificationModule,
   ],
   controllers: [BookController],
   providers: [BookService],

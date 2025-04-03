@@ -7,7 +7,7 @@ export class LoginDto {
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email: string;
 
-  @ApiProperty({ example: '595846', type: 'string' })
+  @ApiProperty({ example: '123456', type: 'string' })
   @IsString({ message: 'Mật khẩu phải là chuỗi' })
   @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
   password: string;

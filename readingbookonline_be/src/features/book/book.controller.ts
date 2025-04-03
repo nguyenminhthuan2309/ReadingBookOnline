@@ -331,6 +331,48 @@ export class BookController {
     return await this.bookService.getReadingHistoryChart(timeRange);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('notification/:id')
+  @ApiOperation({
+    summary: 'Đánh dấu thông báo là đã đọc',
+    description:
+      'API này cho phép người dùng đánh dấu một thông báo cụ thể là đã đọc.',
+  })
+  async markNotificationAsRead(
+    @Param('id') id: number,
+    @Req() req,
+  ): Promise<Boolean> {
+    const user = req.user;
+
+    return await this.bookService.markNotificationAsRead(id, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('notification-all')
+  @ApiOperation({
+    summary: 'Đánh dấu tất cả thông báo là đã đọc',
+    description:
+      'API này cho phép người dùng đánh dấu tất cả thông báo của họ là đã đọc.',
+  })
+  async markAllNotificationsAsRead(@Req() req): Promise<Boolean> {
+    const user = req.user;
+
+    return await this.bookService.markAllNotificationsAsRead(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy danh sách thông báo',
+  })
+  @Get('notification')
+  async getBookNotification(
+    @Req() req,
+    @Query() pagination: PaginationRequestDto,
+  ) {
+    const author = req.user;
+    return this.bookService.getBookNotification(author, pagination);
+  }
+
   @ApiOperation({ summary: 'Lấy chi tiết sách' })
   @Get(':id')
   async getDetailBook(@Param('id') bookId: number): Promise<any> {
@@ -368,10 +410,13 @@ export class BookController {
     @Body() updateBookStatusDto: UpdateBookStatusDto,
     @Request() req,
   ): Promise<Boolean> {
+    const user = req.user;
+
     return await this.bookService.updateBookStatus(
       id,
       updateBookStatusDto.accessStatusId,
       updateBookStatusDto.progressStatusId,
+      user,
     );
   }
 }
