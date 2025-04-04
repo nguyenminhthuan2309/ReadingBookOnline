@@ -220,7 +220,9 @@ export class BookService {
           book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
 
           book.chapters = book.chapters.map((chapter) => {
-            if (chapter.isLocked) {
+            if (user && user.id && book.author && book.author.id === user.id) {
+              return { ...chapter, isLocked: false } as BookChapter;
+            } else if (chapter.isLocked) {
               if (purchasedChapterIds.has(chapter.id)) {
                 return { ...chapter, isLocked: false } as BookChapter;
               } else {
@@ -320,7 +322,9 @@ export class BookService {
       }
 
       book.chapters = book.chapters.map((chapter) => {
-        if (chapter.isLocked) {
+        if (user && user.id && book.author && book.author.id === user.id) {
+          return { ...chapter, isLocked: false } as BookChapter;
+        } else if (chapter.isLocked) {
           if (purchasedChapterIds.has(chapter.id)) {
             return { ...chapter, isLocked: false } as BookChapter;
           } else {
@@ -781,7 +785,15 @@ export class BookService {
         throw new NotFoundException('Chapter not found');
       }
 
-      if (chapter.isLocked) {
+      if (
+        user &&
+        user.id &&
+        chapter.book &&
+        chapter.book.author &&
+        chapter.book.author.id === user.id
+      ) {
+        chapter.isLocked = false;
+      } else if (chapter.isLocked) {
         let isPurchased = false;
         if (user && user.id) {
           const purchase = await this.chapterPurchaseRepository.findOne({

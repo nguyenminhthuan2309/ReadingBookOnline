@@ -436,11 +436,9 @@ export class UserService {
         throw new BadRequestException('Email đã được sử dụng');
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       const newUser = this.userRepository.create({
         email,
-        password: hashedPassword,
+        password,
         name,
         role: { id: 2 },
         status: { id: 1 },
