@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -21,6 +22,7 @@ import {
   RadioGroup,
 } from "@mui/material";
 import { useSearchParams } from "next/navigation";
+import withAuth from "@/utils/withAuth";
 
 const BookListPage = () => {
   const searchParams = useSearchParams();
@@ -45,6 +47,7 @@ const BookListPage = () => {
     if (genre) {
       url += `&categoryId=${genre}`;
     }
+    url += `&accessStatusId=1`;
     if (+progress !== 0) {
       url += `&progressStatusId=${progress}`;
     }
@@ -179,4 +182,4 @@ const BookListPage = () => {
   );
 };
 
-export default BookListPage;
+export default withAuth(BookListPage, [0,3]);

@@ -4,8 +4,9 @@ import PaidIcon from "@mui/icons-material/Paid";
 import HelpIcon from "@mui/icons-material/Help";
 import InfoIcon from "@mui/icons-material/Info";
 import { Header } from "@/layouts/Header";
+import withAuth from "@/utils/withAuth";
 
-export default function CoinPurchasePage() {
+function CoinPurchasePage() {
   const [activeTab, setActiveTab] = useState("coins");
 
   return (
@@ -123,3 +124,5 @@ export default function CoinPurchasePage() {
     </main>
   );
 }
+
+export default withAuth(CoinPurchasePage, [3]);

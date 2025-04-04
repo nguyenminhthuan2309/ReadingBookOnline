@@ -9,6 +9,7 @@ import { getBookInfoData } from "@/utils/actions/bookAction";
 import { useDispatch, useSelector } from "react-redux";
 import { CircularProgress } from "@mui/material";
 import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
+import withAuth from "@/utils/withAuth";
 
 function MangaSPage() {
   const dispatch = useDispatch();
@@ -53,4 +54,4 @@ function MangaSPage() {
   );
 }
 
-export default MangaSPage;
+export default withAuth(MangaSPage, [0,3]);

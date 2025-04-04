@@ -1,8 +1,9 @@
 import React from "react";
 import ChapterFormHeader from "./ChapterFormHeader";
 import ChapterBasicInfo from "./ChapterBasicInfo";
+import withAuth from "@/utils/withAuth";
 
-function CreateNewChapter() {
+function EditChapter() {
   return (
     <main className="text-lg text-black rounded-none">
       <section className="flex flex-col justify-center items-center px-20 py-10 w-full max-md:px-5 max-md:max-w-full">
@@ -15,4 +16,4 @@ function CreateNewChapter() {
   );
 }
 
-export default CreateNewChapter;
+export default withAuth(EditChapter, [3]);

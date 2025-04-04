@@ -1,7 +1,7 @@
 import React from "react";
 import ChapterFormHeader from "./ChapterFormHeader";
 import ChapterBasicInfo from "./ChapterBasicInfo";
-
+import withAuth from "@/utils/withAuth";
 function CreateNewChapter() {
   return (
     <main className="text-lg text-black rounded-none">
@@ -15,4 +15,4 @@ function CreateNewChapter() {
   );
 }
 
-export default CreateNewChapter;
+export default withAuth(CreateNewChapter, [3]);

@@ -21,6 +21,9 @@ import {
 } from "@mui/material";
 import { editBook, getBookInfoData } from "@/utils/actions/bookAction";
 import { useSearchParams } from "next/navigation";
+import { getItem } from "@/utils/localStorage";
+import { USER_INFO } from "@/utils/constants";
+import { useRouter } from "next/router";
 
 const schema = yup.object().shape({
   title: yup.string().required("Title không được để trống"),
@@ -28,8 +31,10 @@ const schema = yup.object().shape({
 
 function BookBasicInfo() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const bookId = searchParams.get("number");
+  const userInfo = getItem(USER_INFO);
   const { loading } = useSelector((state) => state.uploadImage);
   const { bookData } = useSelector((state) => state.bookInfo);
 
@@ -102,6 +107,14 @@ function BookBasicInfo() {
   };
 
   useEffect(() => {
+    if (!userInfo || !userInfo.id || !bookData.author || !bookData.author.id)
+      return;
+    if (userInfo.id !== bookData.author.id) {
+      router.replace("/forbidden");
+    }
+  }, [userInfo, bookData]);
+
+  useEffect(() => {
     if (
       !bookData ||
       !bookData.cover ||
@@ -123,6 +136,8 @@ function BookBasicInfo() {
     if (!bookId) return;
     dispatch(getBookInfoData(bookId));
   }, [dispatch, bookId]);
+
+  
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
@@ -225,87 +240,6 @@ function BookBasicInfo() {
             </RadioGroup>
           </FormControl>
         </div>
-        {/* 
-        {+bookType === 1 && (
-          <div className="mt-14">
-            <FormControl>
-              <FormLabel id="demo-row-radio-buttons-group-label">
-                <span className="text-black text-[18px]">Type of Novel</span>
-              </FormLabel>
-              <RadioGroup
-                row
-                aria-labelledby="demo-row-radio-buttons-group-label"
-                name="row-radio-buttons-group"
-              >
-                <FormControlLabel
-                  value={"shousetsu"}
-                  control={<Radio />}
-                  label="Shousetsu (JP)"
-                />
-                <FormControlLabel
-                  value={"xiaoshuo"}
-                  control={<Radio />}
-                  label="Xiaoshuo(CN)"
-                />
-                <FormControlLabel
-                  value={"soseol"}
-                  control={<Radio />}
-                  label="Soseol(KR)"
-                />
-                <FormControlLabel
-                  value={"truyen"}
-                  control={<Radio />}
-                  label="Truyện chữ(VN)"
-                />{" "}
-                <FormControlLabel
-                  value={"novel"}
-                  control={<Radio />}
-                  label="Novel"
-                />
-              </RadioGroup>
-            </FormControl>
-          </div>
-        )}
-        {+bookType === 2 && (
-          <div className="mt-14">
-            <FormControl>
-              <FormLabel id="demo-row-radio-buttons-group-label">
-                <span className="text-black text-[18px]">Type of Novel</span>
-              </FormLabel>
-              <RadioGroup
-                row
-                aria-labelledby="demo-row-radio-buttons-group-label"
-                name="row-radio-buttons-group"
-              >
-                <FormControlLabel
-                  value={"manga"}
-                  control={<Radio />}
-                  label="Manga(JP)"
-                />
-                <FormControlLabel
-                  value={"manhua"}
-                  control={<Radio />}
-                  label="Manhua(CN)"
-                />
-                <FormControlLabel
-                  value={"manhwa"}
-                  control={<Radio />}
-                  label="Manhwa(KR)"
-                />
-                <FormControlLabel
-                  value={"truyenTranh"}
-                  control={<Radio />}
-                  label="Truyện tranh(VN)"
-                />{" "}
-                <FormControlLabel
-                  value={"comic"}
-                  control={<Radio />}
-                  label="Comic"
-                />
-              </RadioGroup>
-            </FormControl>
-          </div>
-        )} */}
 
         <h2 className="mt-14 max-md:mt-10">Genre(s):</h2>
         <div className="flex flex-wrap gap-3.5 mr-5 w-full">
@@ -408,7 +342,7 @@ function BookBasicInfo() {
               row
               aria-labelledby="demo-row-radio-buttons-group-label"
               name="row-radio-buttons-group"
-              defaultValue={1}
+              value={accessStatus}
               className="flex flex-wrap gap-10"
             >
               <FormControlLabel

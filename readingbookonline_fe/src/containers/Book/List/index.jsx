@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -25,6 +26,7 @@ import {
 } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
+import withAuth from "@/utils/withAuth";
 
 const BookListPage = () => {
   const router = useRouter();
@@ -52,6 +54,7 @@ const BookListPage = () => {
     if (!!search) {
       url += `&search=${search}`;
     }
+    url += `&accessStatusId=1`;
     if (+progress !== 0) {
       url += `&progressStatusId=${progress}`;
     }
@@ -230,4 +233,4 @@ const BookListPage = () => {
   );
 };
 
-export default BookListPage;
+export default withAuth(BookListPage, [0,3]);

@@ -6,6 +6,7 @@ import { Header } from "@/layouts/Header";
 import { useRouter } from "next/router";
 import { IconButton } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
+import withAuth from "@/utils/withAuth";
 
 const AccountPage = () => {
   const router = useRouter();
@@ -49,4 +50,4 @@ const AccountPage = () => {
   );
 };
 
-export default AccountPage;
+export default withAuth(AccountPage, [3]);

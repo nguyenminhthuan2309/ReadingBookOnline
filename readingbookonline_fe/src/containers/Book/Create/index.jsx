@@ -1,6 +1,7 @@
 import React from "react";
 import BookFormHeader from "./BookFormHeader";
 import BookBasicInfo from "./BookBasicInfo";
+import withAuth from "@/utils/withAuth";
 
 function CreateNewBook() {
   return (
@@ -15,4 +16,4 @@ function CreateNewBook() {
   );
 }
 
-export default CreateNewBook;
+export default withAuth(CreateNewBook, [3]);
