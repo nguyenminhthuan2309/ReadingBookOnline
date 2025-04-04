@@ -54,6 +54,7 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
   };
 
   const handleCloseDialog = () => {
+    setImageUrl(userInfo.avatar||"");
     reset();
     handleClose();
   };

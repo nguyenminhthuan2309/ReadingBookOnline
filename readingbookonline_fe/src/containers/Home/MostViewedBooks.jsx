@@ -8,7 +8,7 @@ export const MostViewedBooks = () => {
 
   const getBookData = useCallback(async () => {
     let url = bookAPI.getBook(6, 1);
-    url += `&sortBy=views&sortType=DESC`;
+    url += `&sortBy=views&sortType=DESC&accessStatusId=1`;
     try {
       const response = await getAPI(url);
       const { data } = response.data.data;

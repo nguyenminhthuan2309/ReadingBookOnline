@@ -12,7 +12,7 @@ export const LatestUpdates = () => {
 
   const getBookData = useCallback(async () => {
     let url = bookAPI.getBook(20, 1);
-    url += "&sortBy=updatedAt&sortType=DESC";
+    url += "&sortBy=updatedAt&sortType=DESC&accessStatusId=1";
     try {
       const response = await getAPI(url);
       const { data, totalPages } = response.data.data;
@@ -39,7 +39,7 @@ export const LatestUpdates = () => {
   }, [getBookData]);
 
   return (
-    <section className="flex flex-col justify-center items-center mt-10 max-w-[1493px] max-md:max-w-full">
+    <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full">
       <header className="py-px w-full max-md:max-w-full">
         <div className="flex gap-10 items-start justify-between mr-2.5 ml-4 max-md:max-w-full">
           <div className="flex flex-1 gap-4">

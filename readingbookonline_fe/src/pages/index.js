@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Home from "@/containers/Home/Loadable";
-import AdminPage from "@/containers/Admin/Users";
+import AdminPage from "@/containers/Admin/index";
 import { USER_INFO } from "@/utils/constants";
 
 export default function HomePage() {

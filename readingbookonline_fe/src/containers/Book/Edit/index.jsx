@@ -1,8 +1,9 @@
 import React from "react";
 import BookFormHeader from "./BookFormHeader";
 import BookBasicInfo from "./BookBasicInfo";
+import withAuth from "@/utils/withAuth";
 
-function CreateNewBook() {
+function EditBook() {
   return (
     <main className="text-lg text-black rounded-none">
       <section className="flex flex-col justify-center items-center px-20 py-10 w-full max-md:px-5 max-md:max-w-full">
@@ -15,4 +16,4 @@ function CreateNewBook() {
   );
 }
 
-export default CreateNewBook;
+export default withAuth(EditBook, [3]);
