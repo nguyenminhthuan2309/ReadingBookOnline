@@ -67,6 +67,7 @@ import { BookNotification } from './entities/book-notification.entity';
 import { BookNotificationGateway } from '@core/gateway/book-notification.gateway';
 import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
 import { BookNotificationResponseDto } from './dto/book-notification.dto';
+import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 
 @Injectable()
 export class BookService {
@@ -100,6 +101,8 @@ export class BookService {
     private readonly bookReadingHistoryRepository: Repository<BookReadingHistory>,
     @InjectRepository(BookNotification)
     private readonly bookNotificationRepository: Repository<BookNotification>,
+    @InjectRepository(ChapterPurchase)
+    private readonly chapterPurchaseRepository: Repository<ChapterPurchase>,
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
@@ -118,7 +121,10 @@ export class BookService {
     return '';
   }
 
-  async getAllBooks(params: GetBookRequestDto): Promise<GetBookResponseDto> {
+  async getAllBooks(
+    user: UserResponseDto,
+    params: GetBookRequestDto,
+  ): Promise<GetBookResponseDto> {
     try {
       let {
         page = 1,
@@ -154,9 +160,6 @@ export class BookService {
       }
       if (bookTypeId) {
         qb.andWhere('bookType.id = :bookTypeId', { bookTypeId });
-      }
-      if (accessStatusId) {
-        qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
       }
       if (accessStatusId) {
         qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
@@ -203,24 +206,56 @@ export class BookService {
 
       const [books, total] = await qb.getManyAndCount();
 
+      let purchasedChapterIds = new Set<number>();
+      if (user && user.id) {
+        const purchases = await this.chapterPurchaseRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['chapter'],
+        });
+        purchasedChapterIds = new Set(purchases.map((p) => p.chapter.id));
+      }
+
+      books.forEach((book) => {
+        if (book.chapters && book.chapters.length > 0) {
+          book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
+
+          book.chapters = book.chapters.map((chapter) => {
+            if (chapter.isLocked) {
+              if (purchasedChapterIds.has(chapter.id)) {
+                return { ...chapter, isLocked: false } as BookChapter;
+              } else {
+                return {
+                  id: chapter.id,
+                  title: chapter.title,
+                  chapter: chapter.chapter,
+                  isLocked: true,
+                  content: undefined,
+                  cover: undefined,
+                  price: undefined,
+                  book: undefined,
+                  createdAt: chapter.createdAt,
+                  updatedAt: chapter.updatedAt,
+                } as unknown as BookChapter;
+              }
+            }
+            return chapter;
+          });
+        }
+      });
+
       const response: GetBookResponseDto = {
         totalItems: total,
         totalPages: total > 0 ? Math.ceil(total / limit) : 1,
-        data: books.map((book) => {
-          if (book.chapters) {
-            book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
-          }
-          return plainToInstance(GetBookDto, book, {
-            excludeExtraneousValues: true,
-          });
-        }),
+        data: books.map((book) =>
+          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true }),
+        ),
       };
 
-      await this.cacheService.set(
-        cachedKey,
-        JSON.stringify(response),
-        this.redisBookTtl,
-      );
+      // await this.cacheService.set(
+      //   cachedKey,
+      //   JSON.stringify(response),
+      //   this.redisBookTtl,
+      // );
 
       return response;
     } catch (error) {
@@ -229,7 +264,7 @@ export class BookService {
     }
   }
 
-  async getBookDetail(bookId: number): Promise<any> {
+  async getBookDetail(user: UserResponseDto, bookId: number): Promise<any> {
     try {
       const cachedKey = `book:detail:${bookId}`;
 
@@ -273,10 +308,42 @@ export class BookService {
         .getRawOne();
       const avgRating = Number(ratingResult.avgRating) || 0;
 
+      const purchasedChapterIds = new Set<number>();
+      if (user && user.id) {
+        const purchases = await this.chapterPurchaseRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['chapter'],
+        });
+        purchases.forEach((purchase) =>
+          purchasedChapterIds.add(purchase.chapter.id),
+        );
+      }
+
+      book.chapters = book.chapters.map((chapter) => {
+        if (chapter.isLocked) {
+          if (purchasedChapterIds.has(chapter.id)) {
+            return { ...chapter, isLocked: false } as BookChapter;
+          } else {
+            return {
+              id: chapter.id,
+              title: chapter.title,
+              chapter: chapter.chapter,
+              isLocked: true,
+              content: undefined,
+              cover: undefined,
+              price: undefined,
+              book: undefined,
+              createdAt: chapter.createdAt,
+              updatedAt: chapter.updatedAt,
+            } as unknown as BookChapter;
+          }
+        }
+        return chapter;
+      });
+
       const bookDto = plainToInstance(GetBookDetail, book, {
         excludeExtraneousValues: true,
       });
-
       bookDto.rating = avgRating;
 
       const response: GetBookResponseDto = {
@@ -285,11 +352,11 @@ export class BookService {
         data: [bookDto],
       };
 
-      await this.cacheService.set(
-        cachedKey,
-        JSON.stringify(response),
-        this.redisBookTtl,
-      );
+      // await this.cacheService.set(
+      //   cachedKey,
+      //   JSON.stringify(response),
+      //   this.redisBookTtl,
+      // );
 
       return response;
     } catch (error) {
@@ -690,7 +757,10 @@ export class BookService {
     }
   }
 
-  async getChapter(chapterId: number): Promise<GetBookChapterDto> {
+  async getChapter(
+    user: UserResponseDto,
+    chapterId: number,
+  ): Promise<GetBookChapterDto> {
     try {
       const chapter = await this.databaseService.findOne<BookChapter>(
         this.bookChapterRepository,
@@ -701,6 +771,8 @@ export class BookService {
             'book.bookType',
             'book.author',
             'book.accessStatus',
+            'book.bookCategoryRelations',
+            'book.bookCategoryRelations.category',
           ],
         },
       );
@@ -709,11 +781,42 @@ export class BookService {
         throw new NotFoundException('Chapter not found');
       }
 
+      if (chapter.isLocked) {
+        let isPurchased = false;
+        if (user && user.id) {
+          const purchase = await this.chapterPurchaseRepository.findOne({
+            where: { user: { id: user.id }, chapter: { id: chapter.id } },
+          });
+          isPurchased = Boolean(purchase);
+        }
+
+        if (isPurchased) {
+          chapter.isLocked = false;
+        } else {
+          const summaryChapter = {
+            id: chapter.id,
+            title: chapter.title,
+            chapter: chapter.chapter,
+            isLocked: true,
+            content: undefined,
+            cover: undefined,
+            price: undefined,
+            book: undefined,
+            createdAt: chapter.createdAt,
+            updatedAt: chapter.updatedAt,
+          } as unknown as BookChapter;
+
+          return plainToInstance(GetBookChapterDto, summaryChapter, {
+            excludeExtraneousValues: true,
+          });
+        }
+      }
+
       return plainToInstance(GetBookChapterDto, chapter, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
-      this.loggerService.err(error.message, 'BookChapterService.updateChapter');
+      this.loggerService.err(error.message, 'BookChapterService.getChapter');
       throw error;
     }
   }

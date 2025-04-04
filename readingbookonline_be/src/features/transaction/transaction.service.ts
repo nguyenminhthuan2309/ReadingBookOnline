@@ -269,6 +269,7 @@ export class TransactionService {
           'chapter',
           'chapter.book',
           'chapter.book.bookCategoryRelations',
+          'chapter.book.bookCategoryRelations.category',
         ],
       });
 
@@ -295,7 +296,13 @@ export class TransactionService {
         await this.chapterPurchaseRepository.findAndCount({
           where: { user: { id: user.id } },
           order: { createdAt: 'DESC' },
-          relations: ['user', 'chapter', 'chapter.book'],
+          relations: [
+            'user',
+            'chapter',
+            'chapter.book',
+            'chapter.book.bookCategoryRelations',
+            'chapter.book.bookCategoryRelations.category',
+          ],
           take: limit,
           skip: (page - 1) * limit,
         });

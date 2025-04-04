@@ -40,7 +40,6 @@ import {
   CreateBookChapterCommentDto,
   UpdateBookChapterCommentDto,
 } from './dto/book-chapter-comment.dto';
-import { BookFollow } from './entities/book-follow.entity';
 import { BookFollowDto } from './dto/book-follow.dto';
 import { BookReportDto, BookReportResponseDto } from './dto/book-report.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
@@ -49,17 +48,21 @@ import { GetBookTypeDto } from './dto/book-type.dto';
 import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.dto';
 import { UpdateBookStatusDto } from './dto/book-status.dto';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
+import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
 
 @Controller('book')
 export class BookController {
   constructor(private readonly bookService: BookService) {}
 
+  @UseGuards(OptionalAuthGuard)
   @ApiOperation({ summary: 'Lấy danh sách sách' })
   @Get()
   async getAllBooks(
+    @Request() req: any,
     @Query() params: GetBookRequestDto,
   ): Promise<GetBookResponseDto> {
-    return await this.bookService.getAllBooks(params);
+    const user = req.user;
+    return await this.bookService.getAllBooks(user, params);
   }
 
   @ApiOperation({ summary: 'Lấy danh mục' })
@@ -144,6 +147,7 @@ export class BookController {
     return this.bookService.deleteChapter(chapterId, author);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get('/chapter/:chapterId')
   @ApiOperation({ summary: 'Lấy thông tin chương theo ID' })
   @ApiResponse({
@@ -153,9 +157,11 @@ export class BookController {
   })
   @ApiResponse({ status: 404, description: 'Không tìm thấy chương' })
   async getChapter(
+    @Req() req: any,
     @Param('chapterId', ParseIntPipe) chapterId: number,
   ): Promise<GetBookChapterDto> {
-    return await this.bookService.getChapter(chapterId);
+    const user = req.user;
+    return await this.bookService.getChapter(user, chapterId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -373,10 +379,15 @@ export class BookController {
     return this.bookService.getBookNotification(author, pagination);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @ApiOperation({ summary: 'Lấy chi tiết sách' })
   @Get(':id')
-  async getDetailBook(@Param('id') bookId: number): Promise<any> {
-    return await this.bookService.getBookDetail(bookId);
+  async getDetailBook(
+    @Req() req: any,
+    @Param('id') bookId: number,
+  ): Promise<any> {
+    const user = req.user;
+    return await this.bookService.getBookDetail(user, bookId);
   }
 
   @UseGuards(JwtAuthGuard)

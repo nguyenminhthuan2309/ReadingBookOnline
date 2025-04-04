@@ -443,6 +443,7 @@ export class UserService {
         password: hashedPassword,
         name,
         role: { id: 2 },
+        status: { id: 1 },
       });
 
       return this.userRepository.save(newUser);
