@@ -63,8 +63,9 @@ export const handleAuthenticate = (formdata) => {
         }
       }
     } catch (error) {
-      dispatch(loginFail(error.response.data));
-      ShowNotify(ERROR, error.response.data.msg);
+      console.log(error);
+      dispatch(loginFail(error.data));
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };

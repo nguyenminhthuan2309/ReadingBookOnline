@@ -11,6 +11,7 @@ import InputField from "@/components/RenderInput";
 import PropTypes from "prop-types";
 import { uploadImage } from "@/utils/actions/uploadAction";
 import { editInfo } from "@/utils/actions/userAction";
+import { useRouter } from "next/router";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name không được để trống"),
@@ -30,8 +31,7 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
         if (formData && formData.name) {
           dispatch(editInfo({ name: formData.name, avatar: imageUrl }));
         }
-        reset();
-        handleClose();
+        handleCloseDialog();
       } catch (error) {
         console.log(error);
       }
@@ -53,6 +53,11 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
     }
   };
 
+  const handleCloseDialog = () => {
+    reset();
+    handleClose();
+  };
+
   useEffect(() => {
     if (!userInfo || !userInfo.name) return;
     reset({
@@ -65,7 +70,7 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
     <>
       <Dialog
         open={open}
-        onClose={handleClose}
+        onClose={handleCloseDialog}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
@@ -139,7 +144,10 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
                   Change Information
                 </span>
               </Button>
-              <Button onClick={handleClose} autoFocus>
+              <Button
+                sx={{ textTransform: "none" }}
+                onClick={handleCloseDialog}
+              >
                 Cancel
               </Button>
             </div>

@@ -6,12 +6,7 @@ import { useForm } from "react-hook-form";
 import * as yup from "yup";
 
 import { yupResolver } from "@hookform/resolvers/yup";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@mui/material";
+import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import InputField from "@/components/RenderInput";
 import { changePassword } from "@/utils/actions/userAction";
 import PropTypes from "prop-types";
@@ -57,11 +52,16 @@ const ChangePasswordDialog = ({ open, handleClose }) => {
     }
   };
 
+  const handleCloseDialog = () => {
+    reset();
+    handleClose();
+  };
+
   return (
     <>
       <Dialog
         open={open}
-        onClose={handleClose}
+        onClose={handleCloseDialog}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
@@ -100,7 +100,7 @@ const ChangePasswordDialog = ({ open, handleClose }) => {
                   Change Password
                 </span>
               </Button>
-              <Button onClick={handleClose} autoFocus>
+              <Button sx={{ textTransform: "none" }} onClick={handleCloseDialog}>
                 Cancel
               </Button>
             </div>

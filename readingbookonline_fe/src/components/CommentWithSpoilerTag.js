@@ -10,7 +10,7 @@ import { useRouter } from "next/router";
 // Import ReactQuill chỉ trên client-side để tránh lỗi SSR của Next.js
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
+const TextEditor = ({ typeComment, id, defaultValue, cancel, defaultRating }) => {
   const dispatch = useDispatch();
   const router = useRouter();
   const [rating, setRating] = useState(5);
@@ -58,9 +58,10 @@ const TextEditor = ({ typeComment, id, defaultValue, cancel }) => {
   }, [typeComment, value, rating]);
 
   useEffect(() => {
-    if (!defaultValue) return;
+    if (!defaultValue || !defaultRating) return;
     setValue(defaultValue);
-  }, [defaultValue]);
+    setRating(defaultRating);
+  }, [defaultValue, defaultRating]);
 
   return (
     <>
@@ -112,6 +113,7 @@ TextEditor.propTypes = {
   id: PropTypes.number.isRequired,
   cancel: PropTypes.func.isRequired,
   defaultValue: PropTypes.string,
+  defaultRating: PropTypes.number,
 };
 
 export default TextEditor;

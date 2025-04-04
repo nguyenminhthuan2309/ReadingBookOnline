@@ -24,7 +24,7 @@ function MangaDetails({ bookInfo }) {
                   name="read-only"
                   value={bookInfo.rating}
                   readOnly
-                  precision={0.5}
+                  precision={0.1}
                   sx={{ fontSize: "2.5rem" }}
                 />
               </div>

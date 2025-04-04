@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Button,
   Dialog,
   DialogActions,
@@ -8,7 +9,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Rating,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useState } from "react";
@@ -24,7 +24,7 @@ import { USER_INFO } from "@/utils/constants";
 import { getItem } from "@/utils/localStorage";
 import { deleteComment } from "@/utils/actions/commentAction";
 
-function CommentItem({ user, comment, id, userId }) {
+function CommentItem({ user, comment, id, userId, avatar }) {
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -79,7 +79,9 @@ function CommentItem({ user, comment, id, userId }) {
   return (
     <article className="flex flex-col w-full pb-10 max-md:max-w-full">
       <div className="flex flex-wrap gap-3 items-start">
-        <div className="flex shrink-0 bg-red-500 rounded-full h-[55px] w-[55px]" />
+        <Avatar src={avatar} sx={{ width: 50, height: 50 }}>
+          {(user?.slice(0, 1))?.toUpperCase() }
+        </Avatar>
         <div className="flex flex-col grow shrink-0 basis-0 max-w-[calc(100%-200px)]">
           {" "}
           {/* Added max-width */}
@@ -177,6 +179,7 @@ CommentItem.propTypes = {
   rating: PropTypes.number.isRequired,
   id: PropTypes.number.isRequired,
   userId: PropTypes.number.isRequired,
+  avatar: PropTypes.string.isRequired,
 };
 
 export default CommentItem;

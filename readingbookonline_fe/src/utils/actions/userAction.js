@@ -7,7 +7,12 @@ import {
 import { putAPI } from "../request";
 import { ShowNotify } from "@/components/Notification";
 import { ERROR, SUCESSS, USER_INFO } from "../constants";
-import { editInfoFail, editInfoRequest, editInfoSuccess } from "../redux/slices/userReducer/editInfoReducer";
+import {
+  editInfoFail,
+  editInfoRequest,
+  editInfoSuccess,
+} from "../redux/slices/userReducer/editInfoReducer";
+import Router from "next/router";
 
 export const changePassword = (data) => {
   return async (dispatch) => {
@@ -34,16 +39,17 @@ export const editInfo = (formData) => {
     try {
       const response = await putAPI(url, formData);
       dispatch(editInfoSuccess(response.data));
-      ShowNotify(SUCESSS, "Edit info successfully");
+      await ShowNotify(SUCESSS, "Edit info successfully");
       const user = JSON.parse(localStorage.getItem(USER_INFO));
       localStorage.setItem(
         USER_INFO,
         JSON.stringify({
           ...user,
           avatar: response.data.data.avatar,
-          name: response.data.data.name
+          name: response.data.data.name,
         })
       );
+      Router.reload();
       return response;
     } catch (error) {
       dispatch(editInfoFail(error));

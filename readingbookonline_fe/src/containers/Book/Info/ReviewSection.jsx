@@ -106,6 +106,7 @@ function ReviewSection() {
               rating={comment.rating}
               id={comment.id}
               userId={comment.user.id}
+              avatar={comment.user.avatar}
             />
           ))}
       </div>
