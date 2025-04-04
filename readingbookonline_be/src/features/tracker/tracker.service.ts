@@ -102,7 +102,10 @@ export class TrackerService {
 
       return chartData;
     } catch (error) {
-      console.error(error.message, 'LoginTrackerService.getLoginHistoryChart');
+      this.loggerService.err(
+        error.message,
+        'LoginTrackerService.getLoginHistoryChart',
+      );
       throw error;
     }
   }

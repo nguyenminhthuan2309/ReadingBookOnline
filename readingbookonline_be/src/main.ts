@@ -6,6 +6,7 @@ import { ResponseInterceptor } from '@core/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from '@core/filters/exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { LoggerService } from '@core/logger/logger.service';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +15,8 @@ async function bootstrap() {
 
   const logger = app.get(LoggerService);
 
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
@@ -41,7 +44,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   Logger.log(`🚀 Server is running on http://localhost:${port}`, 'Bootstrap');
   Logger.log(

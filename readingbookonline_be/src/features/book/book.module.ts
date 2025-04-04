@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
 import { BookCategory } from './entities/book-category.entity';
 import { BookChapter } from './entities/book-chapter.entity';
-import { BookChapterPurchase } from './entities/book-chapter-purchase.entity';
 import { BookReport } from './entities/book-report.entity';
 import { BookReview } from './entities/book-review.entity';
 import { UserModule } from '@features/user/user.module';
@@ -25,7 +24,6 @@ import { BookNotificationModule } from '@core/gateway/book-notification.module';
       BookAccessStatus,
       BookCategoryRelation,
       BookCategory,
-      BookChapterPurchase,
       BookChapter,
       BookFollow,
       BookType,

@@ -7,6 +7,11 @@ export class AuthorDto {
   @Expose()
   id: number;
 
+  @IsOptional()
+  @IsString()
+  @Expose()
+  email?: string;
+
   @IsNotEmpty()
   @IsString()
   @Expose()

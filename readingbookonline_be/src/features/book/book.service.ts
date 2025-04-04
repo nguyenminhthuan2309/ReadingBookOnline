@@ -696,7 +696,12 @@ export class BookService {
         this.bookChapterRepository,
         {
           where: { id: chapterId },
-          relations: ['book', 'book.bookType'],
+          relations: [
+            'book',
+            'book.bookType',
+            'book.author',
+            'book.accessStatus',
+          ],
         },
       );
 
@@ -1325,7 +1330,7 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(
-        'Error while marking notification as read',
+        error.message,
         'BookService.markNotificationAsRead',
       );
       throw error;
@@ -1362,7 +1367,7 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(
-        'Error while marking all notifications as read',
+        error.message,
         'BookService.markAllNotificationAsRead',
       );
       throw error;

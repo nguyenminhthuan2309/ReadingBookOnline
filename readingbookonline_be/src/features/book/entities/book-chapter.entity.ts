@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Book } from './book.entity';
 import { BookChapterComment } from './book-chapter-comment.entity';
+import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 
 @Entity('book_chapter')
 export class BookChapter {
@@ -40,6 +41,9 @@ export class BookChapter {
   @ManyToOne(() => Book, (book) => book.chapters, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'book_id' })
   book: Book;
+
+  @OneToMany(() => ChapterPurchase, (purchase) => purchase.chapter)
+  purchases: ChapterPurchase[];
 
   @OneToMany(() => BookChapterComment, (comment) => comment.chapter)
   comments: BookChapterComment[];

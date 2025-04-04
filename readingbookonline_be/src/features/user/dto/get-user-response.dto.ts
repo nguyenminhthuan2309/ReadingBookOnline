@@ -56,6 +56,11 @@ export class UserResponseDto {
 
   @Expose()
   @IsOptional()
+  @IsNumber()
+  points?: number;
+
+  @Expose()
+  @IsOptional()
   @Type(() => StatusDto)
   status?: StatusDto;
 

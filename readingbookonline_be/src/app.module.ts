@@ -13,6 +13,7 @@ import { AuthModule } from '@core/auth/auth.module';
 import { CloudinaryModule } from '@core/cloudinary/cloudinary.module';
 import { TrackerModule } from '@features/tracker/tracker.module';
 import { BookNotificationModule } from '@core/gateway/book-notification.module';
+import { TransactionModule } from '@features/transaction/transaction.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BookNotificationModule } from '@core/gateway/book-notification.module';
     TrackerModule,
     CloudinaryModule,
     BookNotificationModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

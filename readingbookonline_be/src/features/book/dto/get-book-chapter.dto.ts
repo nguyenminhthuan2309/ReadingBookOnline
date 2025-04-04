@@ -14,6 +14,7 @@ export class GetBookChapterDto {
   @IsNumber()
   id: number;
 
+  @IsNotEmpty()
   @Expose()
   @Type(() => GetBookDto)
   book: GetBookDto;

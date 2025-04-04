@@ -22,6 +22,8 @@ import { BookFollow } from '@features/book/entities/book-follow.entity';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { BookChapterComment } from '@features/book/entities/book-chapter-comment.entity';
 import { BookNotification } from '@features/book/entities/book-notification.entity';
+import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
+import { Transaction } from '@features/transaction/entities/transaction.entity';
 
 @Entity('user')
 export class User {
@@ -56,6 +58,10 @@ export class User {
   @JoinColumn({ name: 'status_id' })
   status: UserStatus;
 
+  @Index('idx_user_points')
+  @Column({ name: 'points', type: 'decimal', default: 0 })
+  points: number;
+
   @OneToMany(() => Book, (book) => book.author)
   books: Book[];
 
@@ -82,6 +88,12 @@ export class User {
 
   @OneToMany(() => BookNotification, (notification) => notification.user)
   notifications: BookNotification[];
+
+  @OneToMany(() => Transaction, (transaction) => transaction.user)
+  transactions: Transaction[];
+
+  @OneToMany(() => ChapterPurchase, (purchase) => purchase.user)
+  chapterPurchases: ChapterPurchase[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
