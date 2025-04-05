@@ -219,7 +219,7 @@ export class TransactionService {
         requestId,
         orderId,
         signature,
-        lang: 'vi',
+        lang: 'en',
       };
 
       const response = await axios.post(
@@ -300,7 +300,7 @@ export class TransactionService {
         }
       }
 
-      return true;
+      return momoResponse;
     } catch (error) {
       this.loggerService.err(
         error.message,
