@@ -1,3 +1,4 @@
+import { parseISO, startOfDay, endOfDay, isAfter } from 'date-fns';
 import {
   Injectable,
   HttpException,
@@ -25,6 +26,8 @@ import {
   CreateChapterPurchaseDto,
 } from './dto/book-puchase.dto';
 import { BookChapter } from '@features/book/entities/book-chapter.entity';
+import { GetAdminChapterPurchasesDto } from './dto/admin-book-purchase.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class TransactionService {
@@ -48,6 +51,7 @@ export class TransactionService {
     private readonly bookChapterRepository: Repository<BookChapter>,
     private readonly loggerService: LoggerService,
     private readonly dataBaseService: DatabaseService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createOrderMomo(user: UserResponseDto, amount: number): Promise<any> {
@@ -125,8 +129,6 @@ export class TransactionService {
 
   async handleMoMoWebhook(payload: any): Promise<Boolean> {
     try {
-      console.log(payload);
-
       const { orderId, resultCode } = payload;
       this.loggerService.info(
         `Received MoMo webhook for orderId: ${orderId} with resultCode: ${resultCode}`,
@@ -156,7 +158,18 @@ export class TransactionService {
             transaction.amount,
           );
 
-          return true;
+          await this.mailerService.sendMail({
+            to: transaction.user.email,
+            subject: 'Cảm ơn bạn đã giao dịch với chúng tôi!',
+            text: `Xin chào ${transaction.user.name},\n\nCảm ơn bạn đã thực hiện giao dịch thành công!\nMã đơn hàng của bạn là: ${transaction.id}\nSố điểm của bạn đã được cập nhật.\n\nChúc bạn một ngày tốt lành!`,
+            html: `
+              <h3>Xin chào ${transaction.user.name},</h3>
+              <p>Cảm ơn bạn đã thực hiện giao dịch thành công!</p>
+              <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+              <p>Số điểm của bạn đã được cập nhật thành công. Chúng tôi luôn sẵn sàng phục vụ bạn.</p>
+              <p>Chúc bạn một ngày tuyệt vời!</p>
+            `,
+          });
         }
 
         throw new BadGatewayException('Transaction already processed');
@@ -164,8 +177,21 @@ export class TransactionService {
         transaction.status = TransactionStatus.FAILED;
         await this.transactionRepository.save(transaction);
 
-        return false;
+        await this.mailerService.sendMail({
+          to: transaction.user.email,
+          subject: 'Giao dịch của bạn không thành công',
+          text: `Xin chào ${transaction.user.name},\n\nChúng tôi rất tiếc thông báo rằng giao dịch của bạn không thành công.\nMã đơn hàng của bạn là: ${transaction.id}\nVui lòng kiểm tra lại và thử lại sau.\n\nChúc bạn may mắn!`,
+          html: `
+            <h3>Xin chào ${transaction.user.name},</h3>
+            <p>Chúng tôi rất tiếc phải thông báo rằng giao dịch của bạn không thành công.</p>
+            <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+            <p>Vui lòng kiểm tra lại và thử lại sau. Nếu bạn cần hỗ trợ, đừng ngần ngại liên hệ với chúng tôi.</p>
+            <p>Chúc bạn may mắn và hy vọng sẽ phục vụ bạn trong những lần giao dịch sau.</p>
+          `,
+        });
       }
+
+      return true;
     } catch (error) {
       this.loggerService.err(
         error.message,
@@ -175,20 +201,168 @@ export class TransactionService {
     }
   }
 
+  async checkTransactionStatus(
+    orderId: string,
+    requestId: string,
+  ): Promise<any> {
+    try {
+      const signature = MomoConfig.getRawcheckSignature(
+        this.momoAccessKey,
+        orderId,
+        this.momoPartnerCode,
+        requestId,
+        this.momoSecretkey,
+      );
+
+      const payload = {
+        partnerCode: this.momoPartnerCode,
+        requestId,
+        orderId,
+        signature,
+        lang: 'vi',
+      };
+
+      const response = await axios.post(
+        'https://test-payment.momo.vn/v2/gateway/api/query',
+        payload,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+
+      const momoResponse = response.data;
+
+      if (momoResponse.resultCode === 0) {
+        const transaction = await this.transactionRepository.findOne({
+          where: { id: orderId },
+          relations: ['user'],
+        });
+
+        if (!transaction) {
+          throw new HttpException(
+            'Transaction not found',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+
+        if (transaction.status === TransactionStatus.PENDING) {
+          transaction.status = TransactionStatus.SUCCESS;
+
+          await this.transactionRepository.save(transaction);
+          await this.userRepository.increment(
+            { id: transaction.user.id },
+            'points',
+            transaction.amount,
+          );
+
+          await this.mailerService.sendMail({
+            to: transaction.user.email,
+            subject: 'Cảm ơn bạn đã giao dịch với chúng tôi!',
+            text: `Xin chào ${transaction.user.name},\n\nCảm ơn bạn đã thực hiện giao dịch thành công!\nMã đơn hàng của bạn là: ${transaction.id}\nSố điểm của bạn đã được cập nhật.\n\nChúc bạn một ngày tốt lành!`,
+            html: `
+              <h3>Xin chào ${transaction.user.name},</h3>
+              <p>Cảm ơn bạn đã thực hiện giao dịch thành công!</p>
+              <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+              <p>Số điểm của bạn đã được cập nhật thành công. Chúng tôi luôn sẵn sàng phục vụ bạn.</p>
+              <p>Chúc bạn một ngày tuyệt vời!</p>
+            `,
+          });
+        }
+      } else {
+        const transaction = await this.transactionRepository.findOne({
+          where: { id: orderId },
+          relations: ['user'],
+        });
+
+        if (!transaction) {
+          throw new HttpException(
+            'Transaction not found',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+
+        if (transaction.status === TransactionStatus.PENDING) {
+          transaction.status = TransactionStatus.FAILED;
+          await this.transactionRepository.save(transaction);
+
+          await this.mailerService.sendMail({
+            to: transaction.user.email,
+            subject: 'Giao dịch của bạn không thành công',
+            text: `Xin chào ${transaction.user.name},\n\nChúng tôi rất tiếc thông báo rằng giao dịch của bạn không thành công.\nMã đơn hàng của bạn là: ${transaction.id}\nVui lòng kiểm tra lại và thử lại sau.\n\nChúc bạn may mắn!`,
+            html: `
+              <h3>Xin chào ${transaction.user.name},</h3>
+              <p>Chúng tôi rất tiếc phải thông báo rằng giao dịch của bạn không thành công.</p>
+              <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+              <p>Vui lòng kiểm tra lại và thử lại sau. Nếu bạn cần hỗ trợ, đừng ngần ngại liên hệ với chúng tôi.</p>
+              <p>Chúc bạn may mắn và hy vọng sẽ phục vụ bạn trong những lần giao dịch sau.</p>
+            `,
+          });
+        }
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'TransactionService.checkTransactionStatus',
+      );
+      throw error;
+    }
+  }
+
   async getTransaction(
     user: UserResponseDto,
     pagination: PaginationRequestDto,
+    filter: {
+      id?: string;
+      startDate?: string;
+      endDate?: string;
+      status?: 'PENDING' | 'SUCCESS' | 'FAILED';
+    },
   ): Promise<PaginationResponseDto<TransactionResponseDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
+      const qb = this.transactionRepository
+        .createQueryBuilder('transaction')
+        .leftJoinAndSelect('transaction.user', 'user');
 
-      const [data, totalItems] = await this.transactionRepository.findAndCount({
-        where: { user: { id: user.id } },
-        order: { createdAt: 'DESC' },
-        relations: ['user'],
-        take: limit,
-        skip: (page - 1) * limit,
-      });
+      if (filter.id) {
+        qb.andWhere('transaction.id LIKE :id', { id: `%${filter.id}%` });
+      }
+
+      if (filter.status) {
+        qb.andWhere('transaction.status = :status', { status: filter.status });
+      }
+
+      if (filter.startDate && filter.endDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        const end = endOfDay(parseISO(filter.endDate));
+
+        if (isAfter(start, end)) {
+          throw new BadRequestException('Start date must be before end date');
+        }
+
+        qb.andWhere('transaction.createdAt BETWEEN :startDate AND :endDate', {
+          startDate: start,
+          endDate: end,
+        });
+      } else if (filter.startDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        qb.andWhere('transaction.createdAt >= :startDate', {
+          startDate: start,
+        });
+      } else if (filter.endDate) {
+        const end = endOfDay(parseISO(filter.endDate));
+        qb.andWhere('transaction.createdAt <= :endDate', { endDate: end });
+      }
+
+      qb.andWhere('transaction.user_id = :userId', { userId: user.id });
+
+      qb.orderBy('transaction.createdAt', 'DESC');
+      qb.take(limit);
+      qb.skip((page - 1) * limit);
+
+      const [data, totalItems] = await qb.getManyAndCount();
 
       const dtos = plainToInstance(TransactionResponseDto, data, {
         excludeExtraneousValues: true,
@@ -200,10 +374,6 @@ export class TransactionService {
         data: dtos,
       };
     } catch (error) {
-      this.loggerService.err(
-        error.message,
-        'TransactionService.getTransaction',
-      );
       throw error;
     }
   }
@@ -288,24 +458,59 @@ export class TransactionService {
   async getPurchaseChapter(
     user: UserResponseDto,
     pagination: PaginationRequestDto,
+    filter: {
+      chapterId?: number;
+      bookId?: number;
+      startDate?: string;
+      endDate?: string;
+    },
   ): Promise<PaginationResponseDto<ChapterPurchaseResponseDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
+      const qb = this.chapterPurchaseRepository
+        .createQueryBuilder('chapterPurchase')
+        .leftJoinAndSelect('chapterPurchase.user', 'user')
+        .leftJoinAndSelect('chapterPurchase.chapter', 'chapter')
+        .leftJoinAndSelect('chapter.book', 'book');
 
-      const [data, totalItems] =
-        await this.chapterPurchaseRepository.findAndCount({
-          where: { user: { id: user.id } },
-          order: { createdAt: 'DESC' },
-          relations: [
-            'user',
-            'chapter',
-            'chapter.book',
-            'chapter.book.bookCategoryRelations',
-            'chapter.book.bookCategoryRelations.category',
-          ],
-          take: limit,
-          skip: (page - 1) * limit,
+      if (filter.chapterId) {
+        qb.andWhere('chapter.id = :chapterId', { chapterId: filter.chapterId });
+      }
+
+      if (filter.bookId) {
+        qb.andWhere('book.id = :bookId', { bookId: filter.bookId });
+      }
+
+      if (filter.startDate && filter.endDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        const end = endOfDay(parseISO(filter.endDate));
+
+        if (isAfter(start, end)) {
+          throw new BadRequestException('Start date must be before end date');
+        }
+
+        qb.andWhere(
+          'chapterPurchase.createdAt BETWEEN :startDate AND :endDate',
+          {
+            startDate: start,
+            endDate: end,
+          },
+        );
+      } else if (filter.startDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        qb.andWhere('chapterPurchase.createdAt >= :startDate', {
+          startDate: start,
         });
+      } else if (filter.endDate) {
+        const end = endOfDay(parseISO(filter.endDate));
+        qb.andWhere('chapterPurchase.createdAt <= :endDate', { endDate: end });
+      }
+
+      qb.orderBy('chapterPurchase.createdAt', 'DESC');
+      qb.take(limit);
+      qb.skip((page - 1) * limit);
+
+      const [data, totalItems] = await qb.getManyAndCount();
 
       const dtos = plainToInstance(ChapterPurchaseResponseDto, data, {
         excludeExtraneousValues: true,
@@ -321,6 +526,153 @@ export class TransactionService {
         error.message,
         'TransactionService.getPurchaseChapter',
       );
+      throw error;
+    }
+  }
+
+  async getAdminTransactions(
+    pagination: PaginationRequestDto,
+    filter: {
+      id?: string;
+      email?: string;
+      userId?: number;
+      startDate?: string;
+      endDate?: string;
+      status?: 'PENDING' | 'SUCCESS' | 'FAILED';
+    },
+  ): Promise<PaginationResponseDto<TransactionResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = pagination;
+      const qb = this.transactionRepository
+        .createQueryBuilder('transaction')
+        .leftJoinAndSelect('transaction.user', 'user');
+
+      if (filter.id) {
+        qb.andWhere('transaction.id LIKE :id', { id: `%${filter.id}%` });
+      }
+      if (filter.email) {
+        qb.andWhere('user.email LIKE :email', { email: `%${filter.email}%` });
+      }
+      if (filter.userId) {
+        qb.andWhere('transaction.user_id = :userId', { userId: filter.userId });
+      }
+      if (filter.status) {
+        qb.andWhere('transaction.status = :status', { status: filter.status });
+      }
+
+      if (filter.startDate && filter.endDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        const end = endOfDay(parseISO(filter.endDate));
+
+        if (isAfter(start, end)) {
+          throw new BadRequestException('Start date must be before end date');
+        }
+
+        qb.andWhere('transaction.createdAt BETWEEN :startDate AND :endDate', {
+          startDate: start,
+          endDate: end,
+        });
+      } else if (filter.startDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        qb.andWhere('transaction.createdAt >= :startDate', {
+          startDate: start,
+        });
+      } else if (filter.endDate) {
+        const end = endOfDay(parseISO(filter.endDate));
+        qb.andWhere('transaction.createdAt <= :endDate', { endDate: end });
+      }
+
+      qb.orderBy('transaction.createdAt', 'DESC');
+      qb.take(limit);
+      qb.skip((page - 1) * limit);
+
+      const [data, totalItems] = await qb.getManyAndCount();
+
+      const dtos = plainToInstance(TransactionResponseDto, data, {
+        excludeExtraneousValues: true,
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: dtos,
+      };
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'TransactionService.getAdminTransactions',
+      );
+      throw error;
+    }
+  }
+
+  async getAdminChapterPurchases(
+    filter: GetAdminChapterPurchasesDto,
+  ): Promise<PaginationResponseDto<ChapterPurchaseResponseDto>> {
+    try {
+      const { limit = 10, page = 1 } = filter;
+      const qb = this.chapterPurchaseRepository
+        .createQueryBuilder('chapterPurchase')
+        .leftJoinAndSelect('chapterPurchase.user', 'user')
+        .leftJoinAndSelect('chapterPurchase.chapter', 'chapter')
+        .leftJoinAndSelect('chapter.book', 'book');
+
+      if (filter.chapterId) {
+        qb.andWhere('chapter.id = :chapterId', { chapterId: filter.chapterId });
+      }
+      if (filter.bookId) {
+        qb.andWhere('book.id = :bookId', { bookId: filter.bookId });
+      }
+      if (filter.userId) {
+        qb.andWhere('user.id = :userId', { userId: filter.userId });
+      }
+      if (filter.email) {
+        qb.andWhere('user.email LIKE :email', { email: `%${filter.email}%` });
+      }
+      if (filter.id) {
+        qb.andWhere('chapterPurchase.id = :id', { id: filter.id });
+      }
+      if (filter.startDate && filter.endDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        const end = endOfDay(parseISO(filter.endDate));
+
+        if (isAfter(start, end)) {
+          throw new BadRequestException('Start date must be before end date');
+        }
+
+        qb.andWhere(
+          'chapterPurchase.createdAt BETWEEN :startDate AND :endDate',
+          {
+            startDate: start,
+            endDate: end,
+          },
+        );
+      } else if (filter.startDate) {
+        const start = startOfDay(parseISO(filter.startDate));
+        qb.andWhere('chapterPurchase.createdAt >= :startDate', {
+          startDate: start,
+        });
+      } else if (filter.endDate) {
+        const end = endOfDay(parseISO(filter.endDate));
+        qb.andWhere('chapterPurchase.createdAt <= :endDate', { endDate: end });
+      }
+
+      qb.orderBy('chapterPurchase.createdAt', 'DESC');
+      qb.take(limit);
+      qb.skip((page - 1) * limit);
+
+      const [data, totalItems] = await qb.getManyAndCount();
+
+      const dtos = plainToInstance(ChapterPurchaseResponseDto, data, {
+        excludeExtraneousValues: true,
+      });
+
+      return {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        data: dtos,
+      };
+    } catch (error) {
       throw error;
     }
   }

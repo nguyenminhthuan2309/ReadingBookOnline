@@ -1,6 +1,22 @@
 import { Expose, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class UserInTransactionDto {
+  @ApiProperty({
+    example: 1,
+    description: 'ID người dùng',
+  })
+  @Expose()
+  id: number;
+
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'Email người dùng',
+  })
+  @Expose()
+  email: string;
+}
+
 export class TransactionResponseDto {
   @ApiProperty({
     example: 'BOT_00001',
@@ -50,4 +66,12 @@ export class TransactionResponseDto {
   @Expose()
   @Type(() => Date)
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Thông tin người dùng thực hiện giao dịch',
+    type: UserInTransactionDto,
+  })
+  @Expose()
+  @Type(() => UserInTransactionDto)
+  user: UserInTransactionDto;
 }

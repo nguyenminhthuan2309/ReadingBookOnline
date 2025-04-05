@@ -6,7 +6,7 @@ export const MomoConfig = {
   secretkey: 'TD2PwNHAY6KlXBNn2gu4HKH7PbVxuFdO',
   redirectUrl: 'http://localhost:3001/kiem-tra-thanh-toan',
   ipnUrl:
-    'https://6386-2402-800-62a9-e244-49ed-f8bf-2ec1-deda.ngrok-free.app/transaction/momo/webhook',
+    'https://7a89-2402-800-62a9-e244-ce6-2229-740e-2e99.ngrok-free.app/transaction/momo/webhook',
   requestType: 'captureWallet',
   extraData: '',
   lang: 'vi',
@@ -25,6 +25,21 @@ export const MomoConfig = {
     secretkey: string,
   ): string => {
     const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+
+    return crypto
+      .createHmac('sha256', secretkey)
+      .update(rawSignature)
+      .digest('hex');
+  },
+
+  getRawcheckSignature: (
+    accessKey: string,
+    orderId: string,
+    partnerCode: string,
+    requestId: string,
+    secretkey: string,
+  ): string => {
+    const rawSignature = `accessKey=${accessKey}&orderId=${orderId}&partnerCode=${partnerCode}&requestId=${requestId}`;
 
     return crypto
       .createHmac('sha256', secretkey)
