@@ -15,7 +15,9 @@ export class AdminGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user: UserResponseDto = request.user;
 
-    if (!user || user.role?.name !== 'ADMIN') {
+    const allowedRoles = ['ADMIN', 'MANAGER'];
+
+    if (!user || !allowedRoles.includes(user.role?.name ?? '')) {
       throw new ForbiddenException('Bạn không có quyền truy cập');
     }
 

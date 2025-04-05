@@ -85,10 +85,12 @@ export class UserController {
   @ApiOperation({ summary: 'Admin lấy danh sách người dùng' })
   @Get()
   async getUsers(
+    @Req() req: any,
     @Query() filter: GetUsersFilterDto,
     @Query() pagination: PaginationRequestDto,
   ): Promise<PaginationResponseDto<UserResponseDto>> {
-    return this.userService.getUsers(filter, pagination);
+    const user = req.user;
+    return this.userService.getUsers(user, filter, pagination);
   }
 
   @Post('create-manager')

@@ -374,10 +374,12 @@ export class UserService {
   }
 
   async getUsers(
+    user: UserResponseDto,
     filter: GetUsersFilterDto,
     pagination: PaginationRequestDto,
   ): Promise<PaginationResponseDto<UserResponseDto>> {
     try {
+      const userInfo = user;
       const { limit = 10, page = 1 } = pagination;
       const { id, email, name, status, role } = filter;
 
@@ -386,6 +388,10 @@ export class UserService {
         .leftJoinAndSelect('user.role', 'role')
         .leftJoinAndSelect('user.status', 'status')
         .orderBy('user.id', 'ASC');
+
+      if (userInfo && userInfo?.role?.id !== 1) {
+        query.andWhere('role.id != :adminRoleId', { adminRoleId: 1 });
+      }
 
       if (id) {
         query.andWhere('user.id = :id', { id });

@@ -198,6 +198,8 @@ export class BookService {
         qb.orderBy('book.views', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.TITLE) {
         qb.orderBy('book.title', sortType as SortTypeOptions);
+      } else if (sortBy === SortByOptions.CREATED_AT) {
+        qb.orderBy('book.createdAt', sortType as SortTypeOptions);
       } else if (sortBy === SortByOptions.UPDATED_AT) {
         qb.orderBy('book.updatedAt', sortType as SortTypeOptions);
       }

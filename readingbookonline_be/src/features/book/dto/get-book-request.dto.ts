@@ -15,6 +15,7 @@ import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination
 export enum SortByOptions {
   TITLE = 'title',
   VIEWS = 'views',
+  CREATED_AT = 'createdAt',
   UPDATED_AT = 'updatedAt',
 }
 
