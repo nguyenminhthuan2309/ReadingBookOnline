@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Home from "@/containers/Home/Loadable";
-import AdminPage from "@/containers/Admin/index";
 import { USER_INFO } from "@/utils/constants";
 import { useRouter } from "next/router";
 
@@ -22,7 +21,8 @@ export default function HomePage() {
   }, []);
 
   if (user && user.role && user.role.id !== 3) {
-    router.push("/admin");
+    router.replace("/admin");
+    return;
   } else {
     return (
       <>

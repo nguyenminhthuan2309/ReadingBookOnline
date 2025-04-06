@@ -38,19 +38,20 @@ function MangaSPage() {
   }, [bookId]);
 
   useEffect(() => {
-    if(!bookInfos || !bookInfos.accessStatus|| !bookInfos.accessStatus.id) return;
-    switch(bookInfos.accessStatus.id) {
-      case 2:{
-        if(!userInfo || userInfo.id !== bookInfos.author.id){
+    if (!bookInfos || !bookInfos.accessStatus || !bookInfos.accessStatus.id)
+      return;
+    switch (bookInfos.accessStatus.id) {
+      case 2: {
+        if (!userInfo || userInfo.id !== bookInfos.author.id) {
           router.replace("/forbidden");
         }
         break;
       }
-      case 3:{
+      case 3: {
         router.replace("/forbidden");
         break;
       }
-      case 1:{
+      case 1: {
         setHideButton(false);
         if (!userInfo || userInfo.id !== bookInfos.author.id) {
           setHideButton(true);
@@ -88,4 +89,4 @@ function MangaSPage() {
   );
 }
 
-export default withAuth(MangaSPage, [0, 3]);
+export default withAuth(MangaSPage, [0, 1, 2, 3]);

@@ -10,7 +10,6 @@ import Divider from "@mui/material/Divider";
 
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import Settings from "@mui/icons-material/Settings";
 
 import Logout from "@mui/icons-material/Logout";
 import PropTypes from "prop-types";
@@ -125,12 +124,6 @@ export default function AccountMenu({ name="", avatar="" }) {
           <Avatar /> My account
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <Settings fontSize="small" />
-          </ListItemIcon>
-          Settings
-        </MenuItem>
         <MenuItem onClick={handleClickLogOut}>
           <ListItemIcon>
             <Logout fontSize="small" />
