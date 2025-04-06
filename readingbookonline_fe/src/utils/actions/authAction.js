@@ -56,6 +56,10 @@ export const handleAuthenticate = (formdata) => {
             status: user.status,
           })
         );
+        if (user.role.id !== 3) {
+          Router.replace("/admin");
+          return;
+        }
         if (window.history.length > 1) {
           Router.back();
         } else {
@@ -74,7 +78,11 @@ export const handleLogout = () => {
   return async (dispatch) => {
     dispatch(logout());
     localStorage.clear();
-    window.location.replace("/");
+    if (window.location.pathname !== "/admin") {
+      Router.reload();
+    } else {
+      Router.replace("/");
+    }
   };
 };
 

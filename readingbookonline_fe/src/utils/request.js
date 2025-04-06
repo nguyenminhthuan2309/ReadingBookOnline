@@ -42,9 +42,13 @@ instance.interceptors.response.use(
     const nowInSeconds = Math.floor(now / 1000);
     const isExpired = expiresIn && nowInSeconds > expiresIn;
     if (isExpired) {
-      localStorage.clear();
-      await ShowNotify(ERROR, "Token expired, please login again");
-      window.location.href = "/";
+      return new Promise((resolve) => {
+        localStorage.clear();
+        ShowNotify(ERROR, "Token expired, please login again").then(() => {
+          window.location.href = "/";
+          resolve();
+        });
+      });
     }
     return response;
   },
@@ -56,18 +60,17 @@ instance.interceptors.response.use(
       switch (code) {
         case 401:
           await ShowNotify(ERROR, "Unauthorized");
+          localStorage.clear();
           window.location.href = "/";
           return Promise.reject(error);
         case 403:
           window.location.replace("/forbidden");
-          console.log("here request error", error);
           return Promise.reject(error);
         case 404:
           window.location.replace("/not-found");
           return Promise.reject(error);
         case 400:
           console.log("network error", error);
-          // window.location.replace("/error-network");
           return Promise.reject(error);
         case 500:
           window.location.replace("/error-network");

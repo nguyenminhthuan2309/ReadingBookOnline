@@ -1,35 +1,35 @@
 /* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
 
-const createManagerSlice = createSlice({
-  name: "createManager",
+const changeUserStatusSlice = createSlice({
+  name: "changeUserStatus",
   initialState: {
     loading: false,
-    createSuccess: false,
+    changeSuccess: false,
     error: null,
   },
   reducers: {
     resetState: (state) => {
       state.loading = false;
-      state.createSuccess = false;
+      state.changeSuccess = false;
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
       // eslint-disable-next-line no-unused-vars
-      .addCase("createManager/request", (state, action) => {
+      .addCase("changeUserStatus/request", (state, action) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase("createManager/success", (state, action) => {
+      .addCase("changeUserStatus/success", (state, action) => {
         state.loading = false;
-        state.createSuccess = true;
+        state.changeSuccess = true;
         state.error = null;
       })
-      .addCase("createManager/fail", (state, action) => {
+      .addCase("changeUserStatus/fail", (state, action) => {
         state.loading = false;
-        state.createSuccess = false;
+        state.changeSuccess = false;
         try {
           if (action && action.payload) {
             state.error = action.payload;
@@ -42,14 +42,16 @@ const createManagerSlice = createSlice({
   },
 });
 
-export const createManagerRequest = () => ({ type: "createManager/request" });
-export const createManagerSuccess = () => ({
-  type: "createManager/success",
+export const changeUserStatusRequest = () => ({
+  type: "changeUserStatus/request",
 });
-export const createManagerFail = (data) => ({
-  type: "createManager/fail",
+export const changeUserStatusSuccess = () => ({
+  type: "changeUserStatus/success",
+});
+export const changeUserStatusFail = (data) => ({
+  type: "changeUserStatus/fail",
   payload: data,
 });
 
-export const { resetState } = createManagerSlice.actions;
-export default createManagerSlice.reducer;
+export const { resetState } = changeUserStatusSlice.actions;
+export default changeUserStatusSlice.reducer;

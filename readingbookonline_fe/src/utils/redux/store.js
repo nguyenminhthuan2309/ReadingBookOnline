@@ -26,6 +26,7 @@ import editInfoReducer from "./slices/userReducer/editInfoReducer"
 import changePasswordReducer from "./slices/userReducer/changePasswordReducer"
 
 import createManagerReducer from "./slices/adminReducer/createManager"
+import changeUserStatusReducer from "./slices/adminReducer/changeUserStatus"
 
 export default configureStore({
   reducer: {
@@ -48,5 +49,6 @@ export default configureStore({
     editInfo: editInfoReducer,
     changePassword: changePasswordReducer,
     createManager: createManagerReducer,
+    changeUserStatus: changeUserStatusReducer,
   },
 });

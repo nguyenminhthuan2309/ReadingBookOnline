@@ -29,6 +29,7 @@ import Users from "./Users";
 import Manager from "./Manager";
 import BookTable from "./Books";
 import BlockBook from "./Books/BlockBook";
+import BlockUser from "./Users/BlockUser";
 
 const tabs = [
   {
@@ -274,6 +275,9 @@ function AdminDashboard() {
             {activeTab === "book" && <BookTable />}
             {activeTab === "blocked-list" && activeSubTab === "blocked-book" && (
               <BlockBook />
+            )}
+            {activeTab === "blocked-list" && activeSubTab === "blocked-user" && (
+              <BlockUser />
             )}
           </Box>
         </Box>
