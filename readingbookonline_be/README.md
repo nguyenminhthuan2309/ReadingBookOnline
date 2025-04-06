@@ -28,29 +28,56 @@
 
 ## Project setup
 
-```bash
-$ yarn install
-```
+1. **Set up the database:**
 
-## Project setup
+   - Run the following script using PgAdmin4 or a PostgreSQL client:
+     ```sql
+     CREATE DATABASE readingbookonline
+         WITH
+         OWNER = postgres
+         ENCODING = 'UTF8'
+         LC_COLLATE = 'en_US.utf8'
+         LC_CTYPE = 'en_US.utf8'
+         LOCALE_PROVIDER = 'libc'
+         TABLESPACE = pg_default
+         CONNECTION LIMIT = -1
+         IS_TEMPLATE = False;
+     ```
+   - After that, restore the database with the backup file `reading_book_db.backup` available in the Google Drive folder: [Backup Data](https://drive.google.com/drive/folders/1bjcAVniFBb-OrB9RIdjAMZd-IN5Vz6XE?usp=sharing).
 
-```bash
-$ PgAdmin4 run script and then run restore data with reading_book_db.backuo in drive:
-CREATE DATABASE readingbookonline
-    WITH
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.utf8'
-    LC_CTYPE = 'en_US.utf8'
-    LOCALE_PROVIDER = 'libc'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
-$ docker run -d --name redis -p 6379:6379 redis redis-server --requirepass 1234
-$ docker run -d --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=readingbookonline -p 5431:5432 postgres
-$ env directory: readingbookonlinebe/src/.env
-$ File data and .env: https://drive.google.com/drive/folders/1bjcAVniFBb-OrB9RIdjAMZd-IN5Vz6XE?usp=sharing
-```
+2. **Run Redis and PostgreSQL in Docker:**
+
+   - Start Redis:
+
+     ```bash
+     docker run -d --name redis -p 6379:6379 redis redis-server --requirepass 1234
+     ```
+
+   - Start PostgreSQL:
+
+     ```bash
+     docker run -d --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=readingbookonline -p 5431:5432 postgres
+     ```
+
+3. **Environment Variables:**
+
+   - Make sure the `.env` file is correctly configured. You can find it in the `readingbookonlinebe/src/.env` directory.
+
+4. **Download the necessary data and environment files:**
+
+   - Download the required data and `.env` files from the following link: [Download Files](https://drive.google.com/drive/folders/1bjcAVniFBb-OrB9RIdjAMZd-IN5Vz6XE?usp=sharing).
+
+5. **Install dependencies:**
+
+   - Run the following command to install all dependencies:
+
+     ```bash
+     yarn install
+     ```
+
+---
+
+Let me know if you need further adjustments or clarifications!
 
 ## Compile and run the project
 
