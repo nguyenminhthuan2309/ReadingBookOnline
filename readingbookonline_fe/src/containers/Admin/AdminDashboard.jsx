@@ -28,6 +28,7 @@ import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import Users from "./Users";
 import Manager from "./Manager";
 import BookTable from "./Books";
+import BlockBook from "./Books/BlockBook";
 
 const tabs = [
   {
@@ -40,7 +41,16 @@ const tabs = [
     ],
   },
   { id: "book", label: "Book", icon: <MenuBookIcon /> },
-  { id: "blocked-list", label: "Blocked list", icon: <BlockIcon /> },
+  {
+    id: "blocked-list",
+    label: "Blocked list",
+    icon: <BlockIcon />,
+    subTabs: [
+      { id: "blocked-user", label: "User", icon: <PersonIcon /> },
+      { id: "blocked-manager", label: "Manager", icon: <SupervisorAccountIcon /> },
+      { id: "blocked-book", label: "Book", icon: <MenuBookIcon /> },
+    ],
+  },
   { id: "notices", label: "Notices", icon: <NotificationsIcon /> },
   { id: "statistical", label: "Statistical", icon: <BarChartIcon /> },
 ];
@@ -262,6 +272,9 @@ function AdminDashboard() {
               <Manager />
             )}
             {activeTab === "book" && <BookTable />}
+            {activeTab === "blocked-list" && activeSubTab === "blocked-book" && (
+              <BlockBook />
+            )}
           </Box>
         </Box>
       </Box>

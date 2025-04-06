@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react";
 import Home from "@/containers/Home/Loadable";
 import AdminPage from "@/containers/Admin/index";
 import { USER_INFO } from "@/utils/constants";
+import { useRouter } from "next/router";
 
 export default function HomePage() {
+  const router = useRouter();
   const [user, setUser] = useState({});
 
   useEffect(() => {
@@ -20,11 +22,7 @@ export default function HomePage() {
   }, []);
 
   if (user && user.role && user.role.id !== 3) {
-    return (
-      <>
-        <AdminPage />
-      </>
-    );
+    router.push("/admin");
   } else {
     return (
       <>

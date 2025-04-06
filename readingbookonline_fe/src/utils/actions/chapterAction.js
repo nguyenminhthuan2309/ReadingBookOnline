@@ -84,7 +84,7 @@ export const editChapter = (chapterId, chapterData) => {
       return response;
     } catch (error) {
       dispatch(editBookFail(error));
-      await ShowNotify(ERROR, error.data.data);
+      await ShowNotify(ERROR, error.data.msg);
     }
   };
 };

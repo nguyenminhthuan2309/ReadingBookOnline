@@ -148,8 +148,8 @@ export const verifyCode = (code) => {
         ShowNotify(SUCESSS, "Your account has been verified");
       }
     } catch (error) {
-      dispatch(verifyTokenFail(error.response.data.msg));
-      ShowNotify(ERROR, error.response.data.msg);
+      dispatch(verifyTokenFail(error.data.msg));
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };
