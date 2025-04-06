@@ -1,11 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { User } from '@features/user/entities/user.entity';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
@@ -46,7 +42,7 @@ export class AuthService {
       }
 
       if (user.status.id === 3) {
-        throw new ForbiddenException('Your account has been banned.');
+        throw new BadRequestException('Your account has been banned.');
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
