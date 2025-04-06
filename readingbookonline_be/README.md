@@ -32,6 +32,26 @@
 $ yarn install
 ```
 
+## Project setup
+
+```bash
+$ PgAdmin4 run script and then run restore data with reading_book_db.backuo in drive:
+CREATE DATABASE readingbookonline
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'en_US.utf8'
+    LC_CTYPE = 'en_US.utf8'
+    LOCALE_PROVIDER = 'libc'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+$ docker run -d --name redis -p 6379:6379 redis redis-server --requirepass 1234
+$ docker run -d --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=readingbookonline -p 5431:5432 postgres
+$ env directory: readingbookonlinebe/src/.env
+$ File data and .env: https://drive.google.com/drive/folders/1bjcAVniFBb-OrB9RIdjAMZd-IN5Vz6XE?usp=sharing
+```
+
 ## Compile and run the project
 
 ```bash
