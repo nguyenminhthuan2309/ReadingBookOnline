@@ -74,7 +74,7 @@ export const handleLogout = () => {
   return async (dispatch) => {
     dispatch(logout());
     localStorage.clear();
-    window.location.reload();
+    window.location.replace("/");
   };
 };
 
