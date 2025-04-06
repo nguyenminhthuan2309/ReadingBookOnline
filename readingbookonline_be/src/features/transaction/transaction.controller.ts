@@ -60,6 +60,7 @@ export class TransactionController {
     return await this.transactionService.handleMoMoWebhook(payload);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('/check-status')
   @ApiOperation({ summary: 'Kiểm tra trạng thái giao dịch MoMo' })
   @ApiQuery({

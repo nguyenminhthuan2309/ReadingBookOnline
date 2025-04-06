@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class JwtPayloadDto {
   @IsNotEmpty()
@@ -18,12 +25,20 @@ export class JwtPayloadDto {
   avatar: string;
 
   @IsNotEmpty()
-  @IsNumber()
-  roleId: number;
+  @ValidateNested()
+  role: { id: number; name: string };
 
   @IsNotEmpty()
-  @IsNumber()
-  statusId: number;
+  @IsString()
+  birthDate: string;
+
+  @IsNotEmpty()
+  @IsString()
+  points: string;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  status: { id: number; name: string };
 
   @IsNotEmpty()
   @IsString()
