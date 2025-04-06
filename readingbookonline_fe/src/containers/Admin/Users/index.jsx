@@ -1,8 +1,10 @@
 "use client";
 import { userAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { MaterialReactTable } from "material-react-table";
 import React, { useCallback, useEffect, useState } from "react";
+import BlockIcon from "@mui/icons-material/Block";
 
 function AppContainer() {
   const [data, setData] = useState([]);
@@ -14,7 +16,7 @@ function AppContainer() {
   const getData = useCallback(async () => {
     setIsLoading(true);
     let url = userAPI.getUsers;
-    url += "?role=3&limit=10";
+    url += "?status=1&role=3&limit=10";
     if (currentPage) {
       url += `&page=${currentPage}`;
     }
@@ -57,6 +59,15 @@ function AppContainer() {
         data={data}
         enablePagination
         manualPagination
+        enableRowActions
+        enableFullScreenToggle={false}
+        enableDensityToggle={false}
+        enableColumnFilters={false}
+        enableHiding={false}
+        positionActionsColumn="last"
+        muiTablePaginationProps={{
+          rowsPerPageOptions: [],
+        }}
         rowCount={totalItems}
         pageCount={totalPages}
         onPaginationChange={({ pageIndex }) => {
@@ -69,6 +80,18 @@ function AppContainer() {
             pageSize: 10,
           },
         }}
+        renderRowActions={({ row }) => (
+          <Box sx={{ display: "flex", gap: "1rem" }}>
+            <Tooltip title="Block User">
+              <IconButton
+                onClick={() => console.log(row)}
+                // color={row.original.status.id === 2 ? "error" : "default"}
+              >
+                <BlockIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
       />
     </main>
   );

@@ -25,6 +25,8 @@ import editCommentReducer from "./slices/commentReducer/editComment"
 import editInfoReducer from "./slices/userReducer/editInfoReducer"
 import changePasswordReducer from "./slices/userReducer/changePasswordReducer"
 
+import createManagerReducer from "./slices/adminReducer/createManager"
+
 export default configureStore({
   reducer: {
     login: loginReducer,
@@ -45,5 +47,6 @@ export default configureStore({
     editComment: editCommentReducer,
     editInfo: editInfoReducer,
     changePassword: changePasswordReducer,
+    createManager: createManagerReducer,
   },
 });

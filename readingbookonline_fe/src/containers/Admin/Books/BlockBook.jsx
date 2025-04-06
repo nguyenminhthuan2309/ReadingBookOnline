@@ -73,6 +73,10 @@ function AppContainer() {
         data={data}
         enablePagination
         manualPagination
+        enableFullScreenToggle={false}
+        enableDensityToggle={false}
+        enableColumnFilters={false}
+        enableHiding={false}
         rowCount={totalItems}
         pageCount={totalPages}
         onPaginationChange={({ pageIndex }) => {

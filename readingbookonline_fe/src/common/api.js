@@ -54,6 +54,11 @@ const commentAPI = {
     `${API_GATEWAY}/book/chapter-comment/${commentId}`,
 };
 
+const adminAPI = {
+  createManager: `${API_GATEWAY}/user/create-manager`,
+  changeUserStatus: (userId) => `${API_GATEWAY}/user/status/${userId}`,
+};
+
 export {
   authAPI,
   userAPI,
@@ -62,4 +67,5 @@ export {
   uploadAPI,
   reviewAPI,
   commentAPI,
+  adminAPI,
 };

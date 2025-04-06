@@ -1,5 +1,5 @@
 "use client";
-import { userAPI } from "@/common/api";
+import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import { MaterialReactTable } from "material-react-table";
 import React, { useCallback, useEffect, useState } from "react";
@@ -13,8 +13,8 @@ function AppContainer() {
 
   const getData = useCallback(async () => {
     setIsLoading(true);
-    let url = userAPI.getUsers;
-    url += "?role=3&limit=10";
+    let url = bookAPI.getBook(20, 1);
+    url += "&sortBy=updatedAt&sortType=DESC&accessStatusId=1";
     if (currentPage) {
       url += `&page=${currentPage}`;
     }
@@ -37,26 +37,46 @@ function AppContainer() {
 
   const columns = [
     {
-      accessorKey: "email",
-      header: "Email",
+      accessorKey: "cover",
+      header: "Cover",
+      Cell: ({ cell }) => (
+        <img
+          src={cell.getValue()}
+          alt="Book cover"
+          style={{
+            width: "70px",
+            height: "90px",
+            objectFit: "cover",
+            borderRadius: "4px",
+          }}
+        />
+      ),
     },
     {
-      accessorKey: "name",
-      header: "Name",
+      accessorKey: "title",
+      header: "Book",
     },
     {
-      accessorKey: "status.name",
+      accessorKey: "author.name",
+      header: "Author",
+    },
+    {
+      accessorKey: "progressStatus.name",
       header: "Status",
     },
   ];
 
   return (
-    <main className="text-black">
+    <main className="text-black max-h-[70vh] overflow-y-auto">
       <MaterialReactTable
         columns={columns}
         data={data}
         enablePagination
         manualPagination
+        enableFullScreenToggle={false}
+        enableDensityToggle={false}
+        enableColumnFilters={false}
+        enableHiding={false}
         rowCount={totalItems}
         pageCount={totalPages}
         onPaginationChange={({ pageIndex }) => {

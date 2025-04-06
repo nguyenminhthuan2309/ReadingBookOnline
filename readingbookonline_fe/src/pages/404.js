@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Button } from "@mui/material";
-import Layout from "@/layouts/index";
+import AdminLayout from "@/layouts/AdminLayout";
 
 function NotFound() {
   return (
@@ -51,7 +51,7 @@ function NotFound() {
 
 // Define the layout for this page
 NotFound.getLayout = function getLayout(page) {
-  return <Layout>{page}</Layout>;
+  return <AdminLayout>{page}</AdminLayout>;
 };
 
 export default NotFound;
