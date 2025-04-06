@@ -36,7 +36,7 @@ export const createChapter = (bookId, chapterData) => {
       return response;
     } catch (error) {
       dispatch(createChapterFail());
-      ShowNotify(ERROR, error.response.data.msg);
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };
@@ -68,7 +68,7 @@ export const deleteChapter = (chapterId) => {
       return response;
     } catch (error) {
       dispatch(deleteChapterFail(error));
-      await ShowNotify(ERROR, error.response.data.msg);
+      await ShowNotify(ERROR, error.data.msg);
     }
   };
 };
@@ -84,7 +84,7 @@ export const editChapter = (chapterId, chapterData) => {
       return response;
     } catch (error) {
       dispatch(editBookFail(error));
-      await ShowNotify(ERROR, error.response.data.data);
+      await ShowNotify(ERROR, error.data.data);
     }
   };
 };

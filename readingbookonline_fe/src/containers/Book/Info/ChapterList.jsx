@@ -13,7 +13,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteDialog from "./DeleteDialog";
 
-function ChapterList({ chapters, bookId }) {
+function ChapterList({ chapters, bookId, hideButton }) {
   const router = useRouter();
   const [showEditButton, setShowEditButton] = useState(false);
   const [showDeleteButton, setShowDeleteButton] = useState(false);
@@ -87,17 +87,25 @@ function ChapterList({ chapters, bookId }) {
           </IconButton>
         </div>
         <div className="flex gap-2">
-          <IconButton
-            onClick={() => router.push(`/chapter/create?bookNumber=${bookId}`)}
-          >
-            <AddCircleOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
-          </IconButton>
-          <IconButton onClick={handleShowEditButton}>
-            <EditIcon sx={{ color: "black", fontSize: "2rem" }} />
-          </IconButton>
-          <IconButton onClick={handleShowDeleteButton}>
-            <DeleteOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
-          </IconButton>
+          {!hideButton && (
+            <IconButton
+              onClick={() =>
+                router.push(`/chapter/create?bookNumber=${bookId}`)
+              }
+            >
+              <AddCircleOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
+            </IconButton>
+          )}
+          {!hideButton && (
+            <IconButton onClick={handleShowEditButton}>
+              <EditIcon sx={{ color: "black", fontSize: "2rem" }} />
+            </IconButton>
+          )}
+          {!hideButton && (
+            <IconButton onClick={handleShowDeleteButton}>
+              <DeleteOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
+            </IconButton>
+          )}
         </div>
       </header>
       <hr className="border-b border-black" />
@@ -122,8 +130,8 @@ function ChapterList({ chapters, bookId }) {
                 </time>
               </div>
             </Button>
-            {generateEditButton(chapter.id)}
-            {generateDeleteButton(chapter.id, chapter.title)}
+            {!hideButton && generateEditButton(chapter.id)}
+            {!hideButton && generateDeleteButton(chapter.id, chapter.title)}
           </article>
         ))}
       </div>
@@ -142,6 +150,7 @@ function ChapterList({ chapters, bookId }) {
 ChapterList.propTypes = {
   bookId: PropTypes.number,
   chapters: PropTypes.array,
+  hideButton: PropTypes.bool,
 };
 
 export default ChapterList;

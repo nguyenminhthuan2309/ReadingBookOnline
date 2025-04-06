@@ -11,16 +11,13 @@ import PropTypes from "prop-types";
 
 export default function MyApp({ Component, pageProps }) {
   const [queryClient] = useState(() => new QueryClient());
+  const getLayout = Component.getLayout || ((page) => <Layout>{page}</Layout>);
 
   return (
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <ToastContainer />
-        <ErrorBoundary>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </ErrorBoundary>
+        <ErrorBoundary>{getLayout(<Component {...pageProps} />)}</ErrorBoundary>
       </QueryClientProvider>
     </Provider>
   );

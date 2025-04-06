@@ -42,7 +42,7 @@ export const uploadFile = (file) => {
       return response.data;
     } catch (error) {
       dispatch(uploadFileFail());
-      ShowNotify(ERROR, error.response.data.msg);
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };

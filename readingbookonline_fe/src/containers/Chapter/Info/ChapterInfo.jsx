@@ -1,28 +1,55 @@
 import { Box, Paper } from "@mui/material";
 import Image from "next/image";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 
 import * as docx from "docx-preview";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
 import { getChapterById } from "@/utils/actions/chapterAction";
-import { ERROR } from "@/utils/constants";
+import { ERROR, USER_INFO } from "@/utils/constants";
 import { ShowNotify } from "@/components/Notification";
 import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
 import ChapterSelection from "./ChapterSelection";
 import { getItem, setItem } from "@/utils/localStorage";
+import { useRouter } from "next/navigation";
 
 function ChapterInfo() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const chapterId = searchParams.get("name");
   const [cachedData, setCachedData] = useState(null);
-
   const [filePreview, setFilePreview] = useState("");
 
   const { chapterData, loading } = useSelector((state) => state.infoChapter);
+  const userInfo = useMemo(() => getItem(USER_INFO), []); // Memoize userInfo
+
+  const handleRedirect = useCallback(
+    (bookData) => {
+      if (!bookData?.accessStatus?.id) return;
+
+      switch (bookData.accessStatus.id) {
+        case 2: {
+          if (!userInfo || userInfo.id !== bookData.author.id) {
+            router.replace("/forbidden");
+          }
+          break;
+        }
+        case 3: {
+          router.replace("/forbidden");
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    },
+    [userInfo, router]
+  );
 
   const handleFileURL = useCallback(async (fileURL) => {
+    if (!fileURL) return;
+
     setFilePreview("");
     try {
       const response = await fetch(fileURL, {
@@ -31,20 +58,20 @@ function ChapterInfo() {
           "Content-Type":
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         },
-        cache: "no-cache", // Prevent caching issues
+        cache: "no-cache",
       });
 
       if (!response.ok) {
-        ShowNotify(ERROR, `HTTP error! status: ${response.data.code}`);
+        ShowNotify(ERROR, `HTTP error! status: ${response.status}`);
         return;
       }
+
       const contentType = response.headers.get("content-type");
-      // Check if we actually got a docx file
       if (!contentType?.includes("officedocument.wordprocessingml.document")) {
         ShowNotify(ERROR, "File không đúng định dạng .docx");
         return;
       }
-      // Get the blob first
+
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
 
@@ -54,7 +81,6 @@ function ChapterInfo() {
       }
 
       const container = document.createElement("div");
-
       await docx.renderAsync(arrayBuffer, container, container, {
         className: "docx",
       });
@@ -71,83 +97,60 @@ function ChapterInfo() {
     }
   }, []);
 
+  // Initial setup effect
   useEffect(() => {
+    if (!chapterId) return;
+
     setFilePreview("");
     setCachedData(null);
     dispatch(resetInfoChapterState());
-    if (chapterId) {
-      const savedData = getItem(`chapter-${chapterId}`);
-      if (savedData) {
-        setCachedData(savedData.book);
-        if (savedData.content) {
-          handleFileURL(savedData.content);
-        }
+
+    const savedData = getItem(`chapter-${chapterId}`);
+    if (savedData) {
+      handleRedirect(savedData.book);
+      setCachedData(savedData.book);
+      if (savedData.content) {
+        handleFileURL(savedData.content);
       }
-      dispatch(getChapterById(chapterId));
     }
-  }, [chapterId, dispatch]);
 
+    dispatch(getChapterById(chapterId));
+  }, [chapterId, dispatch, handleRedirect, handleFileURL]);
+
+  // Handle chapter data changes
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (loading) return;
-        if (!chapterData) {
-          // No data yet, try to use cached data if available
-          try {
-            const savedDataString = localStorage.getItem(
-              `chapter-${chapterId}`
-            );
-            if (savedDataString) {
-              const savedData = JSON.parse(savedDataString);
-              if (savedData && savedData.book) {
-                setCachedData(savedData.book);
-              }
-              if (savedData && savedData.content) {
-                await handleFileURL(savedData.content);
-              }
-            }
-          } catch (e) {
-            console.error("Error parsing cached data:", e);
-          }
-          return;
-        }
+    if (loading || !chapterId) return;
 
-        // If chapterData exists but is empty, return early
-        if (Object.keys(chapterData).length === 0) {
-          return;
-        }
+    const handleChapterData = async () => {
+      if (!chapterData?.data) return;
 
-        const data = chapterData?.data;
-        if (!data || !data.content || !data.book) return;
+      const { book, content } = chapterData.data;
+      if (!book || !content) return;
 
-        setItem(`chapter-${chapterId}`, JSON.stringify(data));
-        setCachedData(data.book);
-        await handleFileURL(data.content);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
+      handleRedirect(book);
+      setItem(`chapter-${chapterId}`, JSON.stringify(chapterData.data));
+      setCachedData(book);
+      await handleFileURL(content);
     };
-    fetchData();
-  }, [chapterData, loading, handleFileURL, chapterId]);
 
+    handleChapterData();
+  }, [chapterId, chapterData, loading, handleRedirect, handleFileURL]);
+
+  // Cleanup effect
   useEffect(() => {
     return () => {
-      // Only clear if we're actually navigating away from the chapter
-      if (chapterId) {
-        const currentData = getItem(`chapter-${chapterId}`);
-        if (currentData) {
-          // Only remove if we're actually navigating away
-          const currentPath = window.location.pathname;
-          if (!currentPath.includes(`/chapter/${chapterId}`)) {
-            localStorage.removeItem(`chapter-${chapterId}`);
-          }
-        }
+      if (!chapterId) return;
+
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes(`/chapter/${chapterId}`)) {
+        localStorage.removeItem(`chapter-${chapterId}`);
       }
+
       dispatch(resetInfoChapterState());
       setFilePreview("");
       setCachedData(null);
     };
-  }, [dispatch, chapterId]);
+  }, [chapterId, dispatch]);
 
   return (
     <main className="rounded-none">
@@ -162,12 +165,11 @@ function ChapterInfo() {
             }}
           >
             <ChapterSelection
-              bookID={cachedData ? cachedData?.id : null}
-              chapterID={chapterId ? chapterId : 0}
+              bookID={cachedData?.id ?? null}
+              chapterID={Number(chapterId) || 0}
             />
           </Box>
 
-          {/* Decorative Divider */}
           <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
             <Image
               src="/images/lineBreak.png"
@@ -178,10 +180,9 @@ function ChapterInfo() {
             />
           </Box>
 
-          {/* Chapter Content */}
           <Paper
             sx={{
-              p: { xs: 1, sm: 2, md: 3 }, // Responsive padding
+              p: { xs: 1, sm: 2, md: 3 },
               mb: 3,
               backgroundColor: "transparent",
               boxShadow: "none",
@@ -191,16 +192,14 @@ function ChapterInfo() {
             {filePreview && (
               <div
                 dangerouslySetInnerHTML={{ __html: filePreview }}
-                className="w-full min-w-full overflow-x-auto px-2 sm:px-3 md:px-5" // Responsive padding
-                style={{
-                  whiteSpace: "pre-wrap",
-                }}
+                className="w-full min-w-full overflow-x-auto px-2 sm:px-3 md:px-5"
+                style={{ whiteSpace: "pre-wrap" }}
               />
             )}
             <style jsx global>{`
               .docx {
                 width: 100% !important;
-                font-size: 14px !important; /* Base font size for mobile */
+                font-size: 14px !important;
               }
               .docx > section {
                 width: 100% !important;
@@ -210,20 +209,18 @@ function ChapterInfo() {
                 box-shadow: none !important;
               }
 
-              /* Responsive styles */
               @media (min-width: 640px) {
                 .docx {
-                  font-size: 16px !important; /* Larger font for tablets */
+                  font-size: 16px !important;
                 }
               }
 
               @media (min-width: 768px) {
                 .docx {
-                  font-size: 18px !important; /* Larger font for desktop */
+                  font-size: 18px !important;
                 }
               }
 
-              /* Make tables responsive */
               .docx table {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -231,13 +228,11 @@ function ChapterInfo() {
                 display: block !important;
               }
 
-              /* Make images responsive */
               .docx img {
                 max-width: 100% !important;
                 height: auto !important;
               }
 
-              /* Adjust margins and padding for different screen sizes */
               @media (max-width: 640px) {
                 .docx p,
                 .docx div {
@@ -245,7 +240,6 @@ function ChapterInfo() {
                 }
               }
 
-              /* Better line height for readability on mobile */
               .docx p,
               .docx div {
                 line-height: 1.6 !important;
@@ -253,7 +247,6 @@ function ChapterInfo() {
             `}</style>
           </Paper>
 
-          {/* Bottom Chapter Navigation */}
           <Box
             sx={{
               display: "flex",
@@ -263,8 +256,8 @@ function ChapterInfo() {
             }}
           >
             <ChapterSelection
-              bookID={cachedData ? cachedData?.id : null}
-              chapterID={chapterId ? chapterId : 0}
+              bookID={cachedData?.id ?? null}
+              chapterID={Number(chapterId) || 0}
             />
           </Box>
         </div>

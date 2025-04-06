@@ -10,6 +10,7 @@ const authAPI = {
 const userAPI = {
   editUser: `${API_GATEWAY}/user`,
   changePassword: `${API_GATEWAY}/user/update-password`,
+  getUsers: `${API_GATEWAY}/user`,
 };
 
 const bookAPI = {

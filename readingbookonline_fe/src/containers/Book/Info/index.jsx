@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Header } from "@/layouts/Header";
 import MangaDetails from "./MangaDetails";
 import ChapterList from "./ChapterList";
@@ -10,13 +10,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { CircularProgress } from "@mui/material";
 import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
 import withAuth from "@/utils/withAuth";
+import { getItem } from "@/utils/localStorage";
+import { USER_INFO } from "@/utils/constants";
+import { useRouter } from "next/navigation";
 
 function MangaSPage() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const searchParam = useSearchParams();
   const bookId = searchParam.get("number");
   const bookInfos = useSelector((state) => state.bookInfo.bookData);
   const loading = useSelector((state) => state.bookInfo.loading);
+  const [hideButton, setHideButton] = useState(false);
+
+  const userInfo = useMemo(() => getItem(USER_INFO), []);
 
   useEffect(() => {
     return () => {
@@ -29,6 +36,32 @@ function MangaSPage() {
       dispatch(getBookInfoData(bookId));
     }
   }, [bookId]);
+
+  useEffect(() => {
+    if(!bookInfos || !bookInfos.accessStatus|| !bookInfos.accessStatus.id) return;
+    switch(bookInfos.accessStatus.id) {
+      case 2:{
+        if(!userInfo || userInfo.id !== bookInfos.author.id){
+          router.replace("/forbidden");
+        }
+        break;
+      }
+      case 3:{
+        router.replace("/forbidden");
+        break;
+      }
+      case 1:{
+        setHideButton(false);
+        if (!userInfo || userInfo.id !== bookInfos.author.id) {
+          setHideButton(true);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }, [bookInfos, userInfo]);
 
   return (
     <main className="rounded-none">
@@ -45,6 +78,7 @@ function MangaSPage() {
             <ChapterList
               chapters={bookInfos && bookInfos.chapters}
               bookId={bookInfos && bookInfos.id}
+              hideButton={hideButton}
             />
             <ReviewSection />
           </div>
@@ -54,4 +88,4 @@ function MangaSPage() {
   );
 }
 
-export default withAuth(MangaSPage, [0,3]);
+export default withAuth(MangaSPage, [0, 3]);

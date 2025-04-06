@@ -35,7 +35,7 @@ export const createBook = (bookData) => {
         return response;
       }
     } catch (error) {
-      const { msg } = error.response.data;
+      const { msg } = error.data;
       dispatch(createBookFail(msg));
       if (Array.isArray(msg)) {
         msg.forEach((item) => {

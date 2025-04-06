@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
@@ -28,7 +28,9 @@ import { uploadFile } from "@/utils/actions/uploadAction";
 import { editChapter, getChapterById } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
 import { ShowNotify } from "@/components/Notification";
-import { ERROR } from "@/utils/constants";
+import { ERROR, USER_INFO } from "@/utils/constants";
+import { useRouter } from "next/navigation";
+import { getItem } from "@/utils/localStorage";
 
 const schema = yup.object().shape({
   number: yup
@@ -43,6 +45,8 @@ function ChapterBasicInfo() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const chapterId = searchParams.get("number");
+  const router = useRouter();
+  const userInfo = useMemo(() => getItem(USER_INFO), []);
 
   const { chapterData } = useSelector((state) => state.infoChapter);
 
@@ -189,7 +193,7 @@ function ChapterBasicInfo() {
       };
       if (chapterId && fileUrl) {
         dispatch(editChapter(chapterId, formData));
-      }  
+      }
     },
     [fileUrl]
   );
@@ -200,9 +204,16 @@ function ChapterBasicInfo() {
       !chapterData.data ||
       !chapterData.data.content ||
       !chapterData.data.chapter ||
-      !chapterData.data.title
+      !chapterData.data.title ||
+      !chapterData.data.book ||
+      !chapterData.data.book.author ||
+      !chapterData.data.book.author.id
     )
       return;
+    if (userInfo.id !== chapterData.data.book.author.id) {
+      router.replace("/forbidden");
+      return;
+    }
     setFileUrl(chapterData.data.content);
     reset({ number: chapterData.data.chapter, title: chapterData.data.title });
     handleFileURL(chapterData.data.content);
@@ -212,6 +223,20 @@ function ChapterBasicInfo() {
     if (!chapterId) return;
     dispatch(getChapterById(chapterId));
   }, [dispatch, chapterId]);
+
+  // useEffect(() => {
+  //   if (
+  //     !chapterData ||
+  //     !chapterData.data ||
+  //     !chapterData.data.book ||
+  //     !chapterData.data.book.author ||
+  //     !chapterData.data.book.author.id
+  //   )
+  //     return;
+  //   if (userInfo.id !== chapterData.data.book.author.id) {
+  //     router.replace("/forbidden");
+  //   }
+  // }, [userInfo, chapterData, router]);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">

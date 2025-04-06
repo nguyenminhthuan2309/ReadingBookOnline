@@ -14,7 +14,7 @@ function AppContainer() {
   const getData = useCallback(async () => {
     setIsLoading(true);
     let url = userAPI.getUsers;
-    url += "?role=3&limit=10";
+    url += "?role=2&limit=10";
     if (currentPage) {
       url += `&page=${currentPage}`;
     }

@@ -93,8 +93,8 @@ export const registerAccount = (formdata) => {
         );
       }
     } catch (error) {
-      dispatch(registerFail(error.response.data));
-      ShowNotify(ERROR, error.response.data.msg);
+      dispatch(registerFail(error.data));
+      ShowNotify(ERROR, error.data.msg);
     }
   };
 };
