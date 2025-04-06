@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Layout from "@/layouts/index";
 import ErrorBoundary from "@/utils/ErrorBoundary";
 import PropTypes from "prop-types";
+import Head from "next/head";
 
 export default function MyApp({ Component, pageProps }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -17,6 +18,9 @@ export default function MyApp({ Component, pageProps }) {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <ToastContainer />
+        <Head>
+          <link rel="icon" type="image/png" href="/images/favicon.png" />
+        </Head>
         <ErrorBoundary>{getLayout(<Component {...pageProps} />)}</ErrorBoundary>
       </QueryClientProvider>
     </Provider>
