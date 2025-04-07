@@ -12,6 +12,7 @@ import {
   changeUserStatusRequest,
   changeUserStatusSuccess,
 } from "../redux/slices/adminReducer/changeUserStatus";
+import { changeBookStatusFail, changeBookStatusRequest, changeBookStatusSuccess } from "../redux/slices/adminReducer/changeBookStatus";
 
 export const createManager = (data) => {
   return async (dispatch) => {
@@ -46,3 +47,24 @@ export const changeUserStatus = (userId, status) => {
     }
   };
 };
+
+export const changeBookStatus = (bookId, status) => {
+  return async (dispatch) => {
+    dispatch(changeBookStatusRequest());
+    const url = adminAPI.changeBookStatus(bookId);
+    try {
+      const response = await patchAPI(url, {
+        accessStatusId: status
+      });
+      if (response) {
+        dispatch(changeBookStatusSuccess());
+        ShowNotify(SUCESSS, "Book status changed successfully");
+      }
+    } catch (error) {
+      dispatch(changeBookStatusFail(error.data));
+      ShowNotify(ERROR, error.data.msg);
+    }
+  };
+};
+
+
