@@ -1269,42 +1269,53 @@ export class BookService {
 
   async updateBookStatus(
     bookId: number,
-    accessStatusId: number,
-    progressStatusId: number,
     user: UserResponseDto,
-  ): Promise<Boolean> {
+    accessStatusId?: number,
+    progressStatusId?: number,
+  ): Promise<boolean> {
     try {
-      const userInfo = user;
-
       const book = await this.databaseService.findOne(this.bookRepository, {
         where: { id: bookId },
         relations: ['author'],
       });
+
       if (!book) {
         throw new NotFoundException('Book not found');
       }
 
-      await this.databaseService.update(this.bookRepository, bookId, {
-        accessStatus: { id: accessStatusId },
-        progressStatus: { id: progressStatusId },
-      });
+      const updatePayload: any = {};
+      if (accessStatusId !== undefined) {
+        updatePayload.accessStatus = { id: accessStatusId };
+      }
+      if (progressStatusId !== undefined) {
+        updatePayload.progressStatus = { id: progressStatusId };
+      }
+
+      if (Object.keys(updatePayload).length > 0) {
+        await this.databaseService.update(
+          this.bookRepository,
+          bookId,
+          updatePayload,
+        );
+      }
 
       this.loggerService.info(
         `Updated book ${bookId} with accessStatusId ${accessStatusId} and progressStatusId ${progressStatusId}`,
         'BookService.updateBookStatuses',
       );
 
-      const roleId = userInfo.role?.id;
+      const roleId = user.role?.id;
 
       if (
-        accessStatusId === 4 ||
-        accessStatusId === 3 ||
-        (accessStatusId === 2 && roleId !== 1)
+        accessStatusId !== undefined &&
+        (accessStatusId === 4 ||
+          accessStatusId === 3 ||
+          (accessStatusId === 2 && roleId !== 1))
       ) {
         const statusMessage = this.getStatusMessage(accessStatusId);
 
         await this.databaseService.create(this.bookNotificationRepository, {
-          user: userInfo,
+          user,
           title: 'Book Status Updated',
           message: statusMessage,
         });

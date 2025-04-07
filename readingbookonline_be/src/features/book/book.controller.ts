@@ -418,16 +418,16 @@ export class BookController {
   @Patch(':id/status')
   async updateBookStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateBookStatusDto: UpdateBookStatusDto,
     @Request() req,
+    @Body() updateBookStatusDto: UpdateBookStatusDto,
   ): Promise<Boolean> {
     const user = req.user;
 
     return await this.bookService.updateBookStatus(
       id,
+      user,
       updateBookStatusDto.accessStatusId,
       updateBookStatusDto.progressStatusId,
-      user,
     );
   }
 }
