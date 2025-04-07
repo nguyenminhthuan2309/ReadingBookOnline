@@ -11,7 +11,6 @@ import InputField from "@/components/RenderInput";
 import PropTypes from "prop-types";
 import { uploadImage } from "@/utils/actions/uploadAction";
 import { editInfo } from "@/utils/actions/userAction";
-import { useRouter } from "next/router";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name không được để trống"),

@@ -6,7 +6,7 @@ import * as docx from "docx-preview";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
 import { getChapterById } from "@/utils/actions/chapterAction";
-import { ERROR, USER_INFO } from "@/utils/constants";
+import { ERROR, IS_ADMIN, IS_MANAGER, USER_INFO } from "@/utils/constants";
 import { ShowNotify } from "@/components/Notification";
 import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
 import ChapterSelection from "./ChapterSelection";
@@ -37,6 +37,15 @@ function ChapterInfo() {
         }
         case 3: {
           router.replace("/forbidden");
+          break;
+        }
+        case 4: {
+          if (IS_ADMIN || IS_MANAGER) {
+            break;
+          }
+          if (!userInfo || userInfo.id !== bookData.author.id) {
+            router.replace("/forbidden");
+          }
           break;
         }
         default: {
