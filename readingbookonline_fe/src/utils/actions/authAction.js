@@ -12,7 +12,7 @@ import {
 } from "../redux/slices/authReducer/loginReducer";
 import { getAPI, postAPI } from "../request";
 
-import { authAPI } from "@/common/api";
+import { authAPI, userAPI } from "@/common/api";
 import Router from "next/router";
 import {
   ACCESS_TOKEN,
@@ -56,6 +56,7 @@ export const handleAuthenticate = (formdata) => {
             status: user.status,
           })
         );
+        await postAPI(userAPI.trackUser)
         if (user.role.id !== 3) {
           Router.replace("/admin");
           return;

@@ -11,6 +11,7 @@ const userAPI = {
   editUser: `${API_GATEWAY}/user`,
   changePassword: `${API_GATEWAY}/user/update-password`,
   getUsers: `${API_GATEWAY}/user`,
+  trackUser: `${API_GATEWAY}/tracker/login`,
 };
 
 const bookAPI = {
@@ -57,6 +58,9 @@ const commentAPI = {
 const adminAPI = {
   createManager: `${API_GATEWAY}/user/create-manager`,
   changeUserStatus: (userId) => `${API_GATEWAY}/user/status/${userId}`,
+  changeBookStatus: (bookId) => `${API_GATEWAY}/book/${bookId}/status`,
+  trackLogin: (timeRange) =>
+    `${API_GATEWAY}/tracker/login/history/chart?timeRange=${timeRange}`,
 };
 
 export {

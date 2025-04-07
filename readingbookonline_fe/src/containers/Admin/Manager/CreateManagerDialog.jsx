@@ -10,7 +10,6 @@ import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import InputField from "@/components/RenderInput";
 import PropTypes from "prop-types";
 import { createManager } from "@/utils/actions/adminAction";
-import { useRouter } from "next/router";
 
 const schema = yup.object().shape({
   email: yup
@@ -28,24 +27,23 @@ const schema = yup.object().shape({
     .required("Password không được để trống"),
 });
 
-const CreateManagerDialog = ({ open, handleClose }) => {
+const CreateManagerDialog = ({ open, handleClose, getData }) => {
   const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
   });
 
   const dispatch = useDispatch();
-  const router = useRouter();
   const handleCreateManager = useCallback(
-    (formData) => {
+    async (formData) => {
       try {
         if (formData && formData.reEnterPassword) {
           // eslint-disable-next-line no-unused-vars
           const { reEnterPassword, ...dataToSend } = formData;
-          dispatch(createManager(dataToSend));
+          await dispatch(createManager(dataToSend));
         }
         reset();
+        await getData();
         handleClose();
-        router.reload();
       } catch (error) {
         console.log(error);
       }
@@ -125,5 +123,6 @@ const CreateManagerDialog = ({ open, handleClose }) => {
 CreateManagerDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
+  getData: PropTypes.func.isRequired,
 };
 export default CreateManagerDialog;

@@ -28,12 +28,6 @@ function AppContainer() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const unblockStatus = useCallback((userId) => {
-    dispatch(changeUserStatus(userId, +1));
-    handleCloseDialog();
-    setSelectedUser(null);
-  }, []);
-
   const handleSelectUser = (user) => {
     setSelectedUser(user);
     setOpenDialog(true);
@@ -63,6 +57,16 @@ function AppContainer() {
       setIsLoading(false);
     }
   }, [currentPage]);
+
+   const unblockStatus = useCallback(
+     async (userId) => {
+       await dispatch(changeUserStatus(userId, +1));
+       await getData();
+       handleCloseDialog();
+       setSelectedUser(null);
+     },
+     [dispatch, getData]
+   );
 
   useEffect(() => {
     getData();

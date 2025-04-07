@@ -1,12 +1,12 @@
 "use client";
+import React, { useCallback, useEffect, useState } from "react";
 import { userAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
 import { MaterialReactTable } from "material-react-table";
-import React, { useCallback, useEffect, useState } from "react";
-import BlockIcon from "@mui/icons-material/Block";
 import { useDispatch } from "react-redux";
 import { changeUserStatus } from "@/utils/actions/adminAction";
+import BlockIcon from "@mui/icons-material/Block";
 
 function AppContainer() {
   const dispatch = useDispatch();
@@ -17,12 +17,6 @@ function AppContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-
-  const blockStatus = useCallback((userId) => {
-    dispatch(changeUserStatus(userId, +3));
-    handleCloseDialog();
-    setSelectedUser(null);
-  }, []);
 
   const handleSelectUser = (user) => {
     setSelectedUser(user);
@@ -53,6 +47,13 @@ function AppContainer() {
       setIsLoading(false);
     }
   }, [currentPage]);
+
+  const blockStatus = useCallback(async (userId) => {
+    await dispatch(changeUserStatus(userId, +3));
+    await getData();
+    handleCloseDialog();
+    setSelectedUser(null);
+  }, [dispatch, getData]);
 
   useEffect(() => {
     getData();

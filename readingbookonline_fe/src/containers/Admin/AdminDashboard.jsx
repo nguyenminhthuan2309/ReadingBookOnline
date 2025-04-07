@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Collapse,
@@ -30,6 +30,9 @@ import Manager from "./Manager";
 import BookTable from "./Books";
 import BlockBook from "./Books/BlockBook";
 import BlockUser from "./Users/BlockUser";
+import Statistical from "./Statistic";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 const tabs = [
   {
@@ -48,7 +51,11 @@ const tabs = [
     icon: <BlockIcon />,
     subTabs: [
       { id: "blocked-user", label: "User", icon: <PersonIcon /> },
-      { id: "blocked-manager", label: "Manager", icon: <SupervisorAccountIcon /> },
+      {
+        id: "blocked-manager",
+        label: "Manager",
+        icon: <SupervisorAccountIcon />,
+      },
       { id: "blocked-book", label: "Book", icon: <MenuBookIcon /> },
     ],
   },
@@ -84,12 +91,21 @@ const theme = createTheme({
 });
 
 function AdminDashboard() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState("account");
   const [activeSubTab, setActiveSubTab] = useState("user");
   const [expandedTabs, setExpandedTabs] = useState(["account"]);
 
   const drawerWidth = 240;
 
+  const updateURL = (tabID, subTabID = "") => {
+    const query = new URLSearchParams();
+    query.set("tab", tabID);
+    if (subTabID) query.set("subTab", subTabID);
+    router.replace(`?${query.toString()}`,undefined, { scroll: false });
+  };
   // Toggle expanded state for tabs with subtabs
   const toggleExpand = (tabId) => {
     if (expandedTabs.includes(tabId)) {
@@ -112,17 +128,27 @@ function AdminDashboard() {
       // Find the tab and get its first subtab
       const tab = tabs.find((t) => t.id === tabId);
       if (tab && tab.subTabs && tab.subTabs.length > 0) {
-        setActiveSubTab(tab.subTabs[0].id);
+        const firstSubTab = tab.subTabs[0].id || "";
+        setActiveSubTab(firstSubTab);
+        updateURL(tabId, firstSubTab);
       }
     } else {
       // Reset active subtab if main tab doesn't have subtabs
       setActiveSubTab("");
+      updateURL(tabId);
     }
   };
 
   // Handle subtab click
-  const handleSubTabClick = (subtabId) => {
-    setActiveSubTab(subtabId);
+  const handleSubTabClick = (parentTabId, subTabId) => {
+    setActiveTab(parentTabId);
+    setActiveSubTab(subTabId);
+    updateURL(parentTabId, subTabId);
+
+    // Ensure the parent tab is expanded
+    if (!expandedTabs.includes(parentTabId)) {
+      setExpandedTabs([...expandedTabs, parentTabId]);
+    }
   };
 
   // Get the current page title based on active tab and subtab
@@ -141,6 +167,20 @@ function AdminDashboard() {
 
     return tab.label;
   };
+
+  useEffect(() => {
+    const tabFromURL = searchParams.get("tab");
+    const subTabFromURL = searchParams.get("subTab");
+
+    if (tabFromURL) {
+      setActiveTab(tabFromURL);
+      if (subTabFromURL) {
+        setActiveSubTab(subTabFromURL);
+      } else {
+        setActiveSubTab("");
+      }
+    }
+  }, [searchParams]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -169,7 +209,7 @@ function AdminDashboard() {
                     onClick={() =>
                       tab.subTabs
                         ? toggleExpand(tab.id)
-                        : handleTabClick(tab.id, false)
+                        : handleTabClick(tab.id, !!tab.subTabs)
                     }
                     sx={{
                       py: 2,
@@ -195,7 +235,7 @@ function AdminDashboard() {
                 </ListItem>
 
                 {/* Subtabs */}
-                {tab.subTabs && (
+                {expandedTabs.includes(tab.id) && tab.subTabs && (
                   <Collapse
                     in={expandedTabs.includes(tab.id)}
                     timeout="auto"
@@ -208,7 +248,7 @@ function AdminDashboard() {
                           selected={activeSubTab === subtab.id}
                           onClick={() => {
                             handleTabClick(tab.id, true);
-                            handleSubTabClick(subtab.id);
+                            handleSubTabClick(tab.id, subtab.id);
                           }}
                           sx={{
                             pl: 4,
@@ -266,19 +306,16 @@ function AdminDashboard() {
 
           {/* Content Area */}
           <Box sx={{ p: 3, flexGrow: 1, overflow: "auto" }}>
-            {activeTab === "account" && activeSubTab === "user" && (
-              <Users />
-            )}
+            {activeTab === "account" && activeSubTab === "user" && <Users />}
             {activeTab === "account" && activeSubTab === "manager" && (
               <Manager />
             )}
             {activeTab === "book" && <BookTable />}
-            {activeTab === "blocked-list" && activeSubTab === "blocked-book" && (
-              <BlockBook />
-            )}
-            {activeTab === "blocked-list" && activeSubTab === "blocked-user" && (
-              <BlockUser />
-            )}
+            {activeTab === "blocked-list" &&
+              activeSubTab === "blocked-book" && <BlockBook />}
+            {activeTab === "blocked-list" &&
+              activeSubTab === "blocked-user" && <BlockUser />}
+            {activeTab === "statistical" && <Statistical />}
           </Box>
         </Box>
       </Box>
