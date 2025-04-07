@@ -1,10 +1,20 @@
 "use client";
 import { userAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { MaterialReactTable } from "material-react-table";
 import React, { useCallback, useEffect, useState } from "react";
-import BlockIcon from "@mui/icons-material/Block";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useDispatch } from "react-redux";
 import { changeUserStatus } from "@/utils/actions/adminAction";
 
@@ -18,8 +28,8 @@ function AppContainer() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const blockStatus = useCallback((userId) => {
-    dispatch(changeUserStatus(userId, +3));
+  const unblockStatus = useCallback((userId) => {
+    dispatch(changeUserStatus(userId, +1));
     handleCloseDialog();
     setSelectedUser(null);
   }, []);
@@ -37,7 +47,7 @@ function AppContainer() {
   const getData = useCallback(async () => {
     setIsLoading(true);
     let url = userAPI.getUsers;
-    url += "?status=1&role=3&limit=10";
+    url += "?status=3&role=3&limit=10";
     if (currentPage) {
       url += `&page=${currentPage}`;
     }
@@ -104,10 +114,8 @@ function AppContainer() {
         renderRowActions={({ row }) => (
           <Box sx={{ display: "flex", gap: "1rem" }}>
             <Tooltip title="Block User">
-              <IconButton
-                onClick={() => handleSelectUser(row.original)}
-              >
-                <BlockIcon />
+              <IconButton onClick={() => handleSelectUser(row.original)}>
+                <LockOpenIcon />
               </IconButton>
             </Tooltip>
           </Box>
@@ -115,15 +123,17 @@ function AppContainer() {
       />
       <React.Fragment>
         <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle>Block User</DialogTitle>
+          <DialogTitle>Unblock User</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to block this user?
+              Are you sure you want to unblock this user?
             </DialogContentText>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={() => blockStatus(selectedUser.id)}>Block</Button>
+            <Button onClick={() => unblockStatus(selectedUser.id)}>
+              Unblock
+            </Button>
           </DialogActions>
         </Dialog>
       </React.Fragment>

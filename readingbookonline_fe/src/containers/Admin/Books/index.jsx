@@ -6,18 +6,16 @@ import React, { useCallback, useEffect, useState } from "react";
 
 function AppContainer() {
   const [data, setData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   const getData = useCallback(async () => {
     setIsLoading(true);
-    let url = bookAPI.getBook(20, 1);
-    url += "&sortBy=updatedAt&sortType=DESC&accessStatusId=1";
-    if (currentPage) {
-      url += `&page=${currentPage}`;
-    }
+    let url = bookAPI.getBook(pageSize, currentPage + 1);
+    url += "&accessStatusId=1";
     try {
       const response = await getAPI(url);
       const { data, totalPages, totalItems } = response.data.data;
@@ -29,7 +27,7 @@ function AppContainer() {
       console.log(error);
       setIsLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   useEffect(() => {
     getData();
@@ -79,13 +77,24 @@ function AppContainer() {
         enableHiding={false}
         rowCount={totalItems}
         pageCount={totalPages}
-        onPaginationChange={({ pageIndex }) => {
-          setCurrentPage(pageIndex);
+        onPaginationChange={(updater) => {
+          const newPagination =
+            typeof updater === "function"
+              ? updater({ pageIndex: currentPage, pageSize })
+              : updater;
+          setCurrentPage(newPagination.pageIndex);
+          setPageSize(newPagination.pageSize);
         }}
         state={{
           isLoading,
           pagination: {
             pageIndex: currentPage,
+            pageSize,
+          },
+        }}
+        initialState={{
+          pagination: {
+            pageIndex: 0,
             pageSize: 10,
           },
         }}

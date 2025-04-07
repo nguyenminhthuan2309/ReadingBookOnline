@@ -4,6 +4,7 @@ import { NoticesSection } from "./NoticesSection";
 import { RecommendedBooks } from "./RecommendBooks";
 import { LatestUpdates } from "./LatestUpdates";
 import { MostViewedBooks } from "./MostViewedBooks";
+import withAuth from "@/utils/withAuth";
 
 export const HomePage = () => {
   return (
@@ -19,4 +20,4 @@ export const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default withAuth(HomePage, [0,3]);
