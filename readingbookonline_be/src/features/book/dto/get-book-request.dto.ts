@@ -49,17 +49,20 @@ export class GetBookRequestDto extends PaginationRequestDto {
   bookTypeId?: number;
 
   @ApiPropertyOptional({
-    type: Number,
-    description: 'Lọc sách theo trạng thái tiến độ (progressStatusId)',
+    type: [Number],
+    description: 'Lọc theo nhiều trạng thái truy cập (accessStatusId)',
   })
   @IsOptional()
-  @Expose()
-  @Transform(({ value }) => Number(value), { toClassOnly: true })
-  accessStatusId?: number;
+  @IsArray()
+  @Transform(
+    ({ value }) => (Array.isArray(value) ? value.map(Number) : [Number(value)]),
+    { toClassOnly: true },
+  )
+  accessStatusId?: number[];
 
   @ApiPropertyOptional({
     type: Number,
-    description: 'Lọc sách theo trạng thái truy cập (accessStatusId)',
+    description: 'Lọc sách theo trạng thái hoàn thành (progressStatusId)',
   })
   @IsOptional()
   @Expose()

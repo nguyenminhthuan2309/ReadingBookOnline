@@ -161,8 +161,10 @@ export class BookService {
       if (bookTypeId) {
         qb.andWhere('bookType.id = :bookTypeId', { bookTypeId });
       }
-      if (accessStatusId) {
-        qb.andWhere('accessStatus.id = :accessStatusId', { accessStatusId });
+      if (accessStatusId && accessStatusId.length > 0) {
+        qb.andWhere('accessStatus.id IN (:...accessStatusId)', {
+          accessStatusId,
+        });
       }
       if (progressStatusId) {
         qb.andWhere('progressStatus.id = :progressStatusId', {
