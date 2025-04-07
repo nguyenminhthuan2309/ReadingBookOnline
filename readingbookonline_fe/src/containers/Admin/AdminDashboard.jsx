@@ -30,6 +30,7 @@ import Manager from "./Manager";
 import BookTable from "./Books";
 import BlockBook from "./Books/BlockBook";
 import BlockUser from "./Users/BlockUser";
+import Statistical from "./Statistic";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
 
@@ -314,6 +315,7 @@ function AdminDashboard() {
               activeSubTab === "blocked-book" && <BlockBook />}
             {activeTab === "blocked-list" &&
               activeSubTab === "blocked-user" && <BlockUser />}
+            {activeTab === "statistical" && <Statistical />}
           </Box>
         </Box>
       </Box>

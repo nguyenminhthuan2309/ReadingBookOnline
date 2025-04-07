@@ -98,6 +98,7 @@ function AppContainer() {
         <CreateManagerDialog
           open={openCreateManagerDialog}
           handleClose={handleCloseCreateManagerDialog}
+          getData={getData}
         />
       </React.Fragment>
     </main>

@@ -1,0 +1,146 @@
+"use client";
+import React, { useCallback, useEffect, useState } from "react";
+import { userAPI } from "@/common/api";
+import { getAPI } from "@/utils/request";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import { MaterialReactTable } from "material-react-table";
+import { useDispatch } from "react-redux";
+import { changeUserStatus } from "@/utils/actions/adminAction";
+import BlockIcon from "@mui/icons-material/Block";
+
+function AppContainer() {
+  const dispatch = useDispatch();
+  const [data, setData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedUser(null);
+  };
+
+  const getData = useCallback(async () => {
+    setIsLoading(true);
+    let url = userAPI.getUsers;
+    url += "?status=1&role=3&limit=10";
+    if (currentPage) {
+      url += `&page=${currentPage}`;
+    }
+    try {
+      const response = await getAPI(url);
+      const { data, totalPages, totalItems } = response.data.data;
+      setData(data);
+      setTotalPages(totalPages);
+      setTotalItems(totalItems);
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
+    }
+  }, [currentPage]);
+
+  const blockStatus = useCallback(
+    async (userId) => {
+      await dispatch(changeUserStatus(userId, +3));
+      await getData();
+      handleCloseDialog();
+      setSelectedUser(null);
+    },
+    [dispatch, getData]
+  );
+
+  useEffect(() => {
+    getData();
+  }, [getData]);
+
+  const columns = [
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "status.name",
+      header: "Status",
+    },
+  ];
+
+  return (
+    <main className="text-black">
+      <MaterialReactTable
+        columns={columns}
+        data={data}
+        enablePagination
+        manualPagination
+        enableRowActions
+        enableFullScreenToggle={false}
+        enableDensityToggle={false}
+        enableColumnFilters={false}
+        enableHiding={false}
+        positionActionsColumn="last"
+        muiTablePaginationProps={{
+          rowsPerPageOptions: [],
+        }}
+        rowCount={totalItems}
+        pageCount={totalPages}
+        onPaginationChange={({ pageIndex }) => {
+          setCurrentPage(pageIndex);
+        }}
+        state={{
+          isLoading,
+          pagination: {
+            pageIndex: currentPage,
+            pageSize: 10,
+          },
+        }}
+        renderRowActions={({ row }) => (
+          <Box sx={{ display: "flex", gap: "1rem" }}>
+            <Tooltip title="Block User">
+              <IconButton onClick={() => handleSelectUser(row.original)}>
+                <BlockIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+      />
+      <React.Fragment>
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Block User</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to block this user?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={() => blockStatus(selectedUser.id)}>Block</Button>
+          </DialogActions>
+        </Dialog>
+      </React.Fragment>
+    </main>
+  );
+}
+
+export default AppContainer;
