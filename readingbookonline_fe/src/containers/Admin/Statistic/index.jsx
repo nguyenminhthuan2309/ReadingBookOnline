@@ -1,146 +1,99 @@
-"use client";
-import React, { useCallback, useEffect, useState } from "react";
-import { userAPI } from "@/common/api";
-import { getAPI } from "@/utils/request";
+import React from "react";
 import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  IconButton,
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  TimeScale,
+  LinearScale,
+  PointElement,
   Tooltip,
-} from "@mui/material";
-import { MaterialReactTable } from "material-react-table";
-import { useDispatch } from "react-redux";
-import { changeUserStatus } from "@/utils/actions/adminAction";
-import BlockIcon from "@mui/icons-material/Block";
+  Legend,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
+import { Line } from "react-chartjs-2";
+import moment from "moment";
 
-function AppContainer() {
-  const dispatch = useDispatch();
-  const [data, setData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [openDialog, setOpenDialog] = useState(false);
+ChartJS.register(
+  LineElement,
+  PointElement,
+  CategoryScale,
+  TimeScale,
+  LinearScale,
+  Tooltip,
+  Legend
+);
 
-  const handleSelectUser = (user) => {
-    setSelectedUser(user);
-    setOpenDialog(true);
-  };
+const rawData = [
+  { time: "10-04-2025", login: 1 },
+  { time: "09-04-2025", login: 10 },
+  { time: "08-04-2025", login: 9 },
+  { time: "07-04-2025", login: 5 },
+  { time: "06-04-2025", login: 7 },
+];
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedUser(null);
-  };
+// Chuyển đổi data thành dạng [{x: Date, y: number}]
+const chartDataPoints = rawData
+  .map((item) => ({
+    x: moment(item.time, "DD-MM-YYYY").toDate(), // đổi định dạng dd-mm-yyyy → yyyy-mm-dd
+    y: item.login,
+  }))
+  .sort((a, b) => a.x - b.x); // sắp xếp tăng dần theo thời gian
 
-  const getData = useCallback(async () => {
-    setIsLoading(true);
-    let url = userAPI.getUsers;
-    url += "?status=1&role=3&limit=10";
-    if (currentPage) {
-      url += `&page=${currentPage}`;
-    }
-    try {
-      const response = await getAPI(url);
-      const { data, totalPages, totalItems } = response.data.data;
-      setData(data);
-      setTotalPages(totalPages);
-      setTotalItems(totalItems);
-      setIsLoading(false);
-    } catch (error) {
-      console.log(error);
-      setIsLoading(false);
-    }
-  }, [currentPage]);
-
-  const blockStatus = useCallback(
-    async (userId) => {
-      await dispatch(changeUserStatus(userId, +3));
-      await getData();
-      handleCloseDialog();
-      setSelectedUser(null);
-    },
-    [dispatch, getData]
-  );
-
-  useEffect(() => {
-    getData();
-  }, [getData]);
-
-  const columns = [
+const data = {
+  datasets: [
     {
-      accessorKey: "email",
-      header: "Email",
+      label: "Lượt đăng nhập",
+      data: chartDataPoints,
+      fill: false,
+      borderColor: "rgba(75,192,192,1)",
+      tension: 0.3,
     },
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "status.name",
-      header: "Status",
-    },
-  ];
+  ],
+};
 
+const options = {
+  responsive: true,
+  scales: {
+    x: {
+      type: "time",
+      time: {
+        unit: "day",
+        tooltipFormat: "dd-MM-yyyy",
+        displayFormats: {
+          day: "dd-MM-yyyy",
+        },
+      },
+      title: {
+        display: true,
+        text: "Ngày",
+      },
+    },
+    y: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: "Số lượt đăng nhập",
+      },
+    },
+  },
+};
+
+export default function LoginChart() {
   return (
-    <main className="text-black">
-      <MaterialReactTable
-        columns={columns}
-        data={data}
-        enablePagination
-        manualPagination
-        enableRowActions
-        enableFullScreenToggle={false}
-        enableDensityToggle={false}
-        enableColumnFilters={false}
-        enableHiding={false}
-        positionActionsColumn="last"
-        muiTablePaginationProps={{
-          rowsPerPageOptions: [],
-        }}
-        rowCount={totalItems}
-        pageCount={totalPages}
-        onPaginationChange={({ pageIndex }) => {
-          setCurrentPage(pageIndex);
-        }}
-        state={{
-          isLoading,
-          pagination: {
-            pageIndex: currentPage,
-            pageSize: 10,
-          },
-        }}
-        renderRowActions={({ row }) => (
-          <Box sx={{ display: "flex", gap: "1rem" }}>
-            <Tooltip title="Block User">
-              <IconButton onClick={() => handleSelectUser(row.original)}>
-                <BlockIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
-      />
-      <React.Fragment>
-        <Dialog open={openDialog} onClose={handleCloseDialog}>
-          <DialogTitle>Block User</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to block this user?
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button onClick={() => blockStatus(selectedUser.id)}>Block</Button>
-          </DialogActions>
-        </Dialog>
-      </React.Fragment>
+    <main className="text-black max-h-[70vh] overflow-y-auto">
+      <div className="w-full h-full flex flex-col gap-4">
+        <div className="w-full h-full flex gap-4">
+          <div className="w-[80vh] h-[40vh]">
+            <Line data={data} options={options} />
+          </div>
+          <div className="w-[80vh] h-[40vh]">
+            <Line data={data} options={options} />
+          </div>
+        </div>
+        <div className="w-[80vh] h-[40vh]">
+          <Line data={data} options={options} />
+        </div>
+      </div>
     </main>
   );
 }
-
-export default AppContainer;
