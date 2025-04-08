@@ -1312,7 +1312,7 @@ export class BookService {
         const statusMessage = this.getStatusMessage(accessStatusId);
 
         await this.databaseService.create(this.bookNotificationRepository, {
-          user,
+          user: { id: book.author.id },
           title: 'Book Status Updated',
           message: statusMessage,
         });
