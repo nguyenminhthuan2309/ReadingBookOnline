@@ -16,6 +16,16 @@ export class CreateBookReadingHistoryDto {
   chapterId: number;
 }
 
+export class BookMiniResponseDto {
+  @ApiProperty({ example: 3, description: 'ID của chapter' })
+  @Expose()
+  id: number;
+
+  @ApiProperty({ example: 'tiều đề chapter', description: 'Tiều đề chapter' })
+  @Expose()
+  title: string;
+}
+
 export class BookReadingHistoryResponseDto {
   @ApiProperty({ example: 1, description: 'ID của lịch sử đọc sách' })
   @Expose()
@@ -31,8 +41,8 @@ export class BookReadingHistoryResponseDto {
     type: GetBookChapterDto,
   })
   @Expose()
-  @Type(() => GetBookChapterDto)
-  chapter: GetBookChapterDto;
+  @Type(() => BookMiniResponseDto)
+  chapter: BookMiniResponseDto;
 
   @ApiProperty({
     example: '2025-03-21T17:32:33.692Z',

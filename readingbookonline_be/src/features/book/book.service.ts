@@ -1239,6 +1239,7 @@ export class BookService {
           order: { createdAt: 'DESC' },
           relations: [
             'book',
+            'chapter',
             'book.author',
             'book.bookType',
             'book.accessStatus',
