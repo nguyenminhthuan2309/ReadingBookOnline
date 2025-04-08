@@ -3,9 +3,6 @@ import React from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
 import { Rating } from "@mui/material";
-
-// import EditNoteIcon from "@mui/icons-material/EditNote";
-
 function MangaDetails({ bookInfo }) {
   return (
     <section className="mt-7">
@@ -22,7 +19,7 @@ function MangaDetails({ bookInfo }) {
               <div className="flex mt-7 justify-center max-md:mr-1">
                 <Rating
                   name="read-only"
-                  value={bookInfo.rating}
+                  value={bookInfo.rating > 0 ? bookInfo.rating : 5}
                   readOnly
                   precision={0.1}
                   sx={{ fontSize: "2.5rem" }}

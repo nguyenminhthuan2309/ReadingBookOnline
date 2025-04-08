@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import CommentItem from "./CommentItem";
 import { useSelector } from "react-redux";
 import { getItem } from "@/utils/localStorage";
-import { USER_INFO } from "@/utils/constants";
+import { IS_ADMIN, IS_MANAGER, USER_INFO } from "@/utils/constants";
 import { Button, Pagination, Stack } from "@mui/material";
 import { useRouter } from "next/router";
 import { reviewAPI } from "@/common/api";
@@ -73,20 +73,26 @@ function ReviewSection() {
         </div>
       ) : (
         <div className="w-full">
-          {showInput ? (
-            <SpoilerEditor
-              typeComment="review"
-              id={bookData ? bookData.id : 0}
-              cancel={() => setShowInput(false)}
-            />
+          {IS_ADMIN || IS_MANAGER ? (
+            <div />
           ) : (
-            <div className="w-full flex justify-center">
-              <Button onClick={() => setShowInput(true)}>
-                <p className=" text-black border-b-0 hover:border-b-2 hover:border-black">
-                  Leave a review
-                </p>
-              </Button>
-            </div>
+            <>
+              {showInput ? (
+                <SpoilerEditor
+                  typeComment="review"
+                  id={bookData ? bookData.id : 0}
+                  cancel={() => setShowInput(false)}
+                />
+              ) : (
+                <div className="w-full flex justify-center">
+                  <Button onClick={() => setShowInput(true)}>
+                    <p className=" text-black border-b-0 hover:border-b-2 hover:border-black">
+                      Leave a review
+                    </p>
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
