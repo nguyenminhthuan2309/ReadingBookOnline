@@ -24,7 +24,7 @@ const BookTile = ({
   const router = useRouter();
   const handleBookClick = () => {
     if (!bookId) return;
-    router.push(`/book?number=${encodeURIComponent(bookId)}`);
+    router.push(`/book?number=${bookId}`);
   };
   const handleChapterClick = (event, chapter) => {
     event.stopPropagation();

@@ -11,7 +11,7 @@ import { CircularProgress } from "@mui/material";
 import { resetState } from "@/utils/redux/slices/bookReducer/editBook";
 import withAuth from "@/utils/withAuth";
 import { getItem } from "@/utils/localStorage";
-import { USER_INFO } from "@/utils/constants";
+import { IS_ADMIN, IS_MANAGER, USER_INFO } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 
 function MangaSPage() {
@@ -51,10 +51,22 @@ function MangaSPage() {
         router.replace("/forbidden");
         break;
       }
+      case 4: {
+        setHideButton(false);
+        if (IS_ADMIN || IS_MANAGER) {
+          setHideButton(true);
+          break;
+        }
+        if (!userInfo || userInfo.id !== bookInfos.author.id) {
+          router.replace("/forbidden");
+        }
+        break;
+      }
       case 1: {
         setHideButton(false);
         if (!userInfo || userInfo.id !== bookInfos.author.id) {
           setHideButton(true);
+          break;
         }
         break;
       }

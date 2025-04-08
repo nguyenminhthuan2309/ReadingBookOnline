@@ -224,20 +224,6 @@ function ChapterBasicInfo() {
     dispatch(getChapterById(chapterId));
   }, [dispatch, chapterId]);
 
-  // useEffect(() => {
-  //   if (
-  //     !chapterData ||
-  //     !chapterData.data ||
-  //     !chapterData.data.book ||
-  //     !chapterData.data.book.author ||
-  //     !chapterData.data.book.author.id
-  //   )
-  //     return;
-  //   if (userInfo.id !== chapterData.data.book.author.id) {
-  //     router.replace("/forbidden");
-  //   }
-  // }, [userInfo, chapterData, router]);
-
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
       <form onSubmit={handleSubmit(handleSubmitChapterInfo)} className="w-full">

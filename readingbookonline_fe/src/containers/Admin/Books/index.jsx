@@ -4,15 +4,30 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { bookAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 
 import { MaterialReactTable } from "material-react-table";
 import BlockIcon from "@mui/icons-material/Block";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
+
 import { useDispatch } from "react-redux";
 import { changeBookStatus } from "@/utils/actions/adminAction";
+import { useRouter } from "next/navigation";
 
 function AppContainer() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -22,9 +37,21 @@ function AppContainer() {
 
   const [selectedBook, setSelectedBook] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openPendingDialog, setOpenPendingDialog] = useState(false);
+  const [openApproveDialog, setOpenApproveDialog] = useState(false);
+
+  const handleCloseApproveDialog = () => {
+    setOpenApproveDialog(false);
+    setSelectedBook(null);
+  };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setSelectedBook(null);
+  };
+
+  const handleClosePendingDialog = () => {
+    setOpenPendingDialog(false);
     setSelectedBook(null);
   };
 
@@ -33,10 +60,20 @@ function AppContainer() {
     setOpenDialog(true);
   };
 
+  const handleSelectPendingBook = (book) => {
+    setSelectedBook(book);
+    setOpenPendingDialog(true);
+  };
+
+  const handleSelectApproveBook = (book) => {
+    setSelectedBook(book);
+    setOpenApproveDialog(true);
+  };
+
   const getData = useCallback(async () => {
     setIsLoading(true);
     let url = bookAPI.getBook(pageSize, currentPage + 1);
-    url += "&accessStatusId=1";
+    url += "&accessStatusId=1&&accessStatusId=4";
     try {
       const response = await getAPI(url);
       const { data, totalPages, totalItems } = response.data.data;
@@ -55,6 +92,26 @@ function AppContainer() {
       await dispatch(changeBookStatus(bookId, +3));
       await getData();
       handleCloseDialog();
+      setSelectedBook(null);
+    },
+    [dispatch, getData]
+  );
+
+  const pendingStatus = useCallback(
+    async (bookId) => {
+      await dispatch(changeBookStatus(bookId, +4));
+      await getData();
+      handleClosePendingDialog();
+      setSelectedBook(null);
+    },
+    [dispatch, getData]
+  );
+
+  const approveStatus = useCallback(
+    async (bookId) => {
+      await dispatch(changeBookStatus(bookId, +1));
+      await getData();
+      handleCloseApproveDialog();
       setSelectedBook(null);
     },
     [dispatch, getData]
@@ -93,6 +150,10 @@ function AppContainer() {
       accessorKey: "progressStatus.name",
       header: "Status",
     },
+    {
+      accessorKey: "accessStatus.name",
+      header: "Access Status",
+    },
   ];
 
   return (
@@ -118,6 +179,20 @@ function AppContainer() {
           setCurrentPage(newPagination.pageIndex);
           setPageSize(newPagination.pageSize);
         }}
+        muiTableBodyRowProps={({ row }) => ({
+          onClick: () => {
+            router.push(`/book?number=${row.original?.id}`);
+          },
+          sx: {
+            cursor: "pointer",
+            backgroundColor:
+              row.original?.accessStatus?.id !== 1 ? "#ffebee" : "inherit",
+            "&:hover": {
+              backgroundColor:
+                row.original?.accessStatus?.id !== 1 ? "#ffcdd2" : "#f5f5f5",
+            },
+          },
+        })}
         state={{
           isLoading,
           pagination: {
@@ -132,25 +207,85 @@ function AppContainer() {
           },
         }}
         renderRowActions={({ row }) => (
-          <Box sx={{ display: "flex", gap: "1rem" }}>
+          <Box sx={{ display: "flex", gap: "1rem", justifySelf: "start" }}>
+            {row.original.accessStatus.id !== 1 ? (
+              <Tooltip title="Approve Book">
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectApproveBook(row.original);
+                  }}
+                >
+                  <LockOpenIcon />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Pending Book">
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPendingBook(row.original);
+                  }}
+                >
+                  <AccessTimeIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Block Book">
-              <IconButton onClick={() => handleSelectBook(row.original)}>
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectBook(row.original);
+                }}
+              >
                 <BlockIcon />
               </IconButton>
             </Tooltip>
           </Box>
         )}
       />
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Block Book</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Are you sure you want to block {selectedBook?.title}?</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={() => blockStatus(selectedBook.id)}>Block</Button>
-        </DialogActions>
-      </Dialog>
+      <React.Fragment>
+        <Dialog open={openApproveDialog} onClose={handleCloseApproveDialog}>
+          <DialogTitle>Approve Book</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to approve {selectedBook?.title}?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseApproveDialog}>Cancel</Button>
+            <Button onClick={() => approveStatus(selectedBook.id)}>
+              Approve
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openPendingDialog} onClose={handleClosePendingDialog}>
+          <DialogTitle>Pending Book</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to pending {selectedBook?.title}?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClosePendingDialog}>Cancel</Button>
+            <Button onClick={() => pendingStatus(selectedBook.id)}>
+              Pending
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Block Book</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to block {selectedBook?.title}?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={() => blockStatus(selectedBook.id)}>Block</Button>
+          </DialogActions>
+        </Dialog>
+      </React.Fragment>
     </main>
   );
 }
