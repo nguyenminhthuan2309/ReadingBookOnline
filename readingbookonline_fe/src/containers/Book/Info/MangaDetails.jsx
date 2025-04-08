@@ -2,7 +2,8 @@
 import React from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
-import { Rating } from "@mui/material";
+import { IconButton, Rating } from "@mui/material";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 function MangaDetails({ bookInfo }) {
   return (
     <section className="mt-7">
@@ -12,14 +13,14 @@ function MangaDetails({ bookInfo }) {
           <aside className="w-[22%] max-md:ml-0 max-md:w-full">
             <div className="mt-3 w-full max-md:mt-10">
               <img
-                src={bookInfo.cover}
-                alt={`${bookInfo.cover} cover`}
+                src={bookInfo?.cover}
+                alt={`${bookInfo?.cover} cover`}
                 className="object-contain w-full aspect-[0.74]"
               />
               <div className="flex mt-7 justify-center max-md:mr-1">
                 <Rating
                   name="read-only"
-                  value={bookInfo.rating > 0 ? bookInfo.rating : 5}
+                  value={bookInfo?.rating > 0 ? bookInfo?.rating : 5}
                   readOnly
                   precision={0.1}
                   sx={{ fontSize: "2.5rem" }}
@@ -30,48 +31,55 @@ function MangaDetails({ bookInfo }) {
 
           <div className="ml-5 w-[52%] max-md:ml-0 max-md:w-full">
             <div className="flex max-md:flex-col">
-              <dl className="w-[31%] max-md:w-full text-lg leading-10">
-                <dt className="text-black">Author(s):</dt>
-                <dt className="text-black">Genre(s):</dt>
-                <dt className="text-black">Type:</dt>
-                <dt className="text-black">Release:</dt>
-                <dt className="text-black">Status:</dt>
-                <div className="mt-5">
-                  <button className="px-7 py-1.5 text-white rounded-2xl bg-slate-600 hover:bg-slate-700">
-                    Read First
-                  </button>
-                </div>
-              </dl>
-
-              <dl className="w-[69%] max-md:w-full text-lg leading-10">
-                <dd className="text-stone-400">
-                  {bookInfo.author && bookInfo.author.name}
-                </dd>
-                <dd className="text-stone-400">
-                  {bookInfo.categories &&
-                    bookInfo.categories.map((genre, index) => {
-                      return (
-                        <span key={index}>
-                          {genre.name}
-                          {index !== bookInfo.categories.length - 1 && ", "}
-                        </span>
-                      );
-                    })}
-                </dd>
-                <dd className="text-stone-400">Novel</dd>
-                <dd className="text-stone-400">
-                  {moment(bookInfo.createdAt).format("YYYY-MM-DD hh:mm")}
-                </dd>
-                <dd className="text-stone-400">
-                  {bookInfo.progressStatus &&
-                    bookInfo.progressStatus.name.toLowerCase()}
-                </dd>
-                <div className="mt-4">
-                  <button className="px-7 py-1.5 text-white rounded-2xl bg-slate-600 hover:bg-slate-700">
-                    Read Last
-                  </button>
-                </div>
-              </dl>
+              <table className="flex flex-col gap-4 w-full max-md:w-full text-lg leading-10">
+                  <tr>
+                    <td className="text-black w-[150px]">
+                      Author(s): 
+                    </td>
+                    <td className="text-black/40">
+                      {bookInfo?.author?.name}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="text-black w-[150px]">
+                      Genre(s): 
+                    </td>
+                    <td className="text-black/40 text-wrap">
+                      {bookInfo?.categories && bookInfo?.categories?.map((genre, index) => {
+                        return (
+                          <span key={index}>
+                            {genre.name}
+                            {index !== bookInfo?.categories?.length - 1 && ", "}
+                          </span>
+                        );
+                      })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="text-black w-[150px]">
+                      Type: 
+                    </td>
+                    <td className="text-black/40">
+                      {bookInfo?.bookType?.name}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="text-black w-[150px]">
+                      Release: 
+                    </td>
+                    <td className="text-black/40">
+                      {moment(bookInfo?.createdAt).format("YYYY-MM-DD hh:mm")}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="text-black w-[150px]">
+                      Status: 
+                    </td>
+                    <td className="text-black/40">
+                      {bookInfo?.progressStatus?.name?.toLowerCase()}
+                    </td>
+                  </tr>
+              </table>
             </div>
           </div>
 
@@ -83,19 +91,16 @@ function MangaDetails({ bookInfo }) {
                   alt="Views Icon"
                   className="object-contain aspect-[0.89] w-[65px]"
                 />
-                <p>
+                <p className="mt-2">
                   {bookInfo.views} <br /> Views
                 </p>
               </div>
               <div>
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/0aa0cc64a90b957cc6875d010518c312cc444301d4b6b199748772e615ccc724?placeholderIfAbsent=true"
-                  alt="Favorites Icon"
-                  className="object-contain aspect-[0.89] w-[65px]"
-                />
-                <p>
-                  0<br />
-                  Favorites
+                <IconButton>
+                  <BookmarkIcon sx={{ fontSize: "4rem" }} />
+                </IconButton>
+                  <p>
+                    0<br />Favorites
                 </p>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import moment from "moment";
@@ -12,16 +12,37 @@ import EditIcon from "@mui/icons-material/Edit";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteDialog from "./DeleteDialog";
+import { recordRecentlyRead } from "@/utils/actions/userAction";
+import { useDispatch } from "react-redux";
 
 function ChapterList({ chapters, bookId, hideButton }) {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [showEditButton, setShowEditButton] = useState(false);
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [chapterID, setChapterID] = useState(null);
   const [chapterTitle, setChapterTitle] = useState(null);
+  const [chapterList, setChapterList] = useState([]);
+  const [sortDirection, setSortDirection] = useState("ASC");
 
-  const reversedChapters = chapters ? [...chapters].reverse() : [];
+  const reversedChapters = useCallback(
+    (chapters) => {
+      if (chapters) {
+        const sortedChapters = [...chapters].sort((a, b) => {
+          if (sortDirection === "ASC") {
+            return a.chapter - b.chapter;
+          }
+          return b.chapter - a.chapter;
+        });
+        setChapterList(sortedChapters);
+        setSortDirection(sortDirection === "ASC" ? "DESC" : "ASC");
+        return;
+      }
+      setChapterList([]);
+    },
+    [sortDirection]
+  );
 
   const handleShowEditButton = () => {
     setShowEditButton((prev) => !prev);
@@ -33,6 +54,19 @@ function ChapterList({ chapters, bookId, hideButton }) {
   const handleOpenDeleteDialog = () => {
     setOpenDeleteDialog((prev) => !prev);
   };
+
+  const handleRecordHistory = useCallback(
+    async (bookId, chapterId) => {
+      try {
+        await dispatch(recordRecentlyRead({ bookId, chapterId }));
+        await router.push(`/chapter?name=${chapterId}`);
+      } catch (error) {
+        console.error("Error recording history:", error);
+        router.push(`/chapter?name=${chapterId}`);
+      }
+    },
+    [dispatch, router]
+  );
 
   const generateDeleteButton = useCallback(
     (chapterID, chapterTitle) => {
@@ -72,6 +106,11 @@ function ChapterList({ chapters, bookId, hideButton }) {
     [showEditButton]
   );
 
+  useEffect(() => {
+    if (!chapters) return;
+    setChapterList([...chapters].reverse());
+  }, [chapters]);
+
   return (
     <section className="mt-24 max-md:mt-10">
       <header className="flex justify-between gap-5 items-center ml-4">
@@ -82,7 +121,7 @@ function ChapterList({ chapters, bookId, hideButton }) {
           <h3 className="text-3xl leading-loose text-black">
             Chapter Releases
           </h3>
-          <IconButton>
+          <IconButton onClick={() => reversedChapters(chapters)}>
             <SwapVertIcon sx={{ color: "black" }} />
           </IconButton>
         </div>
@@ -111,14 +150,14 @@ function ChapterList({ chapters, bookId, hideButton }) {
       <hr className="border-b border-black" />
 
       <div className="mt-11 w-full min-h-[30vh] max-md:mt-10 max-md:max-w-full">
-        {reversedChapters.map((chapter, index) => (
+        {chapterList.map((chapter, index) => (
           <article
             key={index}
             className="flex flex-row mt-3.5 w-full text-lg rounded-md max-md:max-w-full"
           >
             <Button
               sx={{ textTransform: "none", width: "100%" }}
-              onClick={() => router.push(`/chapter?name=${chapter.id}`)}
+              onClick={() => handleRecordHistory(bookId, chapter.id)}
             >
               <div className="flex flex-wrap gap-5 w-full justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
                 <h4 className="text-black">

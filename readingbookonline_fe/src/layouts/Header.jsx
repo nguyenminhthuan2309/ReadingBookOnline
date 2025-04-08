@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
-import { IconButton, Button, Typography } from "@mui/material";
+import { IconButton, Button, Typography, Badge } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
 import {
-  COMPLETED,
   FAVORITES,
   NEWBOOK,
   RECENTLY_READ,
@@ -15,22 +14,63 @@ import {
 } from "@/utils/constants";
 import AccountMenu from "@/components/Avatar";
 import { getItem } from "@/utils/localStorage";
+import Notification from "@/components/Notification";
+import { getAPI } from "@/utils/request";
+import { userAPI } from "@/common/api";
+import { useSocketContext } from "@/utils/SocketContext";
 
 export const Header = () => {
   const router = useRouter();
-  const [user, setUser] = useState();
+  const userInfo = useMemo(() => getItem(USER_INFO), []);
   const [search, setSearch] = useState("");
+
+  const { socket, isConnected } = useSocketContext();
+  const [notices, setNotices] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
   };
 
-  useEffect(() => {
-    const userInfo = getItem(USER_INFO);
-    if (userInfo) {
-      setUser(userInfo);
+  const getNotifications = useCallback(async () => {
+    try {
+      if (!userInfo) return;
+      const response = await getAPI(userAPI.getNotifications(6, page));
+      if (response.status === 200) {
+        const { data, totalPages } = response.data.data;
+        setNotices(data);
+        setTotalPages(totalPages);
+      }
+    } catch (error) {
+      console.log(error);
     }
-  }, []);
+  }, [page, userInfo]);
+
+  useEffect(() => {
+    getNotifications();
+  }, [getNotifications]);
+
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleNewChapter = (data) => {
+      console.log("📘 New chapter:", data);
+    };
+
+    const handleBookStatus = (data) => {
+      console.log("📕 Book status:", data);
+      getNotifications();
+    };
+
+    socket.on("new-chapter", handleNewChapter);
+    socket.on("book-status", handleBookStatus);
+
+    return () => {
+      socket.off("new-chapter", handleNewChapter);
+      socket.off("book-status", handleBookStatus);
+    };
+  }, [socket, isConnected]);
 
   return (
     <div className="w-full">
@@ -53,7 +93,9 @@ export const Header = () => {
             <IconButton
               onClick={() => {
                 if (!!search) {
-                  router.push(`/book_list?search=${encodeURIComponent(search)}`);
+                  router.push(
+                    `/book_list?search=${encodeURIComponent(search)}`
+                  );
                 } else {
                   router.push(`/book_list`);
                 }
@@ -62,13 +104,23 @@ export const Header = () => {
               <SearchIcon />
             </IconButton>
           </div>
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/7c00f6f7a652d825df38955bec95590251d89e87650657f38875ee569a3931c5?placeholderIfAbsent=true"
-            alt="User"
-            className="object-contain shrink-0 my-auto aspect-[0.86] w-[18px]"
-          />
-          {user ? (
-            <AccountMenu name={user && user.name?.slice(0, 1)} avatar={user && user.avatar} />
+          <Badge
+            badgeContent={notices.length}
+            sx={{ cursor: "pointer", alignSelf: "center" }}
+            color="secondary"
+          >
+            <Notification
+              notice={notices}
+              totalPages={totalPages}
+              currentPage={page}
+              setCurrentPage={setPage}
+            />
+          </Badge>
+          {userInfo ? (
+            <AccountMenu
+              name={userInfo && userInfo.name?.slice(0, 1)}
+              avatar={userInfo && userInfo.avatar}
+            />
           ) : (
             <div className="flex flex-wrap gap-5 py-2">
               <Button
@@ -92,7 +144,7 @@ export const Header = () => {
           )}
         </nav>
       </header>
-      <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black border-b border-black">
+      <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black">
         <ul className="flex flex-wrap gap-7 items-start">
           {/* <li className="w-[180px]">
             <Typography

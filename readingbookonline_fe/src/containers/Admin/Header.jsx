@@ -4,17 +4,17 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import { Button } from "@mui/material";
-import {
-  USER_INFO,
-} from "@/utils/constants";
+import { USER_INFO } from "@/utils/constants";
 import { getItem } from "@/utils/localStorage";
 import { useDispatch } from "react-redux";
 import { handleLogout } from "@/utils/actions/authAction";
+import EditUserInfoDialog from "./editUserInfoDialog";
 
 export const Header = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [user, setUser] = useState();
+    const [openEditInfoDialog, setOpenEditInfoDialog] = useState(false);
 
   const handleClickLogout = () => {
     dispatch(handleLogout());
@@ -39,7 +39,12 @@ export const Header = () => {
         </button>
         <nav className="flex gap-7 my-auto text-2xl max-md:max-w-full">
           <div className="flex items-center flex-wrap gap-5 py-2">
-            <span>{user && user.name}</span>
+            <Button
+              sx={{ textTransform: "none", backgroundColor: "red" }}
+              onClick={() => setOpenEditInfoDialog(true)}
+            >
+              <span>{user && user.name}</span>
+            </Button>
             <Button
               sx={{ textTransform: "none", backgroundColor: "red" }}
               onClick={() => handleClickLogout()}
@@ -51,6 +56,13 @@ export const Header = () => {
           </div>
         </nav>
       </header>
+      <React.Fragment>
+        <EditUserInfoDialog
+          open={openEditInfoDialog}
+          handleClose={() => setOpenEditInfoDialog(false)}
+          userInfo={user}
+        />
+      </React.Fragment>
     </div>
   );
 };

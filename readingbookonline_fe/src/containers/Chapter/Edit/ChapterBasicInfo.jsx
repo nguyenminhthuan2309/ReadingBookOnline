@@ -1,5 +1,11 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
@@ -27,7 +33,7 @@ import * as docx from "docx-preview";
 import { uploadFile } from "@/utils/actions/uploadAction";
 import { editChapter, getChapterById } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, USER_INFO } from "@/utils/constants";
 import { useRouter } from "next/navigation";
 import { getItem } from "@/utils/localStorage";

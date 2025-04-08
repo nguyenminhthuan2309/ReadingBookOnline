@@ -7,9 +7,13 @@ import { useRouter } from "next/router";
 import { IconButton } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import withAuth from "@/utils/withAuth";
+import { getItem } from "@/utils/localStorage";
+import { USER_INFO } from "@/utils/constants";
 
 const AccountPage = () => {
   const router = useRouter();
+
+  const userInfo = getItem(USER_INFO);
 
   const handelRediect = useCallback(() => {
     if (window.history.length > 1) {
@@ -18,8 +22,13 @@ const AccountPage = () => {
       router.push("/");
     }
   }, []);
+
+  if (!userInfo) {
+    router.push("/");
+    return;
+  }
   return (
-    <div className="rounded-none">
+    <div className="rounded-none pb-10">
       <div className="flex flex-col w-full max-md:max-w-full">
         <Header />
         <main className="flex flex-col self-center mt-10 w-full max-w-[1521px] max-md:mt-10 max-md:max-w-full">
@@ -30,10 +39,10 @@ const AccountPage = () => {
           </div>
           <div className="mt-7 max-md:max-w-full">
             <div className="flex gap-5 max-md:flex-col">
-              <NoticesSidebar />
+              <NoticesSidebar userInfo={userInfo} />
               <div className="ml-5 w-[76%] max-md:ml-0 max-md:w-full">
                 <div className="w-full max-md:mt-8 max-md:max-w-full">
-                  <UserProfile />
+                  <UserProfile userInfo={userInfo} />
                   <div className="mt-5 text-2xl text-black">
                     User&apos;s purchase history
                   </div>
@@ -50,4 +59,4 @@ const AccountPage = () => {
   );
 };
 
-export default withAuth(AccountPage, [3]);
+export default withAuth(AccountPage, [0,3]);

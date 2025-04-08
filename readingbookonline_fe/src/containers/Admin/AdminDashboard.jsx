@@ -18,7 +18,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import BlockIcon from "@mui/icons-material/Block";
 
-import NotificationsIcon from "@mui/icons-material/Notifications";
+// import NotificationsIcon from "@mui/icons-material/Notifications";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
@@ -59,7 +59,7 @@ const tabs = [
       { id: "blocked-book", label: "Book", icon: <MenuBookIcon /> },
     ],
   },
-  { id: "notices", label: "Notices", icon: <NotificationsIcon /> },
+  // { id: "notices", label: "Notices", icon: <NotificationsIcon /> },
   { id: "statistical", label: "Statistical", icon: <BarChartIcon /> },
 ];
 

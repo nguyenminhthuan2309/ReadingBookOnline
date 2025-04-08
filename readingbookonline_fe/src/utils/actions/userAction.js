@@ -4,8 +4,8 @@ import {
   changePasswordRequest,
   changePasswordSuccess,
 } from "../redux/slices/userReducer/changePasswordReducer";
-import { putAPI } from "../request";
-import { ShowNotify } from "@/components/Notification";
+import { postAPI, putAPI } from "../request";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, SUCESSS, USER_INFO } from "../constants";
 import {
   editInfoFail,
@@ -13,6 +13,7 @@ import {
   editInfoSuccess,
 } from "../redux/slices/userReducer/editInfoReducer";
 import Router from "next/router";
+import { recordRecentlyReadFail, recordRecentlyReadRequest, recordRecentlyReadSuccess } from "../redux/slices/userReducer/recordRecentlyRead";
 
 export const changePassword = (data) => {
   return async (dispatch) => {
@@ -58,3 +59,19 @@ export const editInfo = (formData) => {
     }
   };
 };
+
+export const recordRecentlyRead = (data) => {
+  return async (dispatch) => {
+    dispatch(recordRecentlyReadRequest());
+    const url = userAPI.recentLyRead;
+    try {
+      const response = await postAPI(url, data);
+      dispatch(recordRecentlyReadSuccess());
+      return response;
+    } catch (error) {
+      dispatch(recordRecentlyReadFail(error));
+      return error;
+    }
+  };
+};
+

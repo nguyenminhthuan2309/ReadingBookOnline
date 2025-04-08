@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ACCESS_TOKEN, ERROR, EXPIRED_IN, USER_INFO } from "./constants";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 
 export const instance = axios.create({});
 
