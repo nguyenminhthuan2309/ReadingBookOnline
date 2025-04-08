@@ -1301,11 +1301,6 @@ export class BookService {
         );
       }
 
-      this.loggerService.info(
-        `Updated book ${bookId} with accessStatusId ${accessStatusId} and progressStatusId ${progressStatusId}`,
-        'BookService.updateBookStatuses',
-      );
-
       const roleId = user.role?.id;
 
       if (
