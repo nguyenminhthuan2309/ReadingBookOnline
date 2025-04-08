@@ -109,13 +109,13 @@ export class BookService {
     private readonly bookNotificationGateway: BookNotificationGateway,
   ) {}
 
-  private getStatusMessage(accessStatusId: number): string {
+  private getStatusMessage(title: string, accessStatusId: number): string {
     if (accessStatusId === 4) {
-      return `Blocked: Your book has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
+      return `Blocked: ${title} has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
     } else if (accessStatusId === 3) {
-      return `Pending: Your book is under review for suspected community standards violations. You will temporarily not be able to update this book during the review. To appeal, please contact via email: ${this.adminMail}`;
+      return `Pending: ${title} is under review for suspected community standards violations. You will temporarily not be able to update this book during the review. To appeal, please contact via email: ${this.adminMail}`;
     } else if (accessStatusId === 2) {
-      return `Your book has been restored. We apologize for the inconvenience caused.`;
+      return ` ${title} has been restored. We apologize for the inconvenience caused.`;
     }
 
     return '';
@@ -1309,7 +1309,7 @@ export class BookService {
           accessStatusId === 3 ||
           (accessStatusId === 2 && roleId !== 1))
       ) {
-        const statusMessage = this.getStatusMessage(accessStatusId);
+        const statusMessage = this.getStatusMessage(book.title, accessStatusId);
 
         await this.databaseService.create(this.bookNotificationRepository, {
           user: { id: book.author.id },
