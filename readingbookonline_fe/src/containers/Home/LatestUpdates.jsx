@@ -11,7 +11,7 @@ export const LatestUpdates = () => {
   const [totalPage, setTotalPage] = useState();
 
   const getBookData = useCallback(async () => {
-    let url = bookAPI.getBook(20, 1);
+    let url = bookAPI.getBook(30, 1);
     url += "&sortBy=updatedAt&sortType=DESC&accessStatusId=1";
     try {
       const response = await getAPI(url);
@@ -53,21 +53,23 @@ export const LatestUpdates = () => {
         </div>
         <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
       </header>
-      <div className="flex flex-wrap px-18 gap-10 w-full justify-between items-start mt-12 max-md:mt-10">
-        {bookList &&
-          bookList.map((book, index) => (
-            <BookTile
-              key={index}
-              bookId={book.id}
-              imageUrl={book.cover}
-              title={book.title}
-              author={book.author.name}
-              chapters={book.chapters}
-              className="flex flex-col rounded-none w-[200px]"
-            />
-          ))}
+      <div className="flex w-full mt-12 max-md:mt-10 justify-center">
+        <div className="flex flex-wrap gap-10 items-start px-10 max-md:mt-10">
+          {bookList &&
+            bookList.map((book, index) => (
+              <BookTile
+                key={index}
+                bookId={book.id}
+                imageUrl={book.cover}
+                title={book.title}
+                author={book.author.name}
+                chapters={book.chapters}
+                className="flex flex-col rounded-none w-[200px]"
+              />
+            ))}
+        </div>
       </div>
-      <Stack spacing={2} className="flex mt-14 justify-center items-end">
+      <Stack spacing={2} className="flex mt-14 mb-10 justify-center items-end">
         <Pagination
           sx={{
             "& .MuiPaginationItem-root": {

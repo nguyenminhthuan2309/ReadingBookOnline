@@ -14,6 +14,9 @@ const userAPI = {
   trackUser: `${API_GATEWAY}/tracker/login`,
   getNotifications: (limit, page) =>
     `${API_GATEWAY}/book/notification?limit=${limit}&page=${page}`,
+  recentLyRead: `${API_GATEWAY}/book/reading-history`,
+  getRecentlyRead: (limit, page) =>
+    `${API_GATEWAY}/book/reading-history?limit=${limit}&page=${page}`,
 };
 
 const bookAPI = {

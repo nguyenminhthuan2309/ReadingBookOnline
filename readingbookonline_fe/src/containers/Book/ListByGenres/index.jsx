@@ -40,9 +40,9 @@ const BookListPage = () => {
   const getBookData = useCallback(async () => {
     let url;
     if (pageNumber) {
-      url = bookAPI.getBook(20, pageNumber);
+      url = bookAPI.getBook(30, pageNumber);
     } else {
-      url = bookAPI.getBook(20, 1);
+      url = bookAPI.getBook(30, 1);
     }
     if (genre) {
       url += `&categoryId=${genre}`;
