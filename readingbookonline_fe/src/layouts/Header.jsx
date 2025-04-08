@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button, Typography, Badge } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
 import {
-  COMPLETED,
   FAVORITES,
   NEWBOOK,
   RECENTLY_READ,
@@ -18,15 +17,14 @@ import { getItem } from "@/utils/localStorage";
 import Notification from "@/components/Notification";
 import { getAPI } from "@/utils/request";
 import { userAPI } from "@/common/api";
-import { useSocket } from "@/utils/useSocket";
+import { useSocketContext } from "@/utils/SocketContext";
 
 export const Header = () => {
   const router = useRouter();
-  const [user, setUser] = useState();
+  const userInfo = useMemo(() => getItem(USER_INFO), []);
   const [search, setSearch] = useState("");
 
-  const userInfo = getItem(USER_INFO);
-  const { socket, isConnected } = useSocket(userInfo?.id);
+  const { socket, isConnected } = useSocketContext();
   const [notices, setNotices] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -37,6 +35,7 @@ export const Header = () => {
 
   const getNotifications = useCallback(async () => {
     try {
+      if (!userInfo) return;
       const response = await getAPI(userAPI.getNotifications(6, page));
       if (response.status === 200) {
         const { data, totalPages } = response.data.data;
@@ -46,7 +45,7 @@ export const Header = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [page]);
+  }, [page, userInfo]);
 
   useEffect(() => {
     getNotifications();
@@ -71,16 +70,7 @@ export const Header = () => {
       socket.off("new-chapter", handleNewChapter);
       socket.off("book-status", handleBookStatus);
     };
-  }, [socket, isConnected, getNotifications]);
-
-  
-
-  useEffect(() => {
-    const userInfo = getItem(USER_INFO);
-    if (userInfo) {
-      setUser(userInfo);
-    }
-  }, []);
+  }, [socket, isConnected]);
 
   return (
     <div className="w-full">
@@ -119,12 +109,17 @@ export const Header = () => {
             sx={{ cursor: "pointer", alignSelf: "center" }}
             color="secondary"
           >
-            <Notification notice={notices} totalPages={totalPages} currentPage={page} setCurrentPage={setPage}/>
+            <Notification
+              notice={notices}
+              totalPages={totalPages}
+              currentPage={page}
+              setCurrentPage={setPage}
+            />
           </Badge>
-          {user ? (
+          {userInfo ? (
             <AccountMenu
-              name={user && user.name?.slice(0, 1)}
-              avatar={user && user.avatar}
+              name={userInfo && userInfo.name?.slice(0, 1)}
+              avatar={userInfo && userInfo.avatar}
             />
           ) : (
             <div className="flex flex-wrap gap-5 py-2">
@@ -149,7 +144,7 @@ export const Header = () => {
           )}
         </nav>
       </header>
-      <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black border-b border-black">
+      <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black">
         <ul className="flex flex-wrap gap-7 items-start">
           {/* <li className="w-[180px]">
             <Typography

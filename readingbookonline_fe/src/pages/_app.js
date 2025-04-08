@@ -9,10 +9,14 @@ import Layout from "@/layouts/index";
 import ErrorBoundary from "@/utils/ErrorBoundary";
 import PropTypes from "prop-types";
 import Head from "next/head";
+import { SocketProvider } from "@/utils/SocketContext";
+import { USER_INFO } from "@/utils/constants";
+import { getItem } from "@/utils/localStorage";
 
 export default function MyApp({ Component, pageProps }) {
   const [queryClient] = useState(() => new QueryClient());
   const getLayout = Component.getLayout || ((page) => <Layout>{page}</Layout>);
+  const userInfo = getItem(USER_INFO);
 
   return (
     <Provider store={store}>
@@ -21,7 +25,9 @@ export default function MyApp({ Component, pageProps }) {
         <Head>
           <link rel="icon" type="image/png" href="/images/favicon.png" />
         </Head>
-        <ErrorBoundary>{getLayout(<Component {...pageProps} />)}</ErrorBoundary>
+        <SocketProvider userInfo={userInfo ? userInfo : null}>
+          <ErrorBoundary>{getLayout(<Component {...pageProps} />)}</ErrorBoundary>
+        </SocketProvider>
       </QueryClientProvider>
     </Provider>
   );

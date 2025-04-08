@@ -1,51 +1,56 @@
 import { userAPI } from "@/common/api";
 import { getAPI } from "@/utils/request";
-import { useSocket } from "@/utils/useSocket";
+import { useSocketContext } from "@/utils/SocketContext";
 import { Pagination } from "@mui/material";
 import { Stack } from "@mui/system";
 import moment from "moment";
 import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useState } from "react";
 
-const NoticesSidebar = ({ userInfo }) => {
-  const { socket, isConnected } = useSocket(userInfo.id);
+const NoticesSidebar = () => {
+  const { socket, isConnected } = useSocketContext();
   const [notices, setNotices] = useState([]);
-  const [totalPages, setTotalPages] = useState(0)
-  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
 
-  const highlightNotice = useCallback((notice) =>{
+  const highlightNotice = useCallback((notice) => {
     return notice.split(/(Pending:|Block:)/g).map((part, index) => {
-      switch(part){
+      switch (part) {
         case "Pending:":
-          return <span key={index} className="text-yellow-500 font-bold">
-            {part}
-          </span>
+          return (
+            <span key={index} className="text-yellow-500 font-bold">
+              {part}
+            </span>
+          );
         case "Block:":
-          return <span key={index} className="text-red-500 font-bold">
-            {part}
-          </span>
+          return (
+            <span key={index} className="text-red-500 font-bold">
+              {part}
+            </span>
+          );
         default:
-          return part
+          return part;
       }
-    })
-  },[])
+    });
+  }, []);
 
-  const getNotifications = useCallback(async () =>{
-    try{
-      const response = await getAPI(userAPI.getNotifications(10, page))
-      if(response.status === 200){
-        const {data, totalPages} = response.data.data
-        setNotices(data)
-        setTotalPages(totalPages)
+  const getNotifications = useCallback(async () => {
+    try {
+      const response = await getAPI(userAPI.getNotifications(10, page));
+      if (response.status === 200) {
+        const { data, totalPages } = response.data.data;
+        setNotices(data);
+        setTotalPages(totalPages);
       }
-    }catch(error){
-      console.log(error)
+    } catch (error) {
+      console.log(error);
     }
-  },[page])
+  }, [page]);
 
+  // Only fetch notifications when page changes
   useEffect(() => {
-    getNotifications()
-  },[getNotifications])
+    getNotifications();
+  }, [page]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -56,6 +61,7 @@ const NoticesSidebar = ({ userInfo }) => {
 
     const handleBookStatus = (data) => {
       console.log("📕 Book status:", data);
+      // Refresh notifications only when we receive a book status update
       getNotifications();
     };
 
@@ -66,7 +72,7 @@ const NoticesSidebar = ({ userInfo }) => {
       socket.off("new-chapter", handleNewChapter);
       socket.off("book-status", handleBookStatus);
     };
-  }, [socket, isConnected, getNotifications]);
+  }, [socket, isConnected]);
 
   return (
     <aside className="w-[24%] max-md:ml-0 max-md:w-full">
@@ -90,14 +96,23 @@ const NoticesSidebar = ({ userInfo }) => {
             <>
               {notices.map((notice) => (
                 <div key={notice.id}>
-                  <span className="text-sm">- {highlightNotice(notice.message)}</span>
-                  <span className="text-sm text-gray-500 italic"> {moment(notice.createdAt).format("DD/MM/YYYY hh:mm")}</span>
+                  <span className="text-sm">
+                    - {highlightNotice(notice.message)}
+                  </span>
+                  <span className="text-sm text-gray-500 italic">
+                    {" "}
+                    {moment(notice.createdAt).format("DD/MM/YYYY hh:mm")}
+                  </span>
                 </div>
               ))}
-            
-            <Stack className="mt-5 justify-center items-center">
-              <Pagination count={totalPages} page={page} onChange={(event, value) => setPage(value)} />
-            </Stack>
+
+              <Stack className="mt-5 justify-center items-center">
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={(event, value) => setPage(value)}
+                />
+              </Stack>
             </>
           )}
         </p>

@@ -29,6 +29,8 @@ import createManagerReducer from "./slices/adminReducer/createManager"
 import changeUserStatusReducer from "./slices/adminReducer/changeUserStatus"
 import trackLoginStatusReducer from "./slices/adminReducer/trackLoginStatus"
 
+import recordRecentlyReadReducer from "./slices/userReducer/recordRecentlyRead"
+
 export default configureStore({
   reducer: {
     login: loginReducer,
@@ -52,5 +54,6 @@ export default configureStore({
     createManager: createManagerReducer,
     changeUserStatus: changeUserStatusReducer,
     trackLoginStatus: trackLoginStatusReducer,
+    recordRecentlyRead: recordRecentlyReadReducer,
   },
 });
