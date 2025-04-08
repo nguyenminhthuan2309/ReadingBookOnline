@@ -16,7 +16,7 @@ import { useSearchParams } from "next/navigation";
 
 import { getAPI } from "@/utils/request";
 import { authAPI } from "@/common/api";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR } from "@/utils/constants";
 
 const schema = yup.object().shape({

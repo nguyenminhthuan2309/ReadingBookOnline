@@ -5,15 +5,23 @@ import {
   createManagerSuccess,
 } from "@/utils/redux/slices/adminReducer/createManager";
 import { ERROR, SUCESSS } from "../constants";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { getAPI, patchAPI, postAPI } from "../request";
 import {
   changeUserStatusFail,
   changeUserStatusRequest,
   changeUserStatusSuccess,
 } from "../redux/slices/adminReducer/changeUserStatus";
-import { changeBookStatusFail, changeBookStatusRequest, changeBookStatusSuccess } from "../redux/slices/adminReducer/changeBookStatus";
-import { trackLoginStatusFail, trackLoginStatusRequest, trackLoginStatusSuccess } from "../redux/slices/adminReducer/trackLoginStatus";
+import {
+  changeBookStatusFail,
+  changeBookStatusRequest,
+  changeBookStatusSuccess,
+} from "../redux/slices/adminReducer/changeBookStatus";
+import {
+  trackLoginStatusFail,
+  trackLoginStatusRequest,
+  trackLoginStatusSuccess,
+} from "../redux/slices/adminReducer/trackLoginStatus";
 
 export const createManager = (data) => {
   return async (dispatch) => {
@@ -55,7 +63,7 @@ export const changeBookStatus = (bookId, status) => {
     const url = adminAPI.changeBookStatus(bookId);
     try {
       const response = await patchAPI(url, {
-        accessStatusId: status
+        accessStatusId: status,
       });
       if (response) {
         dispatch(changeBookStatusSuccess());

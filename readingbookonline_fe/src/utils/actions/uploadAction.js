@@ -5,7 +5,7 @@ import {
   uploadImageSuccess,
 } from "../redux/slices/uploadReducer/uploadImage";
 import { postAPI } from "../request";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, INFO, SUCESSS } from "../constants";
 import {
   uploadFileFail,

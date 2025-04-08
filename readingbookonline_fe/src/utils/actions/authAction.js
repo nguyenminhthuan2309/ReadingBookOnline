@@ -1,4 +1,4 @@
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import {
   forgotPasswordFail,
   forgotPasswordRequest,
@@ -56,7 +56,7 @@ export const handleAuthenticate = (formdata) => {
             status: user.status,
           })
         );
-        await postAPI(userAPI.trackUser)
+        await postAPI(userAPI.trackUser);
         if (user.role.id !== 3) {
           Router.replace("/admin");
           return;

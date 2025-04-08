@@ -5,7 +5,7 @@ import {
   changePasswordSuccess,
 } from "../redux/slices/userReducer/changePasswordReducer";
 import { putAPI } from "../request";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, SUCESSS, USER_INFO } from "../constants";
 import {
   editInfoFail,

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
 import SearchIcon from "@mui/icons-material/Search";
-import { IconButton, Button, Typography } from "@mui/material";
+import { IconButton, Button, Typography, Badge } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
 import {
   COMPLETED,
@@ -15,15 +15,65 @@ import {
 } from "@/utils/constants";
 import AccountMenu from "@/components/Avatar";
 import { getItem } from "@/utils/localStorage";
+import Notification from "@/components/Notification";
+import { getAPI } from "@/utils/request";
+import { userAPI } from "@/common/api";
+import { useSocket } from "@/utils/useSocket";
 
 export const Header = () => {
   const router = useRouter();
   const [user, setUser] = useState();
   const [search, setSearch] = useState("");
 
+  const userInfo = getItem(USER_INFO);
+  const { socket, isConnected } = useSocket(userInfo?.id);
+  const [notices, setNotices] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
+
   const handleSearch = (e) => {
     setSearch(e.target.value);
   };
+
+  const getNotifications = useCallback(async () => {
+    try {
+      const response = await getAPI(userAPI.getNotifications(6, page));
+      if (response.status === 200) {
+        const { data, totalPages } = response.data.data;
+        setNotices(data);
+        setTotalPages(totalPages);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    getNotifications();
+  }, [getNotifications]);
+
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleNewChapter = (data) => {
+      console.log("📘 New chapter:", data);
+    };
+
+    const handleBookStatus = (data) => {
+      console.log("📕 Book status:", data);
+      getNotifications();
+    };
+
+    socket.on("new-chapter", handleNewChapter);
+    socket.on("book-status", handleBookStatus);
+
+    return () => {
+      socket.off("new-chapter", handleNewChapter);
+      socket.off("book-status", handleBookStatus);
+    };
+  }, [socket, isConnected, getNotifications]);
+
+  
 
   useEffect(() => {
     const userInfo = getItem(USER_INFO);
@@ -53,7 +103,9 @@ export const Header = () => {
             <IconButton
               onClick={() => {
                 if (!!search) {
-                  router.push(`/book_list?search=${encodeURIComponent(search)}`);
+                  router.push(
+                    `/book_list?search=${encodeURIComponent(search)}`
+                  );
                 } else {
                   router.push(`/book_list`);
                 }
@@ -62,13 +114,18 @@ export const Header = () => {
               <SearchIcon />
             </IconButton>
           </div>
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/a1c204e693f745d49e0ba1d47d0b3d23/7c00f6f7a652d825df38955bec95590251d89e87650657f38875ee569a3931c5?placeholderIfAbsent=true"
-            alt="User"
-            className="object-contain shrink-0 my-auto aspect-[0.86] w-[18px]"
-          />
+          <Badge
+            badgeContent={notices.length}
+            sx={{ cursor: "pointer", alignSelf: "center" }}
+            color="secondary"
+          >
+            <Notification notice={notices} totalPages={totalPages} currentPage={page} setCurrentPage={setPage}/>
+          </Badge>
           {user ? (
-            <AccountMenu name={user && user.name?.slice(0, 1)} avatar={user && user.avatar} />
+            <AccountMenu
+              name={user && user.name?.slice(0, 1)}
+              avatar={user && user.avatar}
+            />
           ) : (
             <div className="flex flex-wrap gap-5 py-2">
               <Button

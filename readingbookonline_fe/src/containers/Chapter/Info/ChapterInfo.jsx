@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
 import { getChapterById } from "@/utils/actions/chapterAction";
 import { ERROR, IS_ADMIN, IS_MANAGER, USER_INFO } from "@/utils/constants";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoChapter";
 import ChapterSelection from "./ChapterSelection";
 import { getItem, setItem } from "@/utils/localStorage";

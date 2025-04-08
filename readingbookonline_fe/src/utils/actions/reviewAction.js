@@ -5,15 +5,18 @@ import {
   createReviewSuccess,
 } from "../redux/slices/reviewReducer/createReview";
 import { deleteAPI, postAPI, putAPI } from "../request";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR } from "../constants";
 import {
   editReviewFail,
   editReviewRequest,
   editReviewSuccess,
 } from "../redux/slices/reviewReducer/editReview";
-import { deleteReviewFail, deleteReviewRequest, deleteReviewSuccess } from "../redux/slices/reviewReducer/deleteReview";
-
+import {
+  deleteReviewFail,
+  deleteReviewRequest,
+  deleteReviewSuccess,
+} from "../redux/slices/reviewReducer/deleteReview";
 
 export const createReview = (bookId, reviewData) => {
   return async (dispatch) => {
@@ -51,14 +54,14 @@ export const editReview = (reviewId, reviewData) => {
 export const deleteReview = (reviewId) => {
   return async (dispatch) => {
     dispatch(deleteReviewRequest());
-    try{
-        const url = reviewAPI.deleteReview(reviewId)
-        const response = await deleteAPI(url)
-        dispatch(deleteReviewSuccess())
-        return response
-    }catch(error){
-        dispatch(deleteReviewFail(error))
-        ShowNotify(ERROR, "Review deleted failed")
+    try {
+      const url = reviewAPI.deleteReview(reviewId);
+      const response = await deleteAPI(url);
+      dispatch(deleteReviewSuccess());
+      return response;
+    } catch (error) {
+      dispatch(deleteReviewFail(error));
+      ShowNotify(ERROR, "Review deleted failed");
     }
-  }
-}
+  };
+};

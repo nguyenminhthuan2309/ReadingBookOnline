@@ -27,7 +27,7 @@ import * as docx from "docx-preview";
 import { uploadFile } from "@/utils/actions/uploadAction";
 import { createChapter } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR } from "@/utils/constants";
 
 const schema = yup.object().shape({
@@ -125,21 +125,24 @@ function ChapterBasicInfo() {
     }
   };
 
-  const handleSubmitChapterInfo = useCallback((data) => {
-    const formData = {
-      ...data,
-      title: data.title,
-      chapter: +data.number,
-      content: fileUrl,
-      cover: "https://example.com/cover.jpg",
-      isLocked: false,
-      price: 5000,
-    };
-    if (bookId && fileUrl) {
-      dispatch(createChapter(bookId, formData));
-      reset()
-    }
-  }, [fileUrl]);
+  const handleSubmitChapterInfo = useCallback(
+    (data) => {
+      const formData = {
+        ...data,
+        title: data.title,
+        chapter: +data.number,
+        content: fileUrl,
+        cover: "https://example.com/cover.jpg",
+        isLocked: false,
+        price: 5000,
+      };
+      if (bookId && fileUrl) {
+        dispatch(createChapter(bookId, formData));
+        reset();
+      }
+    },
+    [fileUrl]
+  );
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">

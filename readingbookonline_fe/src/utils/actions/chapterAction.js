@@ -5,7 +5,7 @@ import {
   createChapterSuccess,
 } from "../redux/slices/chapterReducer/createChapter";
 import { deleteAPI, getAPI, postAPI, putAPI } from "../request";
-import { ShowNotify } from "@/components/Notification";
+import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, SUCESSS } from "../constants";
 import Router from "next/router";
 import {
