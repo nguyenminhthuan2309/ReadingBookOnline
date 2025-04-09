@@ -1,10 +1,10 @@
+import { endOfDay, format, parseISO, startOfDay } from 'date-fns';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { LoginTracker } from './entities/login-tracker.entity';
 import { DatabaseService } from '@core/database/database.service';
 import { LoggerService } from '@core/logger/logger.service';
-import { format, parseISO } from 'date-fns';
 
 @Injectable()
 export class TrackerService {
@@ -226,6 +226,63 @@ export class TrackerService {
         'TrackerService.getNewBookStatsChart',
       );
       throw error;
+    }
+  }
+
+  async getReadingHistoryByBookId(
+    bookId: number,
+    from?: string,
+    to?: string,
+    groupBy: 'daily' | 'monthly' | 'yearly' = 'daily',
+  ): Promise<{ time: string; count: number }[]> {
+    try {
+      const formatMap = {
+        daily: 'YYYY-MM-DD',
+        monthly: 'YYYY-MM',
+        yearly: 'YYYY',
+      };
+
+      const dateFormat = formatMap[groupBy];
+
+      const conditions = [`book_id = $1`];
+      const params: any[] = [bookId, dateFormat];
+
+      let index = 3;
+
+      if (from) {
+        conditions.push(`created_at >= $${index}::timestamp`);
+        params.push(startOfDay(new Date(from)));
+        index++;
+      }
+      if (to) {
+        conditions.push(`created_at <= $${index}::timestamp`);
+        params.push(endOfDay(new Date(to)));
+        index++;
+      }
+
+      const whereClause = conditions.length
+        ? `WHERE ${conditions.join(' AND ')}`
+        : '';
+
+      const query = `
+        SELECT
+          to_char(created_at, $2) as time,
+          COUNT(*) as count
+        FROM book_reading_history
+        ${whereClause}
+        GROUP BY time
+        ORDER BY time DESC
+      `;
+
+      const result = await this.databaseService.executeRawQuery(query, params);
+
+      return result.map((row) => ({
+        time: row.time,
+        count: Number(row.count),
+      }));
+    } catch (err) {
+      this.loggerService.err(err.message, 'TrackerService.getReadingHistory');
+      throw err;
     }
   }
 }

@@ -59,4 +59,46 @@ export class TrackerController {
   ): Promise<{ time: string; value: number }[]> {
     return await this.trackerService.getNewBookStatsChart(timeRange);
   }
+
+  @Get('reading-book-history')
+  @ApiQuery({
+    name: 'bookId',
+    required: true,
+    type: Number,
+    description: 'ID của sách cần thống kê lịch sử đọc',
+  })
+  @ApiQuery({
+    name: 'from',
+    required: false,
+    type: String,
+    description:
+      'Ngày bắt đầu lọc theo định dạng yyyy-MM-dd (ví dụ: 2025-01-01)',
+  })
+  @ApiQuery({
+    name: 'to',
+    required: false,
+    type: String,
+    description:
+      'Ngày kết thúc lọc theo định dạng yyyy-MM-dd (ví dụ: 2025-12-31)',
+  })
+  @ApiQuery({
+    name: 'groupBy',
+    enum: ['daily', 'monthly', 'yearly'],
+    required: false,
+    description:
+      'Loại thống kê theo thời gian: daily (ngày), monthly (tháng), yearly (năm). Mặc định là daily.',
+  })
+  async getReadingHistory(
+    @Query('bookId') bookId: number,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('groupBy') groupBy: 'daily' | 'monthly' | 'yearly' = 'daily',
+  ) {
+    return this.trackerService.getReadingHistoryByBookId(
+      bookId,
+      from,
+      to,
+      groupBy,
+    );
+  }
 }
