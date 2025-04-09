@@ -15,5 +15,4 @@ function CreateNewChapter() {
   );
 }
 
-export default withAuth(CreateNewChapter, [0, 1, 2, 3]);
-// export default withAuth(CreateNewChapter, [3]);
+export default withAuth(CreateNewChapter, [3]);
