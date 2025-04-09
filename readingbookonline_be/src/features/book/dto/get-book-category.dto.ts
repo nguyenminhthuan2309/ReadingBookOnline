@@ -13,6 +13,10 @@ export class GetBookCategoryDto {
   @Expose()
   @IsString()
   name: string;
+
+  @Expose()
+  @IsNumber()
+  totalBooks: number;
 }
 
 export class GetBookCategoryRequestDto extends PaginationRequestDto {}

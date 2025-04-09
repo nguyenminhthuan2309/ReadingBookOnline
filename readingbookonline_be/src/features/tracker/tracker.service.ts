@@ -46,7 +46,7 @@ export class TrackerService {
 
       return true;
     } catch (error) {
-      this.loggerService.err(error.message, 'LoginTrackerService.trackLogin');
+      this.loggerService.err(error.message, 'TrackerService.trackLogin');
       throw error;
     }
   }
@@ -104,7 +104,126 @@ export class TrackerService {
     } catch (error) {
       this.loggerService.err(
         error.message,
-        'LoginTrackerService.getLoginHistoryChart',
+        'TrackerService.getLoginHistoryChart',
+      );
+      throw error;
+    }
+  }
+
+  async getNewUserChart(
+    timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<{ time: string; value: number }[]> {
+    try {
+      let dateFormat = 'YYYY-MM-DD';
+      let whereClause = '';
+      let groupByClause = 'GROUP BY time';
+
+      if (timeRange === 'daily') {
+        dateFormat = 'YYYY-MM-DD';
+        whereClause = `WHERE u.created_at >= CURRENT_DATE - INTERVAL '30 days'`;
+      } else if (timeRange === 'weekly') {
+        dateFormat = 'IYYY-IW';
+        whereClause = `WHERE u.created_at >= CURRENT_DATE - INTERVAL '14 weeks'`;
+      } else if (timeRange === 'monthly') {
+        dateFormat = 'YYYY-MM';
+        whereClause = `WHERE u.created_at >= CURRENT_DATE - INTERVAL '12 months'`;
+      }
+
+      const query = `
+        SELECT
+          to_char(u.created_at, $1) as time,
+          COUNT(*) AS value
+        FROM "user" u
+        ${whereClause}
+        ${groupByClause}
+        ORDER BY time DESC
+      `;
+
+      const rawResult: any[] = await this.databaseService.executeRawQuery(
+        query,
+        [dateFormat],
+      );
+
+      const chartData = rawResult.map((row) => {
+        let formattedTime = row.time;
+        if (timeRange === 'daily') {
+          formattedTime = format(parseISO(row.time), 'dd-MM-yyyy');
+        } else if (timeRange === 'weekly') {
+          const [year, week] = row.time.split('-');
+          formattedTime = `Tuần ${week}-${year}`;
+        } else if (timeRange === 'monthly') {
+          formattedTime = format(parseISO(row.time + '-01'), 'MM-yyyy');
+        }
+
+        return {
+          time: formattedTime,
+          value: Number(row.value),
+        };
+      });
+
+      return chartData;
+    } catch (error) {
+      this.loggerService.err(error.message, 'TrackerService.getNewUserChart');
+      throw error;
+    }
+  }
+
+  async getNewBookStatsChart(
+    timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<{ time: string; value: number }[]> {
+    try {
+      let dateFormat = 'YYYY-MM-DD';
+      let whereClause = '';
+      let groupByClause = 'GROUP BY time';
+
+      if (timeRange === 'daily') {
+        dateFormat = 'YYYY-MM-DD';
+        whereClause = `WHERE b.created_at >= CURRENT_DATE - INTERVAL '30 days'`;
+      } else if (timeRange === 'weekly') {
+        dateFormat = 'IYYY-IW';
+        whereClause = `WHERE b.created_at >= CURRENT_DATE - INTERVAL '14 weeks'`;
+      } else if (timeRange === 'monthly') {
+        dateFormat = 'YYYY-MM';
+        whereClause = `WHERE b.created_at >= CURRENT_DATE - INTERVAL '12 months'`;
+      }
+
+      const query = `
+        SELECT
+          to_char(b.created_at, $1) as time,
+          COUNT(*) AS value
+        FROM book b
+        ${whereClause}
+        ${groupByClause}
+        ORDER BY time DESC
+      `;
+
+      const rawResult: any[] = await this.databaseService.executeRawQuery(
+        query,
+        [dateFormat],
+      );
+
+      const chartData = rawResult.map((row) => {
+        let formattedTime = row.time;
+        if (timeRange === 'daily') {
+          formattedTime = format(parseISO(row.time), 'dd-MM-yyyy');
+        } else if (timeRange === 'weekly') {
+          const [year, week] = row.time.split('-');
+          formattedTime = `Tuần ${week}-${year}`;
+        } else if (timeRange === 'monthly') {
+          formattedTime = format(parseISO(row.time + '-01'), 'MM-yyyy');
+        }
+
+        return {
+          time: formattedTime,
+          value: Number(row.value),
+        };
+      });
+
+      return chartData;
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'TrackerService.getNewBookStatsChart',
       );
       throw error;
     }

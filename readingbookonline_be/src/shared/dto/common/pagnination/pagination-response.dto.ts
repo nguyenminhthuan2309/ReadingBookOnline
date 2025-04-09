@@ -14,3 +14,22 @@ export class PaginationResponseDto<T> {
 
   data: T[];
 }
+
+export class PaginationNotificationResponseDto<T> {
+  @IsNotEmpty()
+  @IsInt()
+  @Transform(({ value }) => Number(value), { toClassOnly: true })
+  totalItems: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Transform(({ value }) => Number(value), { toClassOnly: true })
+  totalUnread: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Transform(({ value }) => Number(value), { toClassOnly: true })
+  totalPages: number;
+
+  data: T[];
+}

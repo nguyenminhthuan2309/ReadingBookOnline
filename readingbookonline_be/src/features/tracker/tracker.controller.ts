@@ -27,4 +27,36 @@ export class TrackerController {
   ): Promise<{ time: string; login: number }[]> {
     return await this.trackerService.getLoginHistoryChart(timeRange);
   }
+
+  @ApiOperation({
+    summary: 'Lấy thống kê số lượng người dùng mới',
+  })
+  @ApiQuery({
+    name: 'timeRange',
+    enum: ['daily', 'weekly', 'monthly'],
+    description: 'Khoảng thời gian thống kê',
+    required: false,
+  })
+  @Get('user-new')
+  async getNewUserChart(
+    @Query('timeRange') timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<{ time: string; value: number }[]> {
+    return await this.trackerService.getNewUserChart(timeRange);
+  }
+
+  @ApiOperation({
+    summary: 'Lấy thống kê số lượng sách mới',
+  })
+  @ApiQuery({
+    name: 'timeRange',
+    enum: ['daily', 'weekly', 'monthly'],
+    description: 'Khoảng thời gian thống kê',
+    required: false,
+  })
+  @Get('book-new')
+  async getNewBookStatsChart(
+    @Query('timeRange') timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
+  ): Promise<{ time: string; value: number }[]> {
+    return await this.trackerService.getNewBookStatsChart(timeRange);
+  }
 }

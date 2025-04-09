@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -42,7 +42,10 @@ import {
 } from './dto/book-review.dto';
 import { BookReview } from './entities/book-review.entity';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
-import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import {
+  PaginationNotificationResponseDto,
+  PaginationResponseDto,
+} from '@shared/dto/common/pagnination/pagination-response.dto';
 import {
   BookChapterCommentResponseDto,
   CreateBookChapterCommentDto,
@@ -305,15 +308,17 @@ export class BookService {
         throw new NotFoundException('Book not found');
       }
 
-      await this.databaseService
-        .queryBuilder(this.bookRepository, 'book')
-        .update(Book)
-        .set({
-          views: () => 'views + 1',
-          updatedAt: () => 'updated_at',
-        })
-        .where('id = :bookId', { bookId })
-        .execute();
+      if (book.author.id !== user.id) {
+        await this.databaseService
+          .queryBuilder(this.bookRepository, 'book')
+          .update(Book)
+          .set({
+            views: () => 'views + 1',
+            updatedAt: () => 'updated_at',
+          })
+          .where('id = :bookId', { bookId })
+          .execute();
+      }
 
       const ratingResult = await this.databaseService
         .queryBuilder(this.bookReviewRepository, 'review')
@@ -403,31 +408,44 @@ export class BookService {
         return JSON.parse(cachedPage);
       }
 
-      const data = await this.databaseService.findAndCount(
-        this.bookCategoryRepository,
-        {
+      const [categories, total] =
+        await this.bookCategoryRepository.findAndCount({
           select: ['id', 'name', 'createdAt', 'updatedAt'],
           order: { id: 'ASC' },
           skip: offset,
           take: limit,
-        },
-      );
+        });
+
+      const categoryIds = categories.map((c) => c.id);
+
+      const rawCounts: {
+        category_id: number;
+        book_count: number;
+      }[] = await this.bookCategoryRelationRepository
+        .createQueryBuilder('relation')
+        .select('relation.category_id', 'category_id')
+        .addSelect('COUNT(DISTINCT relation.book_id)', 'book_count')
+        .where('relation.category_id IN (:...categoryIds)', { categoryIds })
+        .groupBy('relation.category_id')
+        .getRawMany();
+
+      const bookCountMap = new Map<number, number>();
+      rawCounts.forEach((row) => {
+        bookCountMap.set(Number(row.category_id), Number(row.book_count));
+      });
 
       const response: GetBookCateogryResponseDto = {
-        totalItems: data.total,
-        totalPages: Math.ceil(data.total / limit),
-        data: data.data.map((category) =>
-          plainToInstance(GetBookCategoryDto, category, {
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        data: categories.map((category) => {
+          const dto = plainToInstance(GetBookCategoryDto, category, {
             excludeExtraneousValues: true,
-          }),
-        ),
-      };
+          });
 
-      await this.cacheService.set(
-        cachedKey,
-        JSON.stringify(response),
-        this.redisBookTtl,
-      );
+          dto.totalBooks = bookCountMap.get(category.id) || 0;
+          return dto;
+        }),
+      };
 
       return response;
     } catch (error) {
@@ -640,7 +658,7 @@ export class BookService {
       );
 
       if (existingChapter) {
-        throw new ConflictException('Chương này đã tồn tại');
+        throw new BadRequestException('Chương này đã tồn tại');
       }
 
       const newChapter = await this.databaseService.create(
@@ -1540,7 +1558,7 @@ export class BookService {
   async getBookNotification(
     user: User,
     pagination: PaginationRequestDto,
-  ): Promise<PaginationResponseDto<BookNotificationResponseDto>> {
+  ): Promise<PaginationNotificationResponseDto<BookNotificationResponseDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
       const [data, totalItems] =
@@ -1552,12 +1570,20 @@ export class BookService {
           skip: (page - 1) * limit,
         });
 
+      const totalUnread = await this.bookNotificationRepository.count({
+        where: {
+          user: { id: user.id },
+          isRead: false,
+        },
+      });
+
       const dtos = plainToInstance(BookNotificationResponseDto, data, {
         excludeExtraneousValues: true,
       });
 
       return {
         totalItems,
+        totalUnread,
         totalPages: Math.ceil(totalItems / limit),
         data: dtos,
       };
