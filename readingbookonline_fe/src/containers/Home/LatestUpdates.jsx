@@ -38,6 +38,8 @@ export const LatestUpdates = () => {
     getBookData();
   }, [getBookData]);
 
+  console.log(bookList);
+
   return (
     <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full">
       <header className="py-px w-full max-md:max-w-full">
@@ -65,6 +67,7 @@ export const LatestUpdates = () => {
                 author={book.author.name}
                 chapters={book.chapters}
                 className="flex flex-col rounded-none w-[200px]"
+                bookTypeID={book.bookType?.id}
               />
             ))}
         </div>

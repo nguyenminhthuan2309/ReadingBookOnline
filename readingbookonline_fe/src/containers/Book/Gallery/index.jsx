@@ -172,6 +172,7 @@ const BookListPage = () => {
                         title={book.title}
                         author={book.author.name}
                         chapters={book.chapters}
+                        bookTypeID={book.bookType?.id}
                         className="flex flex-col rounded-none w-[200px]"
                       />
                     </div>

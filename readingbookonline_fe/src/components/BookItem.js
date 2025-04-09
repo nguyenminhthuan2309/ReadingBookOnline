@@ -10,7 +10,7 @@ import {
 import moment from "moment";
 import { useRouter } from "next/router";
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useCallback } from "react";
 
 const BookTile = ({
   bookId,
@@ -18,6 +18,7 @@ const BookTile = ({
   title,
   author,
   chapters = [],
+  bookTypeID,
   // isNew = false,
   className = "",
 }) => {
@@ -28,9 +29,18 @@ const BookTile = ({
   };
   const handleChapterClick = (event, chapter) => {
     event.stopPropagation();
-    router.push(`/chapter?name=${chapter.id}`);
+    handleRedirect(bookTypeID, chapter.id);
     return;
   };
+
+  const handleRedirect = useCallback((bookTypeID, chapterId) => {
+    if (bookTypeID === 1) {
+      router.push(`/chapter?name=${chapterId}`);
+    } else {
+      router.push(`/chapter-manga?name=${chapterId}`);
+    }
+  }, [bookTypeID]);
+
   return (
     <Card sx={{ backgroundColor: "transparent" }} className={`${className}`}>
       <CardActionArea onClick={handleBookClick}>
@@ -103,5 +113,6 @@ BookTile.propTypes = {
   chapters: PropTypes.array,
   isNew: PropTypes.bool,
   className: PropTypes.string,
+  bookTypeID: PropTypes.number,
 };
 export default BookTile;
