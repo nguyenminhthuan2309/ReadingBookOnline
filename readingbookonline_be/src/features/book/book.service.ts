@@ -211,15 +211,23 @@ export class BookService {
       const [books, total] = await qb.getManyAndCount();
 
       let purchasedChapterIds = new Set<number>();
+      let followedBookIds = new Set<number>();
       if (user && user.id) {
         const purchases = await this.chapterPurchaseRepository.find({
           where: { user: { id: user.id } },
           relations: ['chapter'],
         });
+        const follows = await this.bookFollowRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['book'],
+        });
         purchasedChapterIds = new Set(purchases.map((p) => p.chapter.id));
+        followedBookIds = new Set(follows.map((f) => f.book.id));
       }
 
       books.forEach((book) => {
+        book['isFollowed'] = followedBookIds.has(book.id);
+
         if (book.chapters && book.chapters.length > 0) {
           book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
 
@@ -315,11 +323,19 @@ export class BookService {
       const avgRating = Number(ratingResult.avgRating) || 0;
 
       const purchasedChapterIds = new Set<number>();
+      let isFollowed = false;
       if (user && user.id) {
         const purchases = await this.chapterPurchaseRepository.find({
           where: { user: { id: user.id } },
           relations: ['chapter'],
         });
+        const follow = await this.bookFollowRepository.findOne({
+          where: {
+            user: { id: user.id },
+            book: { id: bookId },
+          },
+        });
+        isFollowed = !!follow;
         purchases.forEach((purchase) =>
           purchasedChapterIds.add(purchase.chapter.id),
         );
@@ -353,6 +369,7 @@ export class BookService {
         excludeExtraneousValues: true,
       });
       bookDto.rating = avgRating;
+      bookDto.isFollowed = isFollowed;
 
       const response: GetBookResponseDto = {
         totalItems: 1,
@@ -1084,6 +1101,8 @@ export class BookService {
         user,
         book,
       });
+
+      await this.bookRepository.increment({ id: book.id }, 'followsCount', 1);
 
       return true;
     } catch (error) {

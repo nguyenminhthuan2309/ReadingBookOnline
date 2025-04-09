@@ -22,6 +22,7 @@ import { BookType } from './book-type.entity';
 
 @Index('idx_book_title', ['title'])
 @Index('idx_book_views', ['views'])
+@Index('idx_book_follow_count', ['followsCount'])
 @Index('idx_book_author', ['author'])
 @Index('idx_book_access_status', ['accessStatus'])
 @Index('idx_book_progress_status', ['progressStatus'])
@@ -47,6 +48,9 @@ export class Book {
 
   @Column({ name: 'views', type: 'int', default: 0 })
   views: number;
+
+  @Column({ name: 'follows_count', type: 'int', default: 0 })
+  followsCount: number;
 
   @ManyToOne(() => BookType, (type) => type.books)
   @JoinColumn({ name: 'book_type_id' })

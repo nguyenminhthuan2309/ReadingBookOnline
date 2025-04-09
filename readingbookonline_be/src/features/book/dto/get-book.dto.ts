@@ -1,6 +1,7 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -39,6 +40,16 @@ export class GetBookDto {
   @IsNumber()
   @Expose()
   views?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Expose()
+  followsCount: number;
+
+  @IsOptional()
+  @IsBoolean()
+  @Expose()
+  isFollowed: boolean;
 
   @IsNotEmpty()
   @Expose()
