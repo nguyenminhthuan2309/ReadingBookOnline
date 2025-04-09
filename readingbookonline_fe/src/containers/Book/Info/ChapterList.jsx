@@ -59,13 +59,13 @@ function ChapterList({ chapters, bookId, hideButton, bookType }) {
     async (bookId, chapterId) => {
       try {
         await dispatch(recordRecentlyRead({ bookId, chapterId }));
-        await router.push(`/chapter?name=${chapterId}`);
+        await handleRedirectChapter(bookType, chapterId);
       } catch (error) {
         console.error("Error recording history:", error);
-        router.push(`/chapter?name=${chapterId}`);
+        handleRedirectChapter(bookType, chapterId);
       }
     },
-    [dispatch, router]
+    [dispatch, router, bookType]
   );
 
   const generateDeleteButton = useCallback(
@@ -105,6 +105,14 @@ function ChapterList({ chapters, bookId, hideButton, bookType }) {
     },
     [showEditButton]
   );
+
+  const handleRedirectChapter = (bookType, chapterId) => {
+    if (bookType === 1) {
+      router.push(`/chapter?name=${chapterId}`);
+    } else {
+      router.push(`/chapter-manga?name=${chapterId}`);
+    }
+  };
 
   const handleRedirectCreateChapter = (bookId, bookType) => {
     if (bookType === 1) {

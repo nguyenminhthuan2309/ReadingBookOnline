@@ -131,12 +131,11 @@ export default function ChapterBasicInfo() {
 
   const handleSubmitChapterInfo = useCallback(
     (data) => {
-      const fileUrl = imageUrl.map((img) => img.url);
       const formData = {
         ...data,
         title: data.title,
         chapter: +data.number,
-        content: JSON.stringify(fileUrl),
+        content: JSON.stringify(imageUrl),
         cover: "https://example.com/cover.jpg",
         isLocked: false,
         price: 5000,
