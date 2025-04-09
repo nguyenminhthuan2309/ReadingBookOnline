@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, CircularProgress, Typography } from "@mui/material";
 
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   FormControl,
@@ -19,7 +19,7 @@ import {
 
 import SectionDivider from "./SectionDivider";
 import { uploadImage } from "@/utils/actions/uploadAction";
-import { createChapter } from "@/utils/actions/chapterAction";
+import { editChapter, getChapterById } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
 
 import { useDropzone } from "react-dropzone";
@@ -31,6 +31,9 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import SortableImage from "./SortableImage";
+import { useRouter } from "next/router";
+import { getItem } from "@/utils/localStorage";
+import { USER_INFO } from "@/utils/constants";
 
 const schema = yup.object().shape({
   number: yup
@@ -42,11 +45,16 @@ const schema = yup.object().shape({
 });
 
 export default function ChapterBasicInfo() {
-  const dispatch = useDispatch();
-  const searchParams = useSearchParams();
-  const bookId = searchParams.get("bookNumber");
-  const [images, setImages] = useState([]);
+ const dispatch = useDispatch();
+ const searchParams = useSearchParams();
+ const chapterId = searchParams.get("number");
+ const router = useRouter();
+ const userInfo = useMemo(() => getItem(USER_INFO), []);
+
+ const { chapterData } = useSelector((state) => state.infoChapter);
+
   const [isUploading, setIsUploading] = useState(false);
+  const [images, setImages] = useState([]);
   const [imageUrl, setImageUrl] = useState([]);
 
   const { handleSubmit, control, reset } = useForm({
@@ -100,7 +108,6 @@ export default function ChapterBasicInfo() {
   }, []);
 
   const handleDelete = (id) => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
     setImageUrl((prev) => prev.filter((img) => img.id !== id));
   };
 
@@ -108,10 +115,9 @@ export default function ChapterBasicInfo() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = images.findIndex((img) => img.id === active.id);
-    const newIndex = images.findIndex((img) => img.id === over.id);
+    const oldIndex = imageUrl.findIndex((img) => img.id === active.id);
+    const newIndex = imageUrl.findIndex((img) => img.id === over.id);
 
-    setImages((prev) => arrayMove(prev, oldIndex, newIndex));
     setImageUrl((prev) => arrayMove(prev, oldIndex, newIndex));
   };
 
@@ -126,7 +132,6 @@ export default function ChapterBasicInfo() {
   const handleSubmitChapterInfo = useCallback(
     (data) => {
       const fileUrl = imageUrl.map((img) => img.url);
-
       const formData = {
         ...data,
         title: data.title,
@@ -136,13 +141,37 @@ export default function ChapterBasicInfo() {
         isLocked: false,
         price: 5000,
       };
-      if (bookId && imageUrl.length > 0) {
-        dispatch(createChapter(bookId, formData));
-        reset();
+      if (chapterId && imageUrl.length > 0) {
+        dispatch(editChapter(chapterId, formData));
       }
     },
     [imageUrl]
   );
+
+  useEffect(() => {
+    if (
+      !chapterData ||
+      !chapterData.data ||
+      !chapterData.data.content ||
+      !chapterData.data.chapter ||
+      !chapterData.data.title ||
+      !chapterData.data.book ||
+      !chapterData.data.book.author ||
+      !chapterData.data.book.author.id
+    )
+      return;
+    if (userInfo.id !== chapterData.data.book.author.id) {
+      router.replace("/forbidden");
+      return;
+    }
+    setImageUrl(JSON.parse(chapterData.data.content));
+    reset({ number: chapterData.data.chapter, title: chapterData.data.title });
+  }, [chapterData]);
+
+  useEffect(() => {
+    if (!chapterId) return;
+    dispatch(getChapterById(chapterId));
+  }, [dispatch, chapterId]);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
@@ -209,13 +238,13 @@ export default function ChapterBasicInfo() {
             <SectionDivider text="← Chapter File →" />
           </div>
 
-          {images.length > 0 && (
+          {imageUrl.length > 0 && (
             <Box sx={{ my: 4 }}>
               <Typography variant="subtitle1" align="center" sx={{ mb: 1 }}>
                 &lt; File: Uploaded &gt;
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {images.map((image, index) => (
+                {imageUrl.map((image, index) => (
                   <Box
                     key={image.id}
                     sx={{
@@ -240,7 +269,7 @@ export default function ChapterBasicInfo() {
                       Page {index + 1}
                     </Typography>
                     <Typography component="span" sx={{ flex: 1 }}>
-                      {image.name}
+                      {image.id}
                     </Typography>
                   </Box>
                 ))}
@@ -300,18 +329,18 @@ export default function ChapterBasicInfo() {
             </Box>
 
             {/* Preview with Sortable */}
-            {images.length > 0 && (
+            {imageUrl.length > 0 && (
               <DndContext
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
                 modifiers={[restrictToParentElement]}
               >
                 <SortableContext
-                  items={images.map((img) => img.id)}
+                  items={imageUrl.map((img) => img.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <Box sx={{ mt: 3 }}>
-                    {images.map((image, index) => (
+                    {imageUrl.map((image, index) => (
                       <SortableImage
                         key={image.id}
                         image={image}

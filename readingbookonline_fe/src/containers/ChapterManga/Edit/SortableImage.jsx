@@ -63,7 +63,7 @@ export default function SortableImage({ image, index, onDelete }) {
         <div className="w-full h-full flex justify-center items-center bg-[#f5f5f5] rounded-lg relative">
           <img
             className="w-[80vh] h-auto"
-            src={image.preview}
+            src={image.url}
             alt={`Preview ${index + 1}`}
           />
           <IconButton
