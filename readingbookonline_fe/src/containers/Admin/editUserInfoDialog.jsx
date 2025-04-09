@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -9,7 +9,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Button, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import InputField from "@/components/RenderInput";
 import PropTypes from "prop-types";
-import { uploadImage } from "@/utils/actions/uploadAction";
 import { editInfo } from "@/utils/actions/userAction";
 
 const schema = yup.object().shape({
@@ -22,38 +21,21 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
   });
 
   const dispatch = useDispatch();
-  const [imageUrl, setImageUrl] = useState("");
-
   const handleChangeInfo = useCallback(
     (formData) => {
       try {
         if (formData && formData.name) {
-          dispatch(editInfo({ name: formData.name, avatar: imageUrl }));
+          dispatch(editInfo({ name: formData.name }));
         }
         handleCloseDialog();
       } catch (error) {
         console.log(error);
       }
     },
-    [dispatch, imageUrl]
+    [dispatch]
   );
 
-  const handleUploadFile = async (data) => {
-    try {
-      if (!data) return;
-      const imageData = new FormData();
-      imageData.append("file", data);
-      const res = await dispatch(uploadImage(imageData));
-      if (res && res.data) {
-        setImageUrl(res.data);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   const handleCloseDialog = () => {
-    setImageUrl(userInfo.avatar || "");
     reset();
     handleClose();
   };
@@ -63,7 +45,6 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
     reset({
       name: userInfo.name,
     });
-    setImageUrl(userInfo.avatar);
   }, [userInfo, reset]);
 
   return (
@@ -81,55 +62,6 @@ const EditInfoDialog = ({ open, handleClose, userInfo }) => {
             className="mx-auto w-[400px]"
           >
             <div className="flex flex-col gap-4">
-              <label className="relative">
-                <div className="flex flex-col justify-self-center">
-                  <div
-                    className="relative rounded-full overflow-hidden cursor-pointer"
-                    style={{ width: `200px`, height: `200px` }}
-                  >
-                    {!imageUrl ? (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <span className="text-muted-foreground text-sm">
-                          Upload
-                        </span>
-                      </div>
-                    ) : (
-                      <img
-                        src={imageUrl}
-                        alt="Avatar"
-                        className="object-cover w-full h-full"
-                      />
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg"
-                    className="hidden"
-                    onChange={(e) => {
-                      const selectedFile = e.target.files[0];
-                      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
-                      if (!selectedFile) {
-                        return;
-                      }
-
-                      // Convert sizes to MB for easier comparison in logs
-                      const fileSizeInMB = selectedFile.size / (1024 * 1024);
-                      const maxSizeInMB = maxSize / (1024 * 1024);
-
-                      if (fileSizeInMB > maxSizeInMB) {
-                        alert(
-                          `File is too large. Your file is ${fileSizeInMB.toFixed(
-                            2
-                          )}MB. Maximum size is ${maxSizeInMB}MB`
-                        );
-                        e.target.value = "";
-                        return;
-                      }
-                      handleUploadFile(selectedFile);
-                    }}
-                  />
-                </div>
-              </label>
               <span className="text-black">NAME</span>
               <InputField
                 name={"name"}

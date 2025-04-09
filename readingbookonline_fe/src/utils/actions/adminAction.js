@@ -85,9 +85,11 @@ export const trackLoginStatus = (timeRange) => {
       if (response) {
         dispatch(trackLoginStatusSuccess(response.data.data));
       }
+      return response.data.data;
     } catch (error) {
       dispatch(trackLoginStatusFail(error.data));
       ShowNotify(ERROR, error.data.msg);
+      return null;
     }
   };
 };

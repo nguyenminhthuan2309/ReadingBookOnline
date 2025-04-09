@@ -6,6 +6,8 @@ import { MaterialReactTable } from "material-react-table";
 import React, { useCallback, useEffect, useState } from "react";
 import CreateManagerDialog from "./CreateManagerDialog";
 import { useSelector } from "react-redux";
+import { IS_ADMIN } from "@/utils/constants";
+import LoadableForbidden from "@/containers/Forbidden/Loadable";
 
 function AppContainer() {
   const [data, setData] = useState([]);
@@ -15,7 +17,7 @@ function AppContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const [openCreateManagerDialog, setOpenCreateManagerDialog] = useState(false);
 
-    const loading = useSelector((state) => state.createManager.loading);
+  const loading = useSelector((state) => state.createManager.loading);
 
   const getData = useCallback(async () => {
     setIsLoading(true);
@@ -60,6 +62,17 @@ function AppContainer() {
     setOpenCreateManagerDialog(false);
   };
 
+  if (!IS_ADMIN) {
+    return (
+      <div className="flex justify-center items-center">
+        <LoadableForbidden
+          containerWidth="max-w-2xl"
+          imageSize={300}
+          showButton={false}
+        />
+      </div>
+    );
+  }
   return (
     <main className="text-black">
       <MaterialReactTable
