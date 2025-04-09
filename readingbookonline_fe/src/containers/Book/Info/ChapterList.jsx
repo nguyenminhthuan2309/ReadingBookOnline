@@ -15,7 +15,7 @@ import DeleteDialog from "./DeleteDialog";
 import { recordRecentlyRead } from "@/utils/actions/userAction";
 import { useDispatch } from "react-redux";
 
-function ChapterList({ chapters, bookId, hideButton }) {
+function ChapterList({ chapters, bookId, hideButton, bookType }) {
   const router = useRouter();
   const dispatch = useDispatch();
   const [showEditButton, setShowEditButton] = useState(false);
@@ -94,7 +94,7 @@ function ChapterList({ chapters, bookId, hideButton }) {
 
       const handleEdit = (e) => {
         e.stopPropagation();
-        router.push(`/chapter/edit?number=${chapterID}`);
+        handleRedirectEditChapter(bookType, chapterID);
       };
 
       return (
@@ -106,6 +106,21 @@ function ChapterList({ chapters, bookId, hideButton }) {
     [showEditButton]
   );
 
+  const handleRedirectCreateChapter = (bookId, bookType) => {
+    if (bookType === 1) {
+      router.push(`/chapter/create?bookNumber=${bookId}`);
+    } else {
+      router.push(`/chapter-manga/create?bookNumber=${bookId}`);
+    }
+  };
+
+  const handleRedirectEditChapter = (bookType, chapterId) => {
+    if (bookType === 1) {
+      router.push(`/chapter/edit?number=${chapterId}`);
+    } else {
+      router.push(`/chapter-manga/edit?number=${chapterId}`);
+    }
+  };
   useEffect(() => {
     if (!chapters) return;
     setChapterList([...chapters].reverse());
@@ -128,9 +143,7 @@ function ChapterList({ chapters, bookId, hideButton }) {
         <div className="flex gap-2">
           {!hideButton && (
             <IconButton
-              onClick={() =>
-                router.push(`/chapter/create?bookNumber=${bookId}`)
-              }
+              onClick={() => handleRedirectCreateChapter(bookId, bookType)}
             >
               <AddCircleOutlineIcon sx={{ color: "black", fontSize: "2rem" }} />
             </IconButton>
@@ -190,6 +203,7 @@ ChapterList.propTypes = {
   bookId: PropTypes.number,
   chapters: PropTypes.array,
   hideButton: PropTypes.bool,
+  bookType: PropTypes.number,
 };
 
 export default ChapterList;

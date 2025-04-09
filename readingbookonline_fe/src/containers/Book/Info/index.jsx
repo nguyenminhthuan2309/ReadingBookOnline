@@ -92,6 +92,7 @@ function MangaSPage() {
               chapters={bookInfos && bookInfos.chapters}
               bookId={bookInfos && bookInfos.id}
               hideButton={hideButton}
+              bookType={bookInfos && bookInfos.bookType?.id}
             />
             <ReviewSection />
           </div>

@@ -54,10 +54,6 @@ function BookBasicInfo() {
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [progressStatus, setProgressStatus] = useState(1);
 
-  const handleBookTypeChange = (event) => {
-    setBookType(event.target.value);
-  };
-
   const handleAcessStatusChange = (event) => {
     setAccessStatus(event.target.value);
   };
@@ -137,8 +133,6 @@ function BookBasicInfo() {
     dispatch(getBookInfoData(bookId));
   }, [dispatch, bookId]);
 
-  
-
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
       <form onSubmit={handleSubmit(handleSubmitBookInfo)} className="w-full">
@@ -214,32 +208,7 @@ function BookBasicInfo() {
             </div>
           </div>
         </div>
-        <div className="mt-14">
-          <FormControl>
-            <FormLabel id="demo-row-radio-buttons-group-label">
-              <span className="text-black text-[18px]">Type</span>
-            </FormLabel>
-            <RadioGroup
-              row
-              aria-labelledby="demo-row-radio-buttons-group-label"
-              name="row-radio-buttons-group"
-              defaultValue={1}
-            >
-              <FormControlLabel
-                value={1}
-                control={<Radio />}
-                label="Novel"
-                onChange={handleBookTypeChange}
-              />
-              <FormControlLabel
-                value={2}
-                control={<Radio />}
-                label="Picture book"
-                onChange={handleBookTypeChange}
-              />
-            </RadioGroup>
-          </FormControl>
-        </div>
+        <div className="mt-14">Type: {bookData.bookType?.name}</div>
 
         <h2 className="mt-14 max-md:mt-10">Genre(s):</h2>
         <div className="flex flex-wrap gap-3.5 mr-5 w-full">
