@@ -33,6 +33,7 @@ import BlockUser from "./Users/BlockUser";
 import Statistical from "./Statistic";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
+import { IS_ADMIN } from "@/utils/constants";
 
 const tabs = [
   {
@@ -41,7 +42,9 @@ const tabs = [
     icon: <AdminPanelSettingsIcon />,
     subTabs: [
       { id: "user", label: "User", icon: <PersonIcon /> },
-      { id: "manager", label: "Manager", icon: <SupervisorAccountIcon /> },
+      ...(IS_ADMIN
+        ? [{ id: "manager", label: "Manager", icon: <SupervisorAccountIcon /> }]
+        : []),
     ],
   },
   { id: "book", label: "Book", icon: <MenuBookIcon /> },
@@ -51,11 +54,15 @@ const tabs = [
     icon: <BlockIcon />,
     subTabs: [
       { id: "blocked-user", label: "User", icon: <PersonIcon /> },
-      {
-        id: "blocked-manager",
-        label: "Manager",
-        icon: <SupervisorAccountIcon />,
-      },
+      ...(IS_ADMIN
+        ? [
+            {
+              id: "blocked-manager",
+              label: "Manager",
+              icon: <SupervisorAccountIcon />,
+            },
+          ]
+        : []),
       { id: "blocked-book", label: "Book", icon: <MenuBookIcon /> },
     ],
   },
@@ -93,6 +100,7 @@ const theme = createTheme({
 function AdminDashboard() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   const [activeTab, setActiveTab] = useState("account");
   const [activeSubTab, setActiveSubTab] = useState("user");
@@ -104,7 +112,7 @@ function AdminDashboard() {
     const query = new URLSearchParams();
     query.set("tab", tabID);
     if (subTabID) query.set("subTab", subTabID);
-    router.replace(`?${query.toString()}`,undefined, { scroll: false });
+    router.replace(`?${query.toString()}`, undefined, { scroll: false });
   };
   // Toggle expanded state for tabs with subtabs
   const toggleExpand = (tabId) => {
@@ -168,7 +176,9 @@ function AdminDashboard() {
     return tab.label;
   };
 
+  // Only run client-side effects after mounting
   useEffect(() => {
+    setMounted(true);
     const tabFromURL = searchParams.get("tab");
     const subTabFromURL = searchParams.get("subTab");
 
@@ -181,6 +191,11 @@ function AdminDashboard() {
       }
     }
   }, [searchParams]);
+
+  // Don't render anything until after mounting to avoid hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ThemeProvider theme={theme}>

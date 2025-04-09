@@ -1,21 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Home from "@/containers/Home/Loadable";
 import { useRouter } from "next/navigation";
-import { IS_ADMIN, IS_MANAGER } from "@/utils/constants";
+import { USER_INFO } from "@/utils/constants";
+import { getItem } from "@/utils/localStorage";
+import { CircularProgress } from "@mui/material";
 
 export default function HomePage() {
   const router = useRouter();
+  const [hasChecked, setHasChecked] = useState(false);
 
-  if (IS_ADMIN || IS_MANAGER) {
-    router.replace("/admin");
-    return;
-  }
+  useEffect(() => {
+    const userInfo = getItem(USER_INFO);
+    if (userInfo?.role?.id === 1 || userInfo?.role?.id === 2) {
+      router.replace("/admin");
+    } else {
+      setHasChecked(true);
+    }
+  }, [router]);
 
-  return (
-    <>
-      <Home />
-    </>
-  );
+  if (!hasChecked) return <CircularProgress />;
+
+  return <Home />;
 }
