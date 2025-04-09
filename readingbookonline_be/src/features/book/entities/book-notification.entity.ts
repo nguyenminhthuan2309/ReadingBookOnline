@@ -10,12 +10,14 @@ import {
 } from 'typeorm';
 import { User } from '@features/user/entities/user.entity';
 
+@Index('idx_notification_user', ['user'])
+@Index('idx_notification_read', ['isRead'])
+@Index('idx_notification_createdAt', ['createdAt'])
 @Entity('book_notifications')
 export class BookNotification {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_notification_user')
   @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;

@@ -11,17 +11,18 @@ import {
 } from 'typeorm';
 import { Book } from './book.entity';
 
+@Index('idx_book_review_user', ['user'])
+@Index('idx_book_review_book', ['book'])
+@Index('idx_book_review_created_at', ['createdAt'])
 @Entity('book_review')
 export class BookReview {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_review_user')
   @ManyToOne(() => User, (user) => user.reviews)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Index('idx_book_review_book')
   @ManyToOne(() => Book, (book) => book.reviews, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'book_id' })
   book: Book;

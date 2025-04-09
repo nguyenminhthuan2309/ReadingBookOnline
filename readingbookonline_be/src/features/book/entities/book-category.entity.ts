@@ -10,12 +10,12 @@ import {
 } from 'typeorm';
 import { BookCategoryRelation } from './book-category-relation.entity';
 
+@Index('idx_book_category_name', ['name'])
 @Entity('book_category')
 export class BookCategory {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_category_name')
   @Column({ name: 'name', type: 'varchar', length: 500 })
   name: string;
 

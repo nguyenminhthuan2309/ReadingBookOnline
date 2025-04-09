@@ -1233,10 +1233,28 @@ export class BookService {
   ): Promise<PaginationResponseDto<BookReadingHistoryResponseDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
+
+      const subQuery = this.bookReadingHistoryRepository
+        .createQueryBuilder('sub')
+        .select('MAX(sub.id)', 'id')
+        .where('sub.user_id = :userId', { userId: user.id })
+        .groupBy('sub.book_id, sub.chapter_id');
+
+      const rawResult = await subQuery.getRawMany();
+
+      const ids = rawResult.map((row) => row.id);
+
+      if (ids.length === 0) {
+        return {
+          totalItems: 0,
+          totalPages: 0,
+          data: [],
+        };
+      }
+
       const [data, totalItems] =
         await this.bookReadingHistoryRepository.findAndCount({
-          where: { user: { id: user.id } },
-          order: { createdAt: 'DESC' },
+          where: { id: In(ids) },
           relations: [
             'book',
             'chapter',
@@ -1244,10 +1262,10 @@ export class BookService {
             'book.bookType',
             'book.accessStatus',
             'book.progressStatus',
-            'book.progressStatus',
             'book.bookCategoryRelations',
             'book.bookCategoryRelations.category',
           ],
+          order: { createdAt: 'DESC' },
           take: limit,
           skip: (page - 1) * limit,
         });

@@ -20,12 +20,19 @@ import { BookProgressStatus } from './book-progess-status.entity';
 import { BookAccessStatus } from './book-access-status.entity';
 import { BookType } from './book-type.entity';
 
+@Index('idx_book_title', ['title'])
+@Index('idx_book_views', ['views'])
+@Index('idx_book_author', ['author'])
+@Index('idx_book_access_status', ['accessStatus'])
+@Index('idx_book_progress_status', ['progressStatus'])
+@Index('idx_book_book_type', ['bookType'])
+@Index('idx_book_created_at', ['createdAt'])
+@Index('idx_book_updated_at', ['updatedAt'])
 @Entity('book')
 export class Book {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_title')
   @Column({ name: 'title', type: 'varchar', length: 500 })
   title: string;
 
@@ -38,7 +45,6 @@ export class Book {
   @Column({ name: 'age_rating', type: 'int', default: 6 })
   ageRating: number;
 
-  @Index('idx_book_views')
   @Column({ name: 'views', type: 'int', default: 0 })
   views: number;
 
@@ -46,17 +52,14 @@ export class Book {
   @JoinColumn({ name: 'book_type_id' })
   bookType: BookType;
 
-  @Index('idx_book_access_status')
   @ManyToOne(() => BookAccessStatus, (accessStatus) => accessStatus.books)
   @JoinColumn({ name: 'access_status_id' })
   accessStatus: BookAccessStatus;
 
-  @Index('idx_book_progress_status')
   @ManyToOne(() => BookProgressStatus, (progressStatus) => progressStatus.books)
   @JoinColumn({ name: 'progress_status_id' })
   progressStatus: BookProgressStatus;
 
-  @Index('idx_book_author')
   @ManyToOne(() => User, (user) => user.books)
   @JoinColumn({ name: 'author_id' })
   author: User;
@@ -82,7 +85,6 @@ export class Book {
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @Index('idx_book_updated_at')
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 }

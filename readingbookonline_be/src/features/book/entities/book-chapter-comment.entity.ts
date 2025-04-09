@@ -12,19 +12,21 @@ import {
 import { BookChapter } from './book-chapter.entity';
 import { User } from '@features/user/entities/user.entity';
 
+@Index('idx_book_chapter_comment_user', ['user'])
+@Index('idx_book_chapter_comment_chapter', ['chapter'])
+@Index('idx_book_chapter_comment_created_at', ['createdAt'])
+@Index('idx_book_chapter_comment_parent', ['parent'])
 @Entity('book_chapter_comment')
 export class BookChapterComment {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_chapter_comment_chapter_id')
   @ManyToOne(() => BookChapter, (chapter) => chapter.comments, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'chapter_id' })
   chapter: BookChapter;
 
-  @Index('idx_book_chapter_comment_user_id')
   @ManyToOne(() => User, (user) => user.chapterComments, {
     onDelete: 'CASCADE',
   })
@@ -44,7 +46,6 @@ export class BookChapterComment {
   @OneToMany(() => BookChapterComment, (comment) => comment.parent)
   children?: BookChapterComment[];
 
-  @Index('idx_book_chapter_comment_created_at')
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 

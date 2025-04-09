@@ -13,6 +13,10 @@ import { Book } from './book.entity';
 import { BookChapterComment } from './book-chapter-comment.entity';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 
+@Index('idx_book_chapter_book', ['book'])
+@Index('idx_book_chapter_chapter', ['chapter'])
+@Index('idx_book_chapter_created_at', ['createdAt'])
+@Index('idx_book_chapter_updated_at', ['updatedAt'])
 @Entity('book_chapter')
 export class BookChapter {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
@@ -21,7 +25,6 @@ export class BookChapter {
   @Column({ name: 'title', type: 'varchar', length: 500 })
   title: string;
 
-  @Index('idx_book_chapter_chapter')
   @Column({ name: 'chapter', type: 'int' })
   chapter: number;
 
@@ -37,7 +40,6 @@ export class BookChapter {
   @Column({ name: 'price', type: 'decimal', default: 0 })
   price: number;
 
-  @Index('idx_book_chapter_book')
   @ManyToOne(() => Book, (book) => book.chapters, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'book_id' })
   book: Book;
@@ -51,7 +53,6 @@ export class BookChapter {
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @Index('idx_book_chapter_updated_at')
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 }

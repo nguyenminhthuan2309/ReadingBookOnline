@@ -9,12 +9,12 @@ import {
 } from 'typeorm';
 import { Book } from './book.entity';
 
+@Index('idx_book_access_status_name', ['name'])
 @Entity('book_access_status')
 export class BookAccessStatus {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
-  @Index('idx_book_access_status_name')
   @Column({ name: 'name', type: 'varchar', length: 50, unique: true })
   name: string;
 
