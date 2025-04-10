@@ -39,7 +39,7 @@ export const LatestUpdates = () => {
   }, [getBookData]);
 
   return (
-    <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full">
+    <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full max-md:px-5">
       <header className="py-px w-full max-md:max-w-full">
         <div className="flex gap-10 items-start justify-between mr-2.5 ml-4 max-md:max-w-full">
           <div className="flex flex-1 gap-4">
@@ -51,10 +51,10 @@ export const LatestUpdates = () => {
             </h2>
           </div>
         </div>
-        <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
+        <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full max-md:px-5" />
       </header>
       <div className="flex w-full mt-12 max-md:mt-10 justify-center">
-        <div className="flex flex-wrap gap-10 items-start px-10 max-md:mt-10">
+        <div className="flex flex-col md:flex-row flex-wrap items-start max-md:justify-between max-md:px-4 max-md:gap-2 gap-10 px-10">
           {bookList &&
             bookList.map((book, index) => (
               <BookTile
@@ -64,7 +64,7 @@ export const LatestUpdates = () => {
                 title={book.title}
                 author={book.author.name}
                 chapters={book.chapters}
-                className="flex flex-col rounded-none w-[200px]"
+                className="flex flex-col rounded-none w-[200px] max-md:w-[180px]"
                 bookTypeID={book.bookType?.id}
               />
             ))}

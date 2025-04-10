@@ -152,8 +152,8 @@ export const Header = () => {
         </nav>
       </header>
       <nav className="flex flex-col justify-center items-center md:items-start self-stretch px-5 md:px-24 py-2.5 w-full text-2xl text-center text-black">
-        <ul className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-7 items-start w-full">
-          <li className="w-[140px] md:w-[180px]">
+        <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-4 md:gap-7 items-center md:items-start w-full">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book_list?page=${NEWBOOK}`)}
@@ -164,10 +164,10 @@ export const Header = () => {
               </span>
             </Typography>
           </li>
-          <li className="w-[140px] md:w-[180px]">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <GenrePopover />
           </li>
-          <li className="w-[140px] md:w-[180px]">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book/gallery`)}
