@@ -141,15 +141,14 @@ export const checkToken = (email, otp) => {
   };
 };
 
-export const verifyCode = (code) => {
+export const verifyToken = (code) => {
   return async (dispatch) => {
     dispatch(verifyTokenRequest());
     const url = authAPI.verifyCode(code);
     try {
       const response = await getAPI(url);
       if (response && response.data) {
-        dispatch(verifyTokenSuccess(response.data));
-        ShowNotify(SUCESSS, "Your account has been verified");
+        dispatch(verifyTokenSuccess());
       }
     } catch (error) {
       dispatch(verifyTokenFail(error.data.msg));

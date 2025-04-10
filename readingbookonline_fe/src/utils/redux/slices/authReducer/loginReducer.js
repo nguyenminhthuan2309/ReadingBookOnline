@@ -9,7 +9,7 @@ const loginSlice = createSlice({
     error: null,
   },
   reducers: {
-    resetState: (state) => {
+    resetStateLogin: (state) => {
       state.loading = false;
       state.isLogin = false;
       state.error = null;
@@ -43,5 +43,5 @@ export const loginSuccess = () => ({ type: "login/success"});
 export const loginFail = (data) => ({ type: "login/fail", payload: data });
 export const logout = () => ({ type: "logout" });
 
-export const { resetState } = loginSlice.actions;
+export const { resetStateLogin } = loginSlice.actions;
 export default loginSlice.reducer;

@@ -11,13 +11,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import InputField from "@/components/RenderInput";
 import ActionButton from "./ActionButton";
 import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
-import { handleAuthenticate, verifyCode } from "@/utils/actions/authAction";
-import { useSearchParams } from "next/navigation";
-
-import { getAPI } from "@/utils/request";
-import { authAPI } from "@/common/api";
-import { ShowNotify } from "@/components/ShowNotify";
-import { ERROR } from "@/utils/constants";
+import { handleAuthenticate } from "@/utils/actions/authAction";
+import { resetStateLogin } from "@/utils/redux/slices/authReducer/loginReducer";
 
 const schema = yup.object().shape({
   email: yup
@@ -31,8 +26,6 @@ const schema = yup.object().shape({
 });
 
 export const LoginForm = () => {
-  const searchParam = useSearchParams();
-  const token = searchParam.get("token");
   const [isOpen, setOpen] = useState(false);
   const dispatch = useDispatch();
   const { handleSubmit, control, reset } = useForm({
@@ -49,9 +42,10 @@ export const LoginForm = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
-    dispatch(verifyCode(token));
-  }, [token]);
+    return () => {
+      dispatch(resetStateLogin());
+    };
+  }, []);
 
   return (
     <div className="self-center">

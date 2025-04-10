@@ -5,15 +5,13 @@ const verifyTokenSlice = createSlice({
   name: "verifyTokenData",
   initialState: {
     loading: false,
-    email: "",
-    token: "",
+    isVerified: false,
     error: null,
   },
   reducers: {
-    resetState: (state) => {
+    resetStateVerifyToken: (state) => {
       state.loading = false;
-      state.email = "";
-      state.token = "";
+      state.isVerified = false;
       state.error = null;
     },
   },
@@ -24,24 +22,14 @@ const verifyTokenSlice = createSlice({
         state.error = null;
       })
       .addCase("verifyToken/success", (state, action) => {
-         try {
-           state.loading = false;
-           // Safely access and validate payload
-           if (action && action.payload) {
-             state.email = action.payload.email || "";
-             state.token = action.payload.token || "";
-           }
-           state.error = null;
-         } catch (error) {
-           state.loading = false;
-           state.email = "";
-           state.token = "";
-           state.error = "Invalid payload format";
-         }
+        state.loading = false;
+        state.isVerified = true;
+        state.error = null;
       })
       .addCase("verifyToken/fail", (state, action) => {
         try {
           state.loading = false;
+          state.isVerified = false;
           if (action && action.payload) {
             state.error = action.payload;
           }
@@ -49,13 +37,13 @@ const verifyTokenSlice = createSlice({
           state.loading = false;
           state.error = "Invalid payload format";
         }
-      })
+      });
   },
 });
 
 export const verifyTokenRequest = () => ({ type: "verifyToken/request" });
-export const verifyTokenSuccess = (data) => ({ type: "verifyToken/success", payload: data });
+export const verifyTokenSuccess = () => ({ type: "verifyToken/success" });
 export const verifyTokenFail = (data) => ({ type: "verifyToken/fail", payload: data });
 
-export const { resetState } = verifyTokenSlice.actions;
+export const { resetStateVerifyToken } = verifyTokenSlice.actions;
 export default verifyTokenSlice.reducer;
