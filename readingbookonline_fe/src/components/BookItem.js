@@ -10,7 +10,8 @@ import {
 import moment from "moment";
 import { useRouter } from "next/router";
 import PropTypes from "prop-types";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { getImageURL } from "@/utils/handleImage";
 
 const BookTile = ({
   bookId,
@@ -23,6 +24,18 @@ const BookTile = ({
   className = "",
 }) => {
   const router = useRouter();
+  const [validImageUrl, setValidImageUrl] = useState("/images/noImage.png");
+
+  useEffect(() => {
+    const validateImage = async () => {
+      if (imageUrl) {
+        const url = await getImageURL(imageUrl);
+        setValidImageUrl(url);
+      }
+    };
+    validateImage();
+  }, [imageUrl]);
+
   const handleBookClick = () => {
     if (!bookId) return;
     router.push(`/book?number=${bookId}`);
@@ -33,13 +46,16 @@ const BookTile = ({
     return;
   };
 
-  const handleRedirect = useCallback((bookTypeID, chapterId) => {
-    if (bookTypeID === 1) {
-      router.push(`/chapter?name=${chapterId}`);
-    } else {
-      router.push(`/chapter-manga?name=${chapterId}`);
-    }
-  }, [bookTypeID]);
+  const handleRedirect = useCallback(
+    (bookTypeID, chapterId) => {
+      if (bookTypeID === 1) {
+        router.push(`/chapter?name=${chapterId}`);
+      } else {
+        router.push(`/chapter-manga?name=${chapterId}`);
+      }
+    },
+    [bookTypeID, router]
+  );
 
   return (
     <Card sx={{ backgroundColor: "transparent" }} className={`${className}`}>
@@ -55,7 +71,7 @@ const BookTile = ({
               objectFit: "fill",
             },
           }}
-          image={imageUrl}
+          image={validImageUrl}
           title={`${title} cover`}
         />
         <CardContent sx={{ backgroundColor: "transparent" }}>
@@ -76,10 +92,10 @@ const BookTile = ({
           </Typography>
         </CardContent>
       </CardActionArea>
-      <CardActions sx={{ height: 170 }} className="flex flex-col">
+      <CardActions className="flex flex-col">
         {chapters &&
           chapters
-            .slice(-2)
+            .slice(-1)
             .reverse()
             .map((chapter, index) => (
               <React.Fragment key={index}>

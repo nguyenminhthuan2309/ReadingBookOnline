@@ -89,17 +89,22 @@ function BookBasicInfo() {
 
   const handleSubmitBookInfo = (data) => {
     // data will contain title and description from the form
-    const formData = {
-      ...data, // spread the form data (title and description)
-      bookTypeId: +bookType, // add the other state values
-      accessStatusId: +accessStatus,
-      ageRating: 12,
-      categoryIds: selectedGenres,
-      progressStatusId: +progressStatus,
+    try {
+      const formData = {
+        ...data, // spread the form data (title and description)
+        bookTypeId: +bookType, // add the other state values
+        accessStatusId: +accessStatus,
+        ageRating: 12,
+        categoryIds: selectedGenres,
+        progressStatusId: +progressStatus,
       cover: imageUrl || "", // add the uploaded image URL
     };
 
-    dispatch(editBook(bookId, formData));
+      dispatch(editBook(bookId, formData));
+      router.back();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {

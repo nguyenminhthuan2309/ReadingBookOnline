@@ -38,25 +38,25 @@ export const LatestUpdates = () => {
     getBookData();
   }, [getBookData]);
 
-  console.log(bookList);
-
   return (
-    <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full">
+    <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full max-md:px-5">
       <header className="py-px w-full max-md:max-w-full">
         <div className="flex gap-10 items-start justify-between mr-2.5 ml-4 max-md:max-w-full">
           <div className="flex flex-1 gap-4">
-            <div className="flex flex-col justify-center items-center px-1.5 bg-amber-600 h-[49px] w-[49px]">
-              <div className="flex rounded-full bg-zinc-300 h-[37px] w-[37px]" />
+            <div className="flex flex-col justify-center items-center px-1.5 bg-amber-600 h-[30px] w-[30px] md:h-[49px] md:w-[49px]">
+              <div className="flex rounded-full bg-zinc-300 h-[20px] w-[20px] md:h-[37px] md:w-[37px]" />
             </div>
-            <h2 className="self-start text-3xl leading-loose text-black">
+            <h2 className="self-start text-lg md:text-3xl leading-loose text-black">
               Latest Updates
             </h2>
           </div>
         </div>
-        <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 max-md:max-w-full" />
+        <div className="flex justify-center w-full">
+          <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 w-[340px] md:max-w-full md:px-5" />
+        </div>
       </header>
       <div className="flex w-full mt-12 max-md:mt-10 justify-center">
-        <div className="flex flex-wrap gap-10 items-start px-10 max-md:mt-10">
+        <div className="flex flex-col md:flex-row flex-wrap items-start max-md:justify-between max-md:px-4 max-md:gap-2 gap-10 px-10">
           {bookList &&
             bookList.map((book, index) => (
               <BookTile
@@ -66,7 +66,7 @@ export const LatestUpdates = () => {
                 title={book.title}
                 author={book.author.name}
                 chapters={book.chapters}
-                className="flex flex-col rounded-none w-[200px]"
+                className="flex flex-col rounded-none w-[200px] max-md:w-[180px]"
                 bookTypeID={book.bookType?.id}
               />
             ))}

@@ -64,7 +64,6 @@ export const deleteChapter = (chapterId) => {
       const response = await deleteAPI(url);
       dispatch(deleteChapterSuccess());
       await ShowNotify(SUCESSS, "Delete chapter successfully");
-      Router.reload();
       return response;
     } catch (error) {
       dispatch(deleteChapterFail(error));

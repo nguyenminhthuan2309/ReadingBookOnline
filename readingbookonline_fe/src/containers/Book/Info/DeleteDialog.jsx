@@ -1,3 +1,4 @@
+"use client";
 import React, { useCallback } from "react";
 
 import Button from "@mui/material/Button";
@@ -22,6 +23,7 @@ const DeleteDialog = ({ open, handleClose, chapterID, chapterTitle }) => {
     async (id) => {
       try {
         await dispatch(deleteChapter(id));
+        router.reload();
       } catch (error) {
         console.log(error);
       }

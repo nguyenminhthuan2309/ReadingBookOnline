@@ -112,12 +112,10 @@ function ChapterBasicInfo() {
         setFilePreview("Error reading file content");
       }
     } else if (file.type === "text/plain") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFilePreview(e.target?.result);
-      };
-      reader.readAsText(file);
+      ShowNotify(ERROR, "Preview not available for this file type");
+      setFilePreview("Preview not available for this file type");
     } else {
+      ShowNotify(ERROR, "Preview not available for this file type");
       setFilePreview("Preview not available for this file type");
     }
   };
@@ -199,6 +197,7 @@ function ChapterBasicInfo() {
       };
       if (chapterId && fileUrl) {
         dispatch(editChapter(chapterId, formData));
+        router.back();
       }
     },
     [fileUrl]
@@ -329,7 +328,7 @@ function ChapterBasicInfo() {
                 ref={fileInputRef}
                 onChange={handleFileInput}
                 style={{ display: "none" }}
-                accept=".txt,.doc,.docx,.pdf"
+                accept=".docx"
               />
               <CloudUploadIcon
                 sx={{ fontSize: 48, color: "text.secondary", mb: 1 }}

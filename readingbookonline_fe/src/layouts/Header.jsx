@@ -7,9 +7,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import { IconButton, Button, Typography, Badge } from "@mui/material";
 import GenrePopover from "@/components/GenreSelector";
 import {
-  FAVORITES,
+  // FAVORITES,
   NEWBOOK,
-  RECENTLY_READ,
+  // RECENTLY_READ,
   USER_INFO,
 } from "@/utils/constants";
 import AccountMenu from "@/components/Avatar";
@@ -27,6 +27,7 @@ export const Header = () => {
   const { socket, isConnected } = useSocketContext();
   const [notices, setNotices] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalNotices, setTotalNotices] = useState(0);
   const [page, setPage] = useState(1);
 
   const handleSearch = (e) => {
@@ -36,11 +37,12 @@ export const Header = () => {
   const getNotifications = useCallback(async () => {
     try {
       if (!userInfo) return;
-      const response = await getAPI(userAPI.getNotifications(6, page));
+      const response = await getAPI(userAPI.getNotifications(10, page));
       if (response.status === 200) {
-        const { data, totalPages } = response.data.data;
+        const { data, totalPages, totalItems } = response.data.data;
         setNotices(data);
         setTotalPages(totalPages);
+        setTotalNotices(totalItems);
       }
     } catch (error) {
       console.log(error);
@@ -74,24 +76,52 @@ export const Header = () => {
 
   return (
     <div className="w-full">
-      <header className="flex flex-wrap gap-5 justify-between self-stretch px-20 pt-7 pb-2 w-full text-white bg-[#FFAF98] max-md:px-5 max-md:max-w-full">
-        <button onClick={() => router.push("/")}>
+      <header className="flex flex-col md:flex-row gap-5 justify-between items-center self-stretch px-5 md:px-20 pt-7 pb-2 w-full text-white bg-[#FFAF98]">
+        <button
+          onClick={() => router.push("/")}
+          className="w-full md:w-auto flex justify-center"
+        >
           <img
             src="/images/name.png"
             alt="Title"
-            className="object-fit shrink-0 self-start aspect-[0.9] h-[95px] w-[475px]"
+            className="object-fit shrink-0 self-start aspect-[0.9] h-[50px] w-[200px] sm:h-[95px] sm:w-[475px] md:h-[100px] md:w-[500px]"
           />
+          <div className="block md:hidden flex items-center gap-4 md:gap-7">
+            <Badge
+              badgeContent={totalNotices > 9 ? " 9+" : totalNotices}
+              sx={{ cursor: "pointer", alignSelf: "center" }}
+              color="secondary"
+            >
+              <Notification
+                notice={notices}
+                totalPages={totalPages}
+                currentPage={page}
+                setCurrentPage={setPage}
+              />
+            </Badge>
+          </div>
+          <div className="block md:hidden flex items-center">
+            {userInfo ? (
+              <AccountMenu
+                name={userInfo && userInfo.name?.slice(0, 1)}
+                avatar={userInfo && userInfo.avatar}
+              />
+            ) : (
+              <div />
+            )}
+          </div>
         </button>
-        <nav className="flex gap-7 my-auto text-2xl max-md:max-w-full">
-          <div className="flex gap-10 py-1.5 pr-2.5 pl-5 text-lg text-black bg-red-100 rounded-xl">
+        <nav className="flex flex-col md:flex-row gap-4 md:gap-7 w-full md:w-auto items-center">
+          <div className="flex gap-10 md:py-1.5 md:pr-2.5 pl-5 text-lg text-black bg-red-100 rounded-xl md:w-full">
             <input
               type="search"
               placeholder="SEARCH . . ."
-              className="bg-transparent outline-none"
+              className="bg-transparent text-xs md:text-xl outline-none w-full md:max-w-[200px]"
               onChange={handleSearch}
             />
             <IconButton
               onClick={() => {
+                // eslint-disable-next-line no-extra-boolean-cast
                 if (!!search) {
                   router.push(
                     `/book_list?search=${encodeURIComponent(search)}`
@@ -104,96 +134,77 @@ export const Header = () => {
               <SearchIcon />
             </IconButton>
           </div>
-          <Badge
-            badgeContent={notices.length}
-            sx={{ cursor: "pointer", alignSelf: "center" }}
-            color="secondary"
-          >
-            <Notification
-              notice={notices}
-              totalPages={totalPages}
-              currentPage={page}
-              setCurrentPage={setPage}
-            />
-          </Badge>
-          {userInfo ? (
-            <AccountMenu
-              name={userInfo && userInfo.name?.slice(0, 1)}
-              avatar={userInfo && userInfo.avatar}
-            />
-          ) : (
-            <div className="flex flex-wrap gap-5 py-2">
-              <Button
-                sx={{ textTransform: "none" }}
-                onClick={() => router.push("/account/sign_in")}
-              >
-                <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
-                  Sign in
-                </span>
-              </Button>
-              <span className="text-xl">|</span>
-              <Button
-                sx={{ textTransform: "none" }}
-                onClick={() => router.push("/account/sign_up")}
-              >
-                <span className="text-xl text-white border-b-2 border-transparent hover:border-white">
-                  Sign up
-                </span>
-              </Button>
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-4 md:gap-7 md:block">
+            <Badge
+              badgeContent={totalNotices > 9 ? " 9+" : totalNotices}
+              sx={{ cursor: "pointer", alignSelf: "center" }}
+              color="secondary"
+            >
+              <Notification
+                notice={notices}
+                totalPages={totalPages}
+                currentPage={page}
+                setCurrentPage={setPage}
+              />
+            </Badge>
+            {userInfo ? (
+              <div className="hidden md:block">
+                <AccountMenu
+                  name={userInfo && userInfo.name?.slice(0, 1)}
+                  avatar={userInfo && userInfo.avatar}
+                />
+              </div>
+            ) : (
+              <div className="flex gap-5 py-2">
+                <Button
+                  sx={{ textTransform: "none" }}
+                  onClick={() => router.push("/account/sign_in")}
+                >
+                  <span className="text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
+                    Sign in
+                  </span>
+                </Button>
+                <span className="text-xl">|</span>
+                <Button
+                  sx={{ textTransform: "none" }}
+                  onClick={() => router.push("/account/sign_up")}
+                >
+                  <span className="text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
+                    Sign up
+                  </span>
+                </Button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
-      <nav className="flex flex-col justify-center items-start self-stretch px-24 py-2.5 w-full text-2xl text-center text-black">
-        <ul className="flex flex-wrap gap-7 items-start">
-          {/* <li className="w-[180px]">
-            <Typography
-              variant="body1"
-              onClick={() => router.push(`/book_list?page=${RECENTLY_READ}`)}
-              sx={{ cursor: "pointer", color: "black" }}
-            >
-              <span className="text-2xl hover:underline">Recently read</span>
-            </Typography>
-          </li> */}
-          {/* <li className="w-[180px]">
-            <Typography
-              variant="body1"
-              onClick={() => router.push(`/book_list?page=${COMPLETED}`)}
-              sx={{ cursor: "pointer", color: "black" }}
-            >
-              <span className="text-2xl hover:underline">Completed</span>
-            </Typography>
-          </li> */}
-          <li className="w-[180px]">
+      <nav className="flex flex-col justify-center items-center md:items-start self-stretch px-5 md:px-24 py-2.5 w-full text-2xl text-center text-black">
+        <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-4 md:gap-7 items-center md:items-start w-full">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book_list?page=${NEWBOOK}`)}
               sx={{ cursor: "pointer", color: "black" }}
             >
-              <span className="text-2xl hover:underline">New book(s)</span>
+              <span className="text-lg md:text-2xl hover:underline">
+                New book(s)
+              </span>
             </Typography>
           </li>
-          <li className="w-[180px]">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <GenrePopover />
           </li>
-          <li className="w-[180px]">
+          <li className="w-full md:w-[140px] lg:w-[180px]">
             <Typography
               variant="body1"
               onClick={() => router.push(`/book/gallery`)}
               sx={{ cursor: "pointer", color: "black" }}
             >
-              <span className="text-2xl hover:underline">Gallery</span>
+              <span className="text-lg md:text-2xl hover:underline">
+                Gallery
+              </span>
             </Typography>
           </li>
-          {/* <li className="w-[180px]">
-            <Typography
-              variant="body1"
-              onClick={() => router.push(`/book_list?page=${FAVORITES}`)}
-              sx={{ cursor: "pointer", color: "black" }}
-            >
-              <span className="text-2xl hover:underline">Favorite(s)</span>
-            </Typography>
-          </li> */}
         </ul>
       </nav>
     </div>

@@ -1,10 +1,23 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import moment from "moment";
 import PropTypes from "prop-types";
 import { IconButton, Rating } from "@mui/material";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
+import { getImageURL } from "@/utils/handleImage";
 function MangaDetails({ bookInfo }) {
+  const [validImageUrl, setValidImageUrl] = useState("/images/noImage.png");
+
+  useEffect(() => {
+    const validateImage = async () => {
+      if (bookInfo?.cover) {
+        const url = await getImageURL(bookInfo.cover);
+        setValidImageUrl(url);
+      }
+    };
+    validateImage();
+  }, [bookInfo?.cover]);
+
   return (
     <section className="mt-7">
       <h2 className="text-4xl font-semibold text-black">{bookInfo.title}</h2>
@@ -13,7 +26,7 @@ function MangaDetails({ bookInfo }) {
           <aside className="w-[22%] max-md:ml-0 max-md:w-full">
             <div className="mt-3 w-full max-md:mt-10">
               <img
-                src={bookInfo?.cover}
+                src={validImageUrl}
                 alt={`${bookInfo?.cover} cover`}
                 className="object-contain w-full aspect-[0.74]"
               />
@@ -23,7 +36,12 @@ function MangaDetails({ bookInfo }) {
                   value={bookInfo?.rating > 0 ? bookInfo?.rating : 5}
                   readOnly
                   precision={0.1}
-                  sx={{ fontSize: "2.5rem" }}
+                  sx={{
+                    fontSize: "2.5rem",
+                    "&.MuiRating-root": {
+                      color: bookInfo?.rating > 0 ? "#faaf00" : "#585655",
+                    },
+                  }}
                 />
               </div>
             </div>
@@ -32,20 +50,15 @@ function MangaDetails({ bookInfo }) {
           <div className="ml-5 w-[52%] max-md:ml-0 max-md:w-full">
             <div className="flex max-md:flex-col">
               <table className="flex flex-col gap-4 w-full max-md:w-full text-lg leading-10">
-                  <tr>
-                    <td className="text-black w-[150px]">
-                      Author(s): 
-                    </td>
-                    <td className="text-black/40">
-                      {bookInfo?.author?.name}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="text-black w-[150px]">
-                      Genre(s): 
-                    </td>
-                    <td className="text-black/40 text-wrap">
-                      {bookInfo?.categories && bookInfo?.categories?.map((genre, index) => {
+                <tr>
+                  <td className="text-black w-[150px]">Author(s):</td>
+                  <td className="text-black/40">{bookInfo?.author?.name}</td>
+                </tr>
+                <tr>
+                  <td className="text-black w-[150px]">Genre(s):</td>
+                  <td className="text-black/40 text-wrap">
+                    {bookInfo?.categories &&
+                      bookInfo?.categories?.map((genre, index) => {
                         return (
                           <span key={index}>
                             {genre.name}
@@ -53,32 +66,24 @@ function MangaDetails({ bookInfo }) {
                           </span>
                         );
                       })}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="text-black w-[150px]">
-                      Type: 
-                    </td>
-                    <td className="text-black/40">
-                      {bookInfo?.bookType?.name}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="text-black w-[150px]">
-                      Release: 
-                    </td>
-                    <td className="text-black/40">
-                      {moment(bookInfo?.createdAt).format("YYYY-MM-DD hh:mm")}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="text-black w-[150px]">
-                      Status: 
-                    </td>
-                    <td className="text-black/40">
-                      {bookInfo?.progressStatus?.name?.toLowerCase()}
-                    </td>
-                  </tr>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-black w-[150px]">Type:</td>
+                  <td className="text-black/40">{bookInfo?.bookType?.name}</td>
+                </tr>
+                <tr>
+                  <td className="text-black w-[150px]">Release:</td>
+                  <td className="text-black/40">
+                    {moment(bookInfo?.createdAt).format("YYYY-MM-DD hh:mm")}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-black w-[150px]">Status:</td>
+                  <td className="text-black/40">
+                    {bookInfo?.progressStatus?.name?.toLowerCase()}
+                  </td>
+                </tr>
               </table>
             </div>
           </div>
@@ -99,8 +104,9 @@ function MangaDetails({ bookInfo }) {
                 <IconButton>
                   <BookmarkIcon sx={{ fontSize: "4rem" }} />
                 </IconButton>
-                  <p>
-                    0<br />Favorites
+                <p>
+                  0<br />
+                  Favorites
                 </p>
               </div>
             </div>
