@@ -55,26 +55,11 @@ export default function ChapterBasicInfo() {
  const { chapterData } = useSelector((state) => state.infoChapter);
 
   const [isUploading, setIsUploading] = useState(false);
-  const [images, setImages] = useState([]);
   const [imageUrl, setImageUrl] = useState([]);
 
   const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
   });
-
-  const handleUploadFile = async (data) => {
-    try {
-      if (!data) return;
-      const imageData = new FormData();
-      imageData.append("file", data);
-      const res = await dispatch(uploadImage(imageData));
-      if (res && res.data) {
-        setImageUrl((prev) => [...prev, { id: `${data.name}`, url: res.data }]);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
@@ -82,25 +67,36 @@ export default function ChapterBasicInfo() {
     setIsUploading(true);
 
     try {
-      const newImages = await Promise.all(
-        acceptedFiles.map((file) => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve({
-                id: `${file.name}`,
-                name: file.name,
-                preview: reader.result,
-                file,
-              });
-            };
-            reader.readAsDataURL(file);
-            handleUploadFile(file);
-          });
-        })
-      );
+      const newImages = [];
+      // Process files sequentially
+      for (const file of acceptedFiles) {
+        const imageData = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              id: `${file.name}`,
+              name: file.name,
+              preview: reader.result,
+              file,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
 
-      setImages((prev) => [...prev, ...newImages]);
+        // Upload file and wait for response
+        const imageDataForm = new FormData();
+        imageDataForm.append("file", file);
+        const res = await dispatch(uploadImage(imageDataForm));
+
+        if (res && res.data) {
+          setImageUrl((prev) => [
+            ...prev,
+            { id: `${file.name}`, url: res.data },
+          ]);
+        }
+
+        newImages.push(imageData);
+      }
     } catch (error) {
       console.error("Error uploading files:", error);
     } finally {
