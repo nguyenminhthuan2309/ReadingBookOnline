@@ -4,11 +4,7 @@ import React, { useCallback, useState } from "react";
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import {
-  Box,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
@@ -35,6 +31,8 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import SortableImage from "./SortableImage";
+import { ShowNotify } from "@/components/ShowNotify";
+import { ERROR } from "@/utils/constants";
 
 const schema = yup.object().shape({
   number: yup
@@ -52,7 +50,6 @@ export default function ChapterBasicInfo() {
   const [images, setImages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState([]);
-
 
   const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
@@ -104,6 +101,14 @@ export default function ChapterBasicInfo() {
     }
   }, []);
 
+  const onDropRejected = (fileRejections) => {
+    fileRejections.forEach((rejection) => {
+      rejection.errors.forEach((e) => {
+        ShowNotify(ERROR, e.message);
+      });
+    });
+  };
+
   const handleDelete = (id) => {
     setImages((prev) => prev.filter((img) => img.id !== id));
     setImageUrl((prev) => prev.filter((img) => img.id !== id));
@@ -126,6 +131,7 @@ export default function ChapterBasicInfo() {
       "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
     },
     multiple: true,
+    onDropRejected,
   });
 
   const handleSubmitChapterInfo = useCallback(

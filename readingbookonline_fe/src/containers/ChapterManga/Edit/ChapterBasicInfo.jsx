@@ -33,7 +33,8 @@ import { restrictToParentElement } from "@dnd-kit/modifiers";
 import SortableImage from "./SortableImage";
 import { useRouter } from "next/router";
 import { getItem } from "@/utils/localStorage";
-import { USER_INFO } from "@/utils/constants";
+import { ERROR, USER_INFO } from "@/utils/constants";
+import { ShowNotify } from "@/components/ShowNotify";
 
 const schema = yup.object().shape({
   number: yup
@@ -107,6 +108,14 @@ export default function ChapterBasicInfo() {
     }
   }, []);
 
+  const onDropRejected = (fileRejections) => {
+    fileRejections.forEach((rejection) => {
+      rejection.errors.forEach((e) => {
+        ShowNotify(ERROR, e.message);
+      });
+    });
+  };
+
   const handleDelete = (id) => {
     setImageUrl((prev) => prev.filter((img) => img.id !== id));
   };
@@ -127,6 +136,7 @@ export default function ChapterBasicInfo() {
       "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
     },
     multiple: true,
+    onDropRejected,
   });
 
   const handleSubmitChapterInfo = useCallback(

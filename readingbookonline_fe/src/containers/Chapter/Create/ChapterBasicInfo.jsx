@@ -250,7 +250,7 @@ function ChapterBasicInfo() {
                 ref={fileInputRef}
                 onChange={handleFileInput}
                 style={{ display: "none" }}
-                accept=".txt,.doc,.docx,.pdf"
+                accept=".docx"
               />
               <CloudUploadIcon
                 sx={{ fontSize: 48, color: "text.secondary", mb: 1 }}
