@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsEnum,
   IsString,
+  IsBoolean,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
@@ -81,6 +82,17 @@ export class GetBookRequestDto extends PaginationRequestDto {
     { toClassOnly: true },
   )
   categoryId?: number[];
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Lọc sách có ít nhất một chương',
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true, {
+    toClassOnly: true,
+  })
+  hasChapters?: boolean;
 
   @ApiPropertyOptional({
     type: String,

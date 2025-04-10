@@ -140,6 +140,7 @@ export class BookService {
         categoryId,
         sortBy = 'updatedAt',
         sortType = 'DESC',
+        hasChapters = false,
       } = params;
 
       const cachedKey = `books:${userId || 'all'}:${search || 'all'}:${bookTypeId || 'all'}:${accessStatusId || 'all'}:${progressStatusId || 'all'}:${categoryId || 'all'}:sortBy${sortBy}:sortType${sortType}:p${page}:l${limit}`;
@@ -197,6 +198,9 @@ export class BookService {
             prefixSearch: `%${search}%`,
           },
         );
+      }
+      if (hasChapters) {
+        qb.andWhere('chapters.id IS NOT NULL');
       }
 
       if (sortBy === SortByOptions.VIEWS) {
