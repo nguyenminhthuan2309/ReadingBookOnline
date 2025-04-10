@@ -44,7 +44,7 @@ export const MostViewedBooks = () => {
               imageUrl={book.cover}
               title={book.title}
               author={book.author?.name}
-              className="self-stretch pr-1.5 pb-9 my-auto w-[200px]"
+              className="flex flex-col rounded-none w-[200px]"
               chapters={book.chapters}
               bookTypeID={book.bookType?.id}
             />

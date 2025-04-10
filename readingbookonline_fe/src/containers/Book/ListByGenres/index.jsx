@@ -129,13 +129,13 @@ const BookListPage = () => {
                     sx={{ color: "black" }}
                     onChange={handleProgressStatusChange}
                   />
-                  <FormControlLabel
+                  {/* <FormControlLabel
                     value={3}
                     control={<Radio />}
                     label="Dropped"
                     sx={{ color: "black" }}
                     onChange={handleProgressStatusChange}
-                  />
+                  /> */}
                 </RadioGroup>
               </FormControl>
             </div>

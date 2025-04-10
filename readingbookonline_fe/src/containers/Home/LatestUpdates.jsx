@@ -38,8 +38,6 @@ export const LatestUpdates = () => {
     getBookData();
   }, [getBookData]);
 
-  console.log(bookList);
-
   return (
     <section className="flex flex-col justify-center items-center mt-10 w-[1493px] max-md:max-w-full">
       <header className="py-px w-full max-md:max-w-full">

@@ -12,12 +12,9 @@ import EditIcon from "@mui/icons-material/Edit";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DeleteDialog from "./DeleteDialog";
-import { recordRecentlyRead } from "@/utils/actions/userAction";
-import { useDispatch } from "react-redux";
 
 function ChapterList({ chapters, bookId, hideButton, bookType }) {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [showEditButton, setShowEditButton] = useState(false);
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -54,19 +51,6 @@ function ChapterList({ chapters, bookId, hideButton, bookType }) {
   const handleOpenDeleteDialog = () => {
     setOpenDeleteDialog((prev) => !prev);
   };
-
-  const handleRecordHistory = useCallback(
-    async (bookId, chapterId) => {
-      try {
-        await dispatch(recordRecentlyRead({ bookId, chapterId }));
-        await handleRedirectChapter(bookType, chapterId);
-      } catch (error) {
-        console.error("Error recording history:", error);
-        handleRedirectChapter(bookType, chapterId);
-      }
-    },
-    [dispatch, router, bookType]
-  );
 
   const generateDeleteButton = useCallback(
     (chapterID, chapterTitle) => {
@@ -178,7 +162,7 @@ function ChapterList({ chapters, bookId, hideButton, bookType }) {
           >
             <Button
               sx={{ textTransform: "none", width: "100%" }}
-              onClick={() => handleRecordHistory(bookId, chapter.id)}
+              onClick={() => handleRedirectChapter(bookType, chapter.id)}
             >
               <div className="flex flex-wrap gap-5 w-full justify-between px-6 py-4 rounded-md border-b border-black bg-opacity-0 max-md:px-5 max-md:max-w-full">
                 <h4 className="text-black">

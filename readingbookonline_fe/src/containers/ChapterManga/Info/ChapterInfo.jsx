@@ -10,6 +10,7 @@ import { resetInfoChapterState } from "@/utils/redux/slices/chapterReducer/infoC
 import ChapterSelection from "./ChapterSelection";
 import { getItem, setItem } from "@/utils/localStorage";
 import { useRouter } from "next/navigation";
+import { recordRecentlyRead } from "@/utils/actions/userAction";
 
 function ChapterInfo() {
   const dispatch = useDispatch();
@@ -54,6 +55,18 @@ function ChapterInfo() {
     [userInfo, router]
   );
 
+  const handleRecordHistory = useCallback(
+    async (bookId, chapterId) => {
+      if (!userInfo) return;
+      try {
+        await dispatch(recordRecentlyRead({ bookId, chapterId: +chapterId }));
+      } catch (error) {
+        console.error("Error recording history:", error);
+      }
+    },
+    [dispatch, userInfo]
+  );
+
   // Initial setup effect
   useEffect(() => {
     if (!chapterId) return;
@@ -66,13 +79,14 @@ function ChapterInfo() {
     if (savedData) {
       handleRedirect(savedData.book);
       setCachedData(savedData.book);
+      handleRecordHistory(savedData.book.id, chapterId);
       if (savedData.content) {
         setFilePreview(JSON.parse(savedData.content));
       }
     }
 
     dispatch(getChapterById(chapterId));
-  }, [chapterId, dispatch, handleRedirect]);
+  }, [chapterId, dispatch, handleRedirect, handleRecordHistory]);
 
   // Handle chapter data changes
   useEffect(() => {
@@ -87,12 +101,12 @@ function ChapterInfo() {
       handleRedirect(book);
       setItem(`chapter-${chapterId}`, JSON.stringify(chapterData.data));
       setCachedData(book);
-      console.log(content);
+      handleRecordHistory(book.id, chapterId);
       setFilePreview(JSON.parse(content));
     };
 
     handleChapterData();
-  }, [chapterId, chapterData, loading, handleRedirect]);
+  }, [chapterId, chapterData, loading, handleRedirect, handleRecordHistory]);
 
   // Cleanup effect
   useEffect(() => {

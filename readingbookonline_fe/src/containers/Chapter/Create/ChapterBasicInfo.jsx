@@ -100,11 +100,8 @@ function ChapterBasicInfo() {
         setFilePreview("Error reading file content");
       }
     } else if (file.type === "text/plain") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFilePreview(e.target?.result);
-      };
-      reader.readAsText(file);
+      ShowNotify(ERROR, "Preview not available for this file type");
+      setFilePreview("Preview not available for this file type");
     } else {
       ShowNotify(ERROR, "Preview not available for this file type");
       setFilePreview("Preview not available for this file type");

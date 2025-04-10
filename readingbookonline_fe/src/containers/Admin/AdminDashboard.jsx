@@ -205,7 +205,7 @@ function AdminDashboard() {
           sx={{
             width: drawerWidth,
             flexShrink: 0,
-            bgcolor: "secondary.main",
+            bgcolor: "#3F3D6E",
             color: "white",
             height: "80vh",
             display: "flex",
