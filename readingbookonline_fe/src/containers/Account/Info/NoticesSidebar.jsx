@@ -50,7 +50,7 @@ const NoticesSidebar = () => {
   // Only fetch notifications when page changes
   useEffect(() => {
     getNotifications();
-  }, [page]);
+  }, [getNotifications]);
 
   useEffect(() => {
     if (!socket || !isConnected) return;

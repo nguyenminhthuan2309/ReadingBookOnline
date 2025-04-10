@@ -35,7 +35,7 @@ export default function GenrePopover() {
         onClick={handleClick}
         sx={{ cursor: "pointer", color: "black" }}
       >
-        <span className="text-2xl hover:underline">Genre(s)</span>
+        <span className="text-lg md:text-2xl hover:underline">Genre(s)</span>
       </Typography>
 
       {/* Popover hiển thị danh sách genres */}
