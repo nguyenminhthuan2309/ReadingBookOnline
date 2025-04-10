@@ -92,10 +92,10 @@ const BookTile = ({
           </Typography>
         </CardContent>
       </CardActionArea>
-      <CardActions sx={{ height: 170 }} className="flex flex-col">
+      <CardActions className="flex flex-col">
         {chapters &&
           chapters
-            .slice(-2)
+            .slice(-1)
             .reverse()
             .map((chapter, index) => (
               <React.Fragment key={index}>

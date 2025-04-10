@@ -197,6 +197,7 @@ function ChapterBasicInfo() {
       };
       if (chapterId && fileUrl) {
         dispatch(editChapter(chapterId, formData));
+        router.back();
       }
     },
     [fileUrl]

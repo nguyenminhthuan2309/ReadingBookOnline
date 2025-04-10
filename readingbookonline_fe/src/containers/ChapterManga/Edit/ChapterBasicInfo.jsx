@@ -148,6 +148,7 @@ export default function ChapterBasicInfo() {
       };
       if (chapterId && imageUrl.length > 0) {
         dispatch(editChapter(chapterId, formData));
+        router.back();
       }
     },
     [imageUrl]

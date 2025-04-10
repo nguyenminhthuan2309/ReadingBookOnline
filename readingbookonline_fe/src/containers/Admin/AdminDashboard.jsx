@@ -33,7 +33,10 @@ import BlockUser from "./Users/BlockUser";
 import Statistical from "./Statistic";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
-import { IS_ADMIN } from "@/utils/constants";
+import { USER_INFO } from "@/utils/constants";
+import { getItem } from "@/utils/localStorage";
+
+const userInfo = getItem(USER_INFO);
 
 const tabs = [
   {
@@ -42,7 +45,7 @@ const tabs = [
     icon: <AdminPanelSettingsIcon />,
     subTabs: [
       { id: "user", label: "User", icon: <PersonIcon /> },
-      ...(IS_ADMIN
+      ...(userInfo?.role?.id === 1
         ? [{ id: "manager", label: "Manager", icon: <SupervisorAccountIcon /> }]
         : []),
     ],
@@ -54,7 +57,7 @@ const tabs = [
     icon: <BlockIcon />,
     subTabs: [
       { id: "blocked-user", label: "User", icon: <PersonIcon /> },
-      ...(IS_ADMIN
+      ...(userInfo?.role?.id === 1
         ? [
             {
               id: "blocked-manager",
