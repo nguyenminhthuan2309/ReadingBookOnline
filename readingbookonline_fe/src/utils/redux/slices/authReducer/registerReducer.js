@@ -9,7 +9,7 @@ const registerSlice = createSlice({
     error: null,
   },
   reducers: {
-    resetState:(state)=>{
+    resetStateRegister:(state)=>{
       state.loading = false;
       state.registerData = {};
       state.error = null;
@@ -53,5 +53,5 @@ export const registerRequest = () => ({ type: "register/request" });
 export const registerSuccess = (data) => ({ type: "register/success", payload: data });
 export const registerFail = (data) => ({ type: "register/fail", payload: data });
 
-export const { resetState } = registerSlice.actions;
+export const { resetStateRegister } = registerSlice.actions;
 export default registerSlice.reducer;

@@ -52,11 +52,11 @@ export const LatestUpdates = () => {
           </div>
         </div>
         <div className="flex justify-center w-full">
-          <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 w-[340px] md:max-w-full md:px-5" />
+          <hr className="flex z-10 h-px border-b border-black bg-zinc-300 bg-opacity-0 w-[340px] md:w-full md:px-5" />
         </div>
       </header>
       <div className="flex w-full mt-12 max-md:mt-10 justify-center">
-        <div className="flex flex-col md:flex-row flex-wrap items-start max-md:justify-between max-md:px-4 max-md:gap-2 gap-10 px-10">
+        <div className="flex flex-col md:flex-row flex-wrap items-center justify-center gap-10 w-full px-4 md:px-10">
           {bookList &&
             bookList.map((book, index) => (
               <BookTile

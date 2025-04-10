@@ -39,7 +39,7 @@ const BookListPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const getBookData = async () => {
-    let url = bookAPI.getBook(18, currentPage);
+    let url = bookAPI.getBookByUser(18, currentPage);
     url += `&userId=${user.id}`;
     try {
       const response = await getAPI(url);

@@ -94,12 +94,7 @@ export const registerAccount = (formdata) => {
     try {
       const response = await postAPI(url, formdata);
       if (response && response.data) {
-        dispatch(registerSuccess(response.data));
-        ShowNotify(
-          SUCESSS,
-          "A email has been sent please check your email to verify your account",
-          { autoClose: false }
-        );
+        dispatch(registerSuccess(response.data.data));
       }
     } catch (error) {
       dispatch(registerFail(error.data));

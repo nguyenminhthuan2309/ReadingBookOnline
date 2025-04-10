@@ -134,19 +134,21 @@ export const Header = () => {
               <SearchIcon />
             </IconButton>
           </div>
-          <div className="hidden md:flex items-center gap-4 md:gap-7 md:block">
-            <Badge
-              badgeContent={totalNotices > 9 ? " 9+" : totalNotices}
-              sx={{ cursor: "pointer", alignSelf: "center" }}
-              color="secondary"
-            >
-              <Notification
-                notice={notices}
-                totalPages={totalPages}
-                currentPage={page}
-                setCurrentPage={setPage}
-              />
-            </Badge>
+          <div className="flex items-center gap-4 md:gap-7">
+            <div className="hidden md:block">
+              <Badge
+                badgeContent={totalNotices > 9 ? " 9+" : totalNotices}
+                sx={{ cursor: "pointer", alignSelf: "center" }}
+                color="secondary"
+              >
+                <Notification
+                  notice={notices}
+                  totalPages={totalPages}
+                  currentPage={page}
+                  setCurrentPage={setPage}
+                />
+              </Badge>
+            </div>
             {userInfo ? (
               <div className="hidden md:block">
                 <AccountMenu
@@ -155,12 +157,12 @@ export const Header = () => {
                 />
               </div>
             ) : (
-              <div className="flex gap-5 py-2">
+              <div className="flex gap-5 md:block w-[300px]">
                 <Button
                   sx={{ textTransform: "none" }}
                   onClick={() => router.push("/account/sign_in")}
                 >
-                  <span className="text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
+                  <span className="w-[100px] text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
                     Sign in
                   </span>
                 </Button>
@@ -169,7 +171,7 @@ export const Header = () => {
                   sx={{ textTransform: "none" }}
                   onClick={() => router.push("/account/sign_up")}
                 >
-                  <span className="text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
+                  <span className="w-[100px] text-lg md:text-xl text-white border-b-2 border-transparent hover:border-white">
                     Sign up
                   </span>
                 </Button>

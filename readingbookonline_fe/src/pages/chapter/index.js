@@ -1,6 +1,14 @@
 import React from "react";
 import ChapterInfo from "@/containers/Chapter/Info/Loadable";
+import Head from "next/head";
 
 export default function ChapterPage() {
-  return <ChapterInfo />;
+  return (
+    <>
+      <Head>
+        <title>Haru&apos;s Library</title>
+      </Head>
+      <ChapterInfo />
+    </>
+  );
 }

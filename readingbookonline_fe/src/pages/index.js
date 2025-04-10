@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { USER_INFO } from "@/utils/constants";
 import { getItem } from "@/utils/localStorage";
 import { CircularProgress } from "@mui/material";
-
+import Head from "next/head";
 export default function HomePage() {
   const router = useRouter();
   const [hasChecked, setHasChecked] = useState(false);
@@ -22,5 +22,12 @@ export default function HomePage() {
 
   if (!hasChecked) return <CircularProgress />;
 
-  return <Home />;
+  return (
+    <>
+      <Head>
+        <title>Haru&apos;s Library</title>
+      </Head>
+      <Home />
+    </>
+  );
 }

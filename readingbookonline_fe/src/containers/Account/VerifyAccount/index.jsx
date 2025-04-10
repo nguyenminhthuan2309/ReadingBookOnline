@@ -1,19 +1,17 @@
 import React from "react";
+
 import Link from "next/link";
 import Image from "next/image";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Button } from "@mui/material";
-import AdminLayout from "@/layouts/AdminLayout";
-import Head from "next/head";
-function NotFound() {
+
+
+export default function VerifyAccount() {
   return (
     <div
       className="flex w-full flex-col items-center justify-center"
       style={{ backgroundColor: "#F6E8DF" }}
     >
-      <Head>
-        <title>Haru&apos;s Library</title>
-      </Head>
       <div className="container flex max-w-3xl flex-col items-center justify-center gap-8 px-4 py-16 text-center md:py-24">
         <div className="relative h-64 w-64 md:h-80 md:w-80">
           <Image
@@ -45,16 +43,11 @@ function NotFound() {
         </div>
 
         <Button asChild className="mt-4">
-          <Link href="/">Go back home</Link>
+          <Link href="/account/sign_in">Back to Login Page</Link>
         </Button>
       </div>
     </div>
   );
 }
 
-// Define the layout for this page
-NotFound.getLayout = function getLayout(page) {
-  return <AdminLayout>{page}</AdminLayout>;
-};
 
-export default NotFound;
