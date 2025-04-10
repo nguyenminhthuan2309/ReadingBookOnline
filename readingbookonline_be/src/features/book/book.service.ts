@@ -113,11 +113,11 @@ export class BookService {
   ) {}
 
   private getStatusMessage(title: string, accessStatusId: number): string {
-    if (accessStatusId === 4) {
+    if (accessStatusId === 3) {
       return `Blocked: ${title} has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
-    } else if (accessStatusId === 3) {
+    } else if (accessStatusId === 4) {
       return `Pending: ${title} is under review for suspected community standards violations. You will temporarily not be able to update this book during the review. To appeal, please contact via email: ${this.adminMail}`;
-    } else if (accessStatusId === 2) {
+    } else if (accessStatusId === 1) {
       return ` ${title} has been restored. We apologize for the inconvenience caused.`;
     }
 
@@ -1367,7 +1367,7 @@ export class BookService {
         accessStatusId !== undefined &&
         (accessStatusId === 4 ||
           accessStatusId === 3 ||
-          (accessStatusId === 2 && roleId !== 1))
+          (accessStatusId === 1 && roleId !== 1))
       ) {
         const statusMessage = this.getStatusMessage(book.title, accessStatusId);
 

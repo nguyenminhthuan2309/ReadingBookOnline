@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway(3001, { cors: true })
+@WebSocketGateway(3002, { cors: true })
 export class BookNotificationGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {

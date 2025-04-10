@@ -38,7 +38,8 @@ export const userConfig = {
 };
 
 export const bookConfig = {
-  redisBookTtl: 60 * 10,
+  // redisBookTtl: 60 * 10,
+  redisBookTtl: 1,
 };
 
 export const cloudinaryConfig = {
