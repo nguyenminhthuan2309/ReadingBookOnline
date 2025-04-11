@@ -70,11 +70,12 @@ export default function ChapterBasicInfo() {
       const newImages = [];
       // Process files sequentially
       for (const file of acceptedFiles) {
+        const now = Date.now();
         const imageData = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => {
             resolve({
-              id: `${file.name}`,
+              id: `${file.name}_${now}`,
               name: file.name,
               preview: reader.result,
               file,
@@ -91,7 +92,7 @@ export default function ChapterBasicInfo() {
         if (res && res.data) {
           setImageUrl((prev) => [
             ...prev,
-            { id: `${file.name}`, url: res.data },
+            { id: `${file.name}_${now}`, url: res.data },
           ]);
         }
 
