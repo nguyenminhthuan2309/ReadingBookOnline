@@ -1,13 +1,13 @@
 "use client";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import InputField from "@/components/RenderInput";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Box, Button, Paper, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Paper, Typography } from "@mui/material";
 
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   Checkbox,
@@ -29,6 +29,8 @@ import { createChapter } from "@/utils/actions/chapterAction";
 import { useSearchParams } from "next/navigation";
 import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR } from "@/utils/constants";
+import { resetStateCreateChapter } from "@/utils/redux/slices/chapterReducer/createChapter";
+import { useRouter } from "next/router";
 
 const schema = yup.object().shape({
   number: yup
@@ -40,6 +42,7 @@ const schema = yup.object().shape({
 });
 
 function ChapterBasicInfo() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const bookId = searchParams.get("bookNumber");
@@ -48,6 +51,9 @@ function ChapterBasicInfo() {
   const [filePreview, setFilePreview] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const fileInputRef = useRef(null);
+  const [redirectTo, setRedirectTo] = useState(1);
+
+  const { loading, isSuccess } = useSelector((state) => state.createChapter);
 
   const { handleSubmit, control, reset } = useForm({
     resolver: yupResolver(schema),
@@ -135,250 +141,287 @@ function ChapterBasicInfo() {
       };
       if (bookId && fileUrl) {
         dispatch(createChapter(bookId, formData));
-        reset();
       }
     },
-    [fileUrl]
+    [fileUrl, bookId]
   );
+
+  useEffect(() => {
+    if (!isSuccess) return;
+    if (+redirectTo === 1) {
+      router.push(`/book?number=${bookId}`);
+    } else if (+redirectTo === 2) {
+      router.reload();
+    }
+  }, [redirectTo, bookId, isSuccess, router]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetStateCreateChapter());
+      reset();
+      setFile(null);
+      setFilePreview(null);
+      setFileUrl(null);
+      setRedirectTo(1);
+      setIsDragging(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+      }
+    };
+  }, []);
 
   return (
     <section className="flex flex-wrap gap-9 self-stretch max-md:max-w-full">
-      <form onSubmit={handleSubmit(handleSubmitChapterInfo)} className="w-full">
-        <div className="flex flex-col items-start max-md:max-w-full">
-          <div className="w-full">
-            <label className="block">
-              Chapter Number: <span className="text-[#DE741C]">(Required)</span>
-            </label>
-            <InputField
-              name="number"
-              control={control}
-              type="text"
-              placeholder="Enter chapter number..."
-            />
-            {/* {errors.number && (
+      {loading ? (
+        <div className="flex justify-center items-center">
+          <CircularProgress />
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit(handleSubmitChapterInfo)}
+          className="w-full"
+        >
+          <div className="flex flex-col items-start max-md:max-w-full">
+            <div className="w-full">
+              <label className="block">
+                Chapter Number:{" "}
+                <span className="text-[#DE741C]">(Required)</span>
+              </label>
+              <InputField
+                name="number"
+                control={control}
+                type="text"
+                placeholder="Enter chapter number..."
+              />
+              {/* {errors.number && (
               <p className="text-red-500 text-sm mt-2">
                 {errors.number.message}
               </p>
             )} */}
-            <div className="flex flex-col w-full text-black/50">
-              <span>Number only!</span>
-              <span>Decimal is not allowed</span>
+              <div className="flex flex-col w-full text-black/50">
+                <span>Number only!</span>
+                <span>Decimal is not allowed</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-14 w-full">
-            <label className="block">
-              Chapter Title: <span className="text-[#DE741C]">(Required)</span>
-            </label>
-            <InputField
-              name="title"
-              control={control}
-              type="text"
-              placeholder="Enter chapter number..."
-            />
-            {/* {errors.title && (
+            <div className="mt-14 w-full">
+              <label className="block">
+                Chapter Title:{" "}
+                <span className="text-[#DE741C]">(Required)</span>
+              </label>
+              <InputField
+                name="title"
+                control={control}
+                type="text"
+                placeholder="Enter chapter number..."
+              />
+              {/* {errors.title && (
               <p className="text-red-500 text-sm mt-2">
                 {errors.title.message}
               </p>
             )} */}
-            <div className="flex flex-col w-full text-black/50">
-              <span>*Avoid sexual, violent, or offensive word</span>
+              <div className="flex flex-col w-full text-black/50">
+                <span>*Avoid sexual, violent, or offensive word</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-14">
+            <div className="mt-14">
+              <FormControl>
+                <FormLabel id="demo-row-radio-buttons-group-label">
+                  <span className="text-black text-[18px]">Public Status:</span>
+                </FormLabel>
+                <RadioGroup
+                  row
+                  aria-labelledby="demo-row-radio-buttons-group-label"
+                  name="row-radio-buttons-group"
+                  defaultValue={1}
+                >
+                  <FormControlLabel
+                    value={1}
+                    control={<Radio />}
+                    label="Public"
+                  />
+                  <FormControlLabel
+                    value={2}
+                    control={<Radio />}
+                    label="Private"
+                  />
+                </RadioGroup>
+              </FormControl>
+            </div>
+            <div className="flex flex-col w-full text-black/50">
+              <span>*Only public status got display on the website</span>
+            </div>
+            <div className="mt-14 w-full justify-items-center">
+              <SectionDivider text="← Chapter File →" />
+            </div>
+            <div className="mt-4 w-full justify-items-center">
+              <Paper
+                variant="outlined"
+                sx={{
+                  width: "100%",
+                  border: "2px dashed",
+                  borderColor: isDragging
+                    ? "primary.main"
+                    : file
+                    ? "success.main"
+                    : "divider",
+                  bgcolor: isDragging ? "primary.light" : "background.paper",
+                  opacity: isDragging ? 0.9 : 1,
+                  p: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: "primary.light",
+                    opacity: 0.9,
+                  },
+                }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileInput}
+                  style={{ display: "none" }}
+                  accept=".docx"
+                />
+                <CloudUploadIcon
+                  sx={{ fontSize: 48, color: "text.secondary", mb: 1 }}
+                />
+                <Typography variant="body1" color="text.secondary">
+                  DRAG AND DROP OR BROWSE
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  Accept extensions: .docx
+                </Typography>
+              </Paper>
+            </div>
+            <div className="mt-14 w-full justify-items-center">
+              {file && (
+                <>
+                  <SectionDivider text="← File: Uploaded →" />
+
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <FormControlLabel
+                      control={<Checkbox size="small" />}
+                      label={file.name}
+                    />
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      sx={{ ml: "auto" }}
+                      onClick={removeFile}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </Button>
+                  </Paper>
+
+                  <SectionDivider text="← File: Preview →" />
+
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      height: "100%",
+                      overflow: "auto",
+                      bgcolor: "background.paper",
+                      width: "100%",
+                    }}
+                  >
+                    {filePreview ? (
+                      file.type ===
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ? (
+                        <div
+                          dangerouslySetInnerHTML={{ __html: filePreview }}
+                          style={{ whiteSpace: "pre-wrap", width: "100%" }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          sx={{ whiteSpace: "pre-wrap", width: "100%" }}
+                        >
+                          {filePreview}
+                        </Typography>
+                      )
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          width: "100%",
+                        }}
+                      >
+                        <DescriptionIcon
+                          sx={{ fontSize: 64, color: "primary.main", mb: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {file.name}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Paper>
+                </>
+              )}
+            </div>
+
             <FormControl>
               <FormLabel id="demo-row-radio-buttons-group-label">
-                <span className="text-black text-[18px]">Public Status:</span>
+                <span className="text-black text-[18px]">After submit:</span>
               </FormLabel>
               <RadioGroup
                 row
                 aria-labelledby="demo-row-radio-buttons-group-label"
                 name="row-radio-buttons-group"
-                defaultValue={1}
+                value={redirectTo}
+                onChange={(e) => {
+                  setRedirectTo(e.target.value);
+                }}
               >
                 <FormControlLabel
                   value={1}
                   control={<Radio />}
-                  label="Public"
+                  label="Back to Book page"
                 />
                 <FormControlLabel
                   value={2}
                   control={<Radio />}
-                  label="Private"
+                  label="Upload next chapter"
                 />
               </RadioGroup>
             </FormControl>
-          </div>
-          <div className="flex flex-col w-full text-black/50">
-            <span>*Only public status got display on the website</span>
-          </div>
-          <div className="mt-14 w-full justify-items-center">
-            <SectionDivider text="← Chapter File →" />
-          </div>
-          <div className="mt-4 w-full justify-items-center">
-            <Paper
-              variant="outlined"
-              sx={{
-                width: "100%",
-                border: "2px dashed",
-                borderColor: isDragging
-                  ? "primary.main"
-                  : file
-                  ? "success.main"
-                  : "divider",
-                bgcolor: isDragging ? "primary.light" : "background.paper",
-                opacity: isDragging ? 0.9 : 1,
-                p: 3,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                "&:hover": {
-                  borderColor: "primary.main",
-                  bgcolor: "primary.light",
-                  opacity: 0.9,
-                },
-              }}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileInput}
-                style={{ display: "none" }}
-                accept=".docx"
-              />
-              <CloudUploadIcon
-                sx={{ fontSize: 48, color: "text.secondary", mb: 1 }}
-              />
-              <Typography variant="body1" color="text.secondary">
-                DRAG AND DROP OR BROWSE
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ mt: 1 }}
+            <div className=" mt-14 w-full text-white flex justify-center">
+              <button
+                type="submit"
+                className="items-center px-16 py-6 rounded-xl bg-[#3F3D6E] w-fit max-md:px-5 max-md:max-w-full"
               >
-                Accept extensions: .docx
-              </Typography>
-            </Paper>
+                Submit
+              </button>
+            </div>
           </div>
-          <div className="mt-14 w-full justify-items-center">
-            {file && (
-              <>
-                <SectionDivider text="← File: Uploaded →" />
-
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%",
-                  }}
-                >
-                  <FormControlLabel
-                    control={<Checkbox size="small" />}
-                    label={file.name}
-                  />
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    sx={{ ml: "auto" }}
-                    onClick={removeFile}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </Button>
-                </Paper>
-
-                <SectionDivider text="← File: Preview →" />
-
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    overflow: "auto",
-                    bgcolor: "background.paper",
-                    width: "100%",
-                  }}
-                >
-                  {filePreview ? (
-                    file.type ===
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ? (
-                      <div
-                        dangerouslySetInnerHTML={{ __html: filePreview }}
-                        style={{ whiteSpace: "pre-wrap", width: "100%" }}
-                      />
-                    ) : (
-                      <Typography
-                        variant="body2"
-                        sx={{ whiteSpace: "pre-wrap", width: "100%" }}
-                      >
-                        {filePreview}
-                      </Typography>
-                    )
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: "100%",
-                        width: "100%",
-                      }}
-                    >
-                      <DescriptionIcon
-                        sx={{ fontSize: 64, color: "primary.main", mb: 1 }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {file.name}
-                      </Typography>
-                    </Box>
-                  )}
-                </Paper>
-              </>
-            )}
-          </div>
-
-          <FormControl>
-            <FormLabel id="demo-row-radio-buttons-group-label">
-              <span className="text-black text-[18px]">After submit:</span>
-            </FormLabel>
-            <RadioGroup
-              row
-              aria-labelledby="demo-row-radio-buttons-group-label"
-              name="row-radio-buttons-group"
-              defaultValue={1}
-            >
-              <FormControlLabel
-                value={1}
-                control={<Radio />}
-                label="Back to Gallery page"
-              />
-              <FormControlLabel
-                value={2}
-                control={<Radio />}
-                label="Upload next chapter"
-              />
-            </RadioGroup>
-          </FormControl>
-          <div className=" mt-14 w-full text-white flex justify-center">
-            <button
-              type="submit"
-              className="items-center px-16 py-6 rounded-xl bg-[#3F3D6E] w-fit max-md:px-5 max-md:max-w-full"
-            >
-              Submit
-            </button>
-          </div>
-        </div>
-      </form>
+        </form>
+      )}
     </section>
   );
 }

@@ -7,7 +7,6 @@ import {
 import { deleteAPI, getAPI, postAPI, putAPI } from "../request";
 import { ShowNotify } from "@/components/ShowNotify";
 import { ERROR, SUCESSS } from "../constants";
-import Router from "next/router";
 import {
   infoChapterFail,
   infoChapterRequest,
@@ -30,12 +29,13 @@ export const createChapter = (bookId, chapterData) => {
     const url = chapterAPI.createChapter(bookId);
     try {
       const response = await postAPI(url, chapterData);
-      dispatch(createChapterSuccess());
-      ShowNotify(SUCESSS, "Create chapter successfully");
-      Router.push(`/book?number=${bookId}`);
-      return response;
+      if (response && response.data) {
+        dispatch(createChapterSuccess(response.data.data));
+        ShowNotify(SUCESSS, "Create chapter successfully");
+        return response.data;
+      }
     } catch (error) {
-      dispatch(createChapterFail());
+      dispatch(createChapterFail(error.data.msg));
       ShowNotify(ERROR, error.data.msg);
     }
   };

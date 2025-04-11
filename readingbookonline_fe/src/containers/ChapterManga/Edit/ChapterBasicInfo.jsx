@@ -360,7 +360,7 @@ export default function ChapterBasicInfo() {
             )}
           </Box>
 
-          <FormControl>
+          {/* <FormControl>
             <FormLabel id="demo-row-radio-buttons-group-label">
               <span className="text-black text-[18px]">After submit:</span>
             </FormLabel>
@@ -381,7 +381,7 @@ export default function ChapterBasicInfo() {
                 label="Upload next chapter"
               />
             </RadioGroup>
-          </FormControl>
+          </FormControl> */}
           <div className=" mt-14 w-full text-white flex justify-center">
             <button
               type="submit"

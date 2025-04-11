@@ -5,13 +5,13 @@ const createBookSlice = createSlice({
   name: "createBookData",
   initialState: {
     loading: false,
-    bookData: {},
+    bookData: null,
     error: null,
   },
   reducers: {
-    resetState: (state) => {
+    resetStateCreateBook: (state) => {
       state.loading = false;
-      state.bookData = {};
+      state.bookData = null;
       state.error = null;
     },
   },
@@ -25,12 +25,12 @@ const createBookSlice = createSlice({
         try {
           state.loading = false;
           if (action && action.payload) {
-            state.bookData = action.payload || {};
+            state.bookData = action.payload || null;
           }
           state.error = null;
         } catch (error) {
           state.loading = false;
-          state.bookData = {};
+          state.bookData = null;
           state.error = "Invalid payload format";
         }
       })
@@ -52,5 +52,5 @@ export const createBookRequest = () => ({ type: "createBook/request" });
 export const createBookSuccess = (data) => ({ type: "createBook/success", payload: data });
 export const createBookFail = (data) => ({ type: "createBook/fail", payload: data });
 
-export const { resetState } = createBookSlice.actions;
+export const { resetStateCreateBook } = createBookSlice.actions;
 export default createBookSlice.reducer;

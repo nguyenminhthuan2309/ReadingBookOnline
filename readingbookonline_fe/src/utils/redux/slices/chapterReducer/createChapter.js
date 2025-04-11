@@ -5,13 +5,13 @@ const createChapterSlice = createSlice({
   name: "createChapterData",
   initialState: {
     loading: false,
-    ChapterData: {},
+    isSuccess: false,
     error: null,
   },
   reducers: {
-    resetState: (state) => {
+    resetStateCreateChapter: (state) => {
       state.loading = false;
-      state.ChapterData = {};
+      state.isSuccess = false;
       state.error = null;
     },
   },
@@ -25,12 +25,12 @@ const createChapterSlice = createSlice({
         try {
           state.loading = false;
           if (action && action.payload) {
-            state.ChapterData = action.payload || {};
+            state.isSuccess = action.payload || false;
           }
           state.error = null;
         } catch (error) {
           state.loading = false;
-          state.ChapterData = {};
+          state.isSuccess = false;
           state.error = "Invalid payload format";
         }
       })
@@ -52,5 +52,5 @@ export const createChapterRequest = () => ({ type: "createChapter/request" });
 export const createChapterSuccess = (data) => ({ type: "createChapter/success", payload: data });
 export const createChapterFail = (data) => ({ type: "createChapter/fail", payload: data });
 
-export const { resetState } = createChapterSlice.actions;
+export const { resetStateCreateChapter } = createChapterSlice.actions;
 export default createChapterSlice.reducer;

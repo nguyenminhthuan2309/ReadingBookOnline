@@ -448,7 +448,7 @@ function ChapterBasicInfo() {
               <div></div>
             )}
           </div>
-          <FormControl>
+          {/* <FormControl>
             <FormLabel id="demo-row-radio-buttons-group-label">
               <span className="text-black text-[18px]">After submit:</span>
             </FormLabel>
@@ -469,7 +469,7 @@ function ChapterBasicInfo() {
                 label="Upload next chapter"
               />
             </RadioGroup>
-          </FormControl>
+          </FormControl> */}
           <div className=" mt-14 w-full text-white flex justify-center">
             <button
               type="submit"

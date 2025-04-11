@@ -6,9 +6,11 @@ import forgotPasswordReducer from "./slices/authReducer/forgotPasswordReducer";
 import verifyTokenReducer from "./slices/authReducer/checkToken";
 import verifyCodeReducer from "./slices/authReducer/checkCode"
 
+import createBookReducer from "./slices/bookReducer/createBook"
 import bookReducer from "./slices/bookReducer/editBook"
 import deleteBookReducer from "./slices/bookReducer/deleteBook"
 
+import createChapterReducer from "./slices/chapterReducer/createChapter"
 import infoChapterReducer from "./slices/chapterReducer/infoChapter"
 import deleteChapterReducer from "./slices/chapterReducer/deleteChapter"
 
@@ -39,7 +41,9 @@ export default configureStore({
     verifyToken: verifyTokenReducer,
     verifyCode: verifyCodeReducer,
     bookInfo: bookReducer,
+    createBook: createBookReducer,
     deleteBook: deleteBookReducer,
+    createChapter: createChapterReducer,
     infoChapter: infoChapterReducer,
     deleteChapter: deleteChapterReducer,
     uploadImage: uploadImageRducer,

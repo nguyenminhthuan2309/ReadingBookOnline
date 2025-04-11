@@ -29,9 +29,8 @@ export const createBook = (bookData) => {
     try {
       const response = await postAPI(url, bookData);
       if (response && response.data) {
-        dispatch(createBookSuccess(response.data));
+        dispatch(createBookSuccess(response.data.data));
         ShowNotify(SUCESSS, "Create book successfully");
-        Router.push("/book/gallery");
         return response;
       }
     } catch (error) {
