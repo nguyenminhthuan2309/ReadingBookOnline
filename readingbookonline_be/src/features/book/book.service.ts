@@ -312,7 +312,7 @@ export class BookService {
         throw new NotFoundException('Book not found');
       }
 
-      if (book.author.id !== user.id) {
+      if (!user || book.author.id !== user.id) {
         await this.databaseService
           .queryBuilder(this.bookRepository, 'book')
           .update(Book)
