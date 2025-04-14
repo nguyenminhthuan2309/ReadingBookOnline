@@ -38,11 +38,6 @@ export class CreateBookDto {
   @IsNumber()
   bookTypeId: number;
 
-  @ApiProperty({ example: 1, description: 'ID của Access Status' })
-  @IsNotEmpty()
-  @IsNumber()
-  accessStatusId: number;
-
   @ApiProperty({ example: 2, description: 'ID của Progress Status' })
   @IsNotEmpty()
   @IsNumber()

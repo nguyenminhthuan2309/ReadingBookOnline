@@ -76,6 +76,7 @@ import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase
 export class BookService {
   private readonly redisBookTtl = bookConfig.redisBookTtl;
   private readonly adminMail = 'iiiimanhiiii007@gmail.com';
+  private readonly privateBookStatus = 2;
 
   constructor(
     @InjectRepository(Book)
@@ -118,7 +119,7 @@ export class BookService {
     } else if (accessStatusId === 4) {
       return `Pending: ${title} is under review for suspected community standards violations. You will temporarily not be able to update this book during the review. To appeal, please contact via email: ${this.adminMail}`;
     } else if (accessStatusId === 1) {
-      return ` ${title} has been restored. We apologize for the inconvenience caused.`;
+      return `Your book "${title}" has successfully passed the review and has been restored. Thank you for your patience.`;
     }
 
     return '';
@@ -529,7 +530,7 @@ export class BookService {
         cover: dto.cover,
         ageRating: dto.ageRating,
         bookType: { id: dto.bookTypeId },
-        accessStatus: { id: dto.accessStatusId },
+        accessStatus: { id: this.privateBookStatus },
         progressStatus: { id: dto.progressStatusId },
         author: { id: author.id },
       });
@@ -575,7 +576,6 @@ export class BookService {
         description: dto.description,
         cover: dto.cover,
         ageRating: dto.ageRating,
-        accessStatus: { id: dto.accessStatusId },
         progressStatus: { id: dto.progressStatusId },
       });
 
@@ -1364,10 +1364,8 @@ export class BookService {
       const roleId = user.role?.id;
 
       if (
-        accessStatusId !== undefined &&
-        (accessStatusId === 4 ||
-          accessStatusId === 3 ||
-          (accessStatusId === 1 && roleId !== 1))
+        typeof accessStatusId === 'number' &&
+        [1, 3, 4].includes(accessStatusId)
       ) {
         const statusMessage = this.getStatusMessage(book.title, accessStatusId);
 
