@@ -119,7 +119,7 @@ export class UserService {
         this.redisTtlResetPassword,
       );
 
-      const verificationUrl = `http://localhost:3001/account/verifyAccount?token=${verificationToken}`;
+      const verificationUrl = `http://localhost:3001/verify-email?token=${verificationToken}&&email=${email}`;
 
       await this.mailerService.sendMail({
         to: email,
