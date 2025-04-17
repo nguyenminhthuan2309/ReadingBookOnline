@@ -10,14 +10,14 @@ import {
   Patch,
   Param,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { UserService } from './user.service';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import {
   GetUsersFilterDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
@@ -26,6 +26,7 @@ import { UpdatePasswordDto } from './dto/update-password-dto';
 import { AdminGuard } from '@core/auth/admin.guard';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import { AddFavoriteCategoriesDto } from './dto/user-favorite.dto';
 
 @Controller('user')
 export class UserController {
@@ -111,5 +112,27 @@ export class UserController {
       id,
       updateUserStatusDto.statusId,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Thêm thể loại sách với người dùng' })
+  @ApiBody({ type: AddFavoriteCategoriesDto })
+  @Post('favorite/categories')
+  async addFavorites(
+    @Req() req: Request,
+    @Body() body: { categoryIds: number[] },
+  ) {
+    const userId = (req as any).user?.id;
+    return this.userService.addFavorite(userId, body.categoryIds);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy danh sách thể loại sách yêu thích của người dùng',
+  })
+  @Get('favorite/categories')
+  async getFavoriteCategories(@Req() req: Request) {
+    const userId = (req as any).user?.id;
+    return this.userService.getFavoriteCategories(userId);
   }
 }

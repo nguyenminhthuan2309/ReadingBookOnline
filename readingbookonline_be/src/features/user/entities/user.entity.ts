@@ -24,6 +24,7 @@ import { BookChapterComment } from '@features/book/entities/book-chapter-comment
 import { BookNotification } from '@features/book/entities/book-notification.entity';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { Transaction } from '@features/transaction/entities/transaction.entity';
+import { UserFavorite } from './user-favorite.entity';
 
 @Entity('user')
 export class User {
@@ -94,6 +95,9 @@ export class User {
 
   @OneToMany(() => ChapterPurchase, (purchase) => purchase.user)
   chapterPurchases: ChapterPurchase[];
+
+  @OneToMany(() => UserFavorite, (favorite) => favorite.user)
+  favorites: UserFavorite[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

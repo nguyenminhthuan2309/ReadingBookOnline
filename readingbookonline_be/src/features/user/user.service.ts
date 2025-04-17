@@ -11,7 +11,7 @@ import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
 import { plainToInstance } from 'class-transformer';
 import {
@@ -29,6 +29,8 @@ import { UpdatePasswordDto } from './dto/update-password-dto';
 import { JwtService } from '@nestjs/jwt';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import { UserFavorite } from './entities/user-favorite.entity';
+import { BookCategory } from '@features/book/entities/book-category.entity';
 
 @Injectable()
 export class UserService {
@@ -41,6 +43,10 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserFavorite)
+    private readonly userFavoriteRepository: Repository<UserFavorite>,
+    @InjectRepository(BookCategory)
+    private readonly bookCategoryRepository: Repository<BookCategory>,
     private readonly dataBaseService: DatabaseService,
     private readonly mailerService: MailerService,
     private readonly loggerService: LoggerService,
@@ -479,6 +485,64 @@ export class UserService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.updateUserStatus');
+      throw error;
+    }
+  }
+
+  async addFavorite(userId: number, categoryId: number[]) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException('User not found');
+
+      const categories = await this.bookCategoryRepository.find({
+        where: { id: In(categoryId) },
+      });
+      if (!categories.length)
+        throw new NotFoundException('No valid categories found');
+
+      const categoryIds = categories.map((c) => c.id);
+      const existingFavorites = await this.userFavoriteRepository.find({
+        where: {
+          user: { id: userId },
+          category: { id: In(categoryIds) },
+        },
+        relations: ['category'],
+      });
+
+      const existingCategoryIds = new Set(
+        existingFavorites.map((fav) => fav.category.id),
+      );
+
+      const newFavorites = categories
+        .filter((category) => !existingCategoryIds.has(category.id))
+        .map((category) =>
+          this.userFavoriteRepository.create({ user, category }),
+        );
+
+      if (newFavorites.length > 0) {
+        await this.userFavoriteRepository.save(newFavorites);
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.addFavorite');
+      throw error;
+    }
+  }
+
+  async getFavoriteCategories(userId: number) {
+    try {
+      const favorites = await this.userFavoriteRepository.find({
+        where: { user: { id: userId } },
+        relations: ['category'],
+      });
+
+      return favorites.map((fav) => fav.category);
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'UserService.getFavoriteCategories',
+      );
       throw error;
     }
   }

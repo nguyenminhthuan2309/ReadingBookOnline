@@ -9,10 +9,19 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BookModule } from '@features/book/book.module';
 import { UserStatus } from './entities/user-status.entity';
 import { LoggerModule } from '@core/logger/logger.module';
+import { UserFavorite } from './entities/user-favorite.entity';
+import { BookCategory } from '@features/book/entities/book-category.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserReport, UserStatus, Role]),
+    TypeOrmModule.forFeature([
+      User,
+      UserReport,
+      UserStatus,
+      Role,
+      UserFavorite,
+      BookCategory,
+    ]),
     forwardRef(() => BookModule),
     JwtModule,
     LoggerModule,
