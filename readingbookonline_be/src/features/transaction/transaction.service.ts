@@ -108,7 +108,7 @@ export class TransactionService {
       await this.dataBaseService.create(this.transactionRepository, {
         id: orderId,
         amount,
-        points: amount,
+        tokens: amount,
         status: TransactionStatus.PENDING,
         user: { id: user.id },
       });
@@ -152,11 +152,18 @@ export class TransactionService {
           transaction.status = TransactionStatus.SUCCESS;
           await this.transactionRepository.save(transaction);
 
-          await this.userRepository.increment(
-            { id: transaction.user.id },
-            'points',
-            transaction.amount,
-          );
+          const tokens = Math.floor(transaction.amount / 1000);
+
+          await this.userRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              tokenBalance: () => `"token_balance" + ${tokens}`,
+              tokenReceived: () => `"token_received" + ${tokens}`,
+              tokenPurchased: () => `"token_purchased" + ${tokens}`,
+            })
+            .where('id = :id', { id: transaction.user.id })
+            .execute();
 
           await this.mailerService.sendMail({
             to: transaction.user.email,
@@ -249,11 +256,25 @@ export class TransactionService {
           transaction.status = TransactionStatus.SUCCESS;
 
           await this.transactionRepository.save(transaction);
+
           await this.userRepository.increment(
             { id: transaction.user.id },
-            'points',
+            'tokenBalance',
             transaction.amount,
           );
+
+          const tokens = Math.floor(transaction.amount / 1000);
+
+          await this.userRepository
+            .createQueryBuilder()
+            .update()
+            .set({
+              tokenBalance: () => `"token_balance" + ${tokens}`,
+              tokenReceived: () => `"token_received" + ${tokens}`,
+              tokenPurchased: () => `"token_purchased" + ${tokens}`,
+            })
+            .where('id = :id', { id: transaction.user.id })
+            .execute();
 
           await this.mailerService.sendMail({
             to: transaction.user.email,
@@ -413,13 +434,19 @@ export class TransactionService {
         throw new BadRequestException('Chapter already purchased');
       }
 
-      if (user.points < chapter.price) {
-        throw new BadRequestException('Not enough points. Please top up');
+      if (user.tokenBalance < chapter.price) {
+        throw new BadRequestException('Not enough tokens. Please top up');
       }
 
       await this.userRepository.decrement(
         { id: user.id },
-        'points',
+        'tokenBalance',
+        chapter.price,
+      );
+
+      await this.userRepository.increment(
+        { id: user.id },
+        'tokenSpent',
         chapter.price,
       );
 

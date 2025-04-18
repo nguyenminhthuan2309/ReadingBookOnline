@@ -26,6 +26,12 @@ import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase
 import { Transaction } from '@features/transaction/entities/transaction.entity';
 import { UserFavorite } from './user-favorite.entity';
 
+export enum GENDER_ENUM {
+  MALE = 'male',
+  FEMALE = 'female',
+  OTHER = 'other',
+}
+
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
@@ -42,12 +48,33 @@ export class User {
   @Column({ name: 'name', type: 'varchar' })
   name: string;
 
+  @Index('idx_user_gender')
+  @Column({
+    name: 'gender',
+    type: 'enum',
+    enum: GENDER_ENUM,
+    default: GENDER_ENUM.OTHER,
+  })
+  gender: GENDER_ENUM;
+
   @Column({ name: 'avatar', type: 'varchar', nullable: true })
   avatar: string;
 
   @Index('idx_user_birth_date')
   @Column({ name: 'birth_date', type: 'date', nullable: true })
   birthDate: Date;
+
+  @Column({ name: 'bio', type: 'text', nullable: true })
+  bio: string;
+
+  @Column({ name: 'facebook_link', type: 'varchar', nullable: true })
+  facebook: string;
+
+  @Column({ name: 'twitter', type: 'varchar', nullable: true })
+  twitter: string;
+
+  @Column({ name: 'instagram', type: 'varchar', nullable: true })
+  instagram: string;
 
   @Index('idx_user_role')
   @ManyToOne(() => Role, (role) => role.users)
@@ -59,9 +86,29 @@ export class User {
   @JoinColumn({ name: 'status_id' })
   status: UserStatus;
 
-  @Index('idx_user_points')
-  @Column({ name: 'points', type: 'decimal', default: 0 })
-  points: number;
+  @Index('idx_user_token_balance')
+  @Column({ name: 'token_balance', type: 'decimal', default: 0 })
+  tokenBalance: number;
+
+  @Index('idx_user_token_spent')
+  @Column({ name: 'token_spent', type: 'decimal', default: 0 })
+  tokenSpent: number;
+
+  @Index('idx_user_token_received')
+  @Column({ name: 'token_received', type: 'decimal', default: 0 })
+  tokenReceived: number;
+
+  @Index('idx_user_token_purchased')
+  @Column({ name: 'token_purchased', type: 'decimal', default: 0 })
+  tokenPurchased: number;
+
+  @Index('idx_user_token_withdrawn')
+  @Column({ name: 'token_withdrawn', type: 'decimal', default: 0 })
+  tokenWithdrawn: number;
+
+  @Index('idx_user_token_earned')
+  @Column({ name: 'token_earned', type: 'decimal', default: 0 })
+  tokenEarned: number;
 
   @OneToMany(() => Book, (book) => book.author)
   books: Book[];

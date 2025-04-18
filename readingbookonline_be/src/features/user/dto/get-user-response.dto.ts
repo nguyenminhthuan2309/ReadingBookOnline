@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { GENDER_ENUM } from '../entities/user.entity';
 
 class RoleDto {
   @Expose()
@@ -42,6 +43,11 @@ export class UserResponseDto {
   @Expose()
   @IsOptional()
   @IsString()
+  gender?: GENDER_ENUM;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
   avatar?: string;
 
   @Expose()
@@ -51,13 +57,58 @@ export class UserResponseDto {
 
   @Expose()
   @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  facebook?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  twitter?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  instagram?: string;
+
+  @Expose()
+  @IsOptional()
   @Type(() => RoleDto)
   role?: RoleDto;
 
   @Expose()
   @IsOptional()
   @IsNumber()
-  points?: number;
+  tokenBalance?: number;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  tokenSpent?: number;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  tokenReceived?: number;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  tokenPurchased?: number;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  tokenWithdrawn?: number;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  tokenEarned?: number;
 
   @Expose()
   @IsOptional()
@@ -73,6 +124,16 @@ export class UserResponseDto {
   @IsOptional()
   @IsDate()
   updateAt?: Date;
+}
+
+export class UserProfileResponseDto extends UserResponseDto {
+  @Expose()
+  @IsNumber()
+  booksRead: number;
+
+  @Expose()
+  @IsNumber()
+  chaptersRead: number;
 }
 
 export class GetUsersFilterDto {

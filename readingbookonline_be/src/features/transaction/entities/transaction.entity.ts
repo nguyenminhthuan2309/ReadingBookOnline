@@ -24,8 +24,8 @@ export class Transaction {
   @Column({ name: 'amount', type: 'decimal' })
   amount: number;
 
-  @Column({ name: 'points', type: 'int' })
-  points: number;
+  @Column({ name: 'tokens', type: 'int' })
+  tokens: number;
 
   @Column({
     type: 'enum',

@@ -3,6 +3,7 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 import { GetBookDto } from './get-book.dto';
 import { Expose, Type } from 'class-transformer';
 import { GetBookChapterDto } from './get-book-chapter.dto';
+import { AuthorDto } from './get-author.dto';
 
 export class CreateBookReadingHistoryDto {
   @ApiProperty({ example: 1, description: 'ID của sách mà user đang đọc' })
@@ -50,4 +51,33 @@ export class BookReadingHistoryResponseDto {
   })
   @Expose()
   createdAt: Date;
+}
+
+export class ChapterReadDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  title: string;
+
+  @Expose()
+  lastReadAt: Date;
+
+  @Expose()
+  isLocked: boolean;
+}
+
+export class BookReadingSummaryDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  title: string;
+
+  @Expose()
+  cover: string;
+
+  @Expose()
+  @Type(() => ChapterReadDto)
+  chaptersRead: ChapterReadDto[];
 }

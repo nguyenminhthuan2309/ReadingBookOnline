@@ -11,6 +11,9 @@ import { UserStatus } from './entities/user-status.entity';
 import { LoggerModule } from '@core/logger/logger.module';
 import { UserFavorite } from './entities/user-favorite.entity';
 import { BookCategory } from '@features/book/entities/book-category.entity';
+import { UserSettings } from './entities/user-setting.entity';
+import { Book } from '@features/book/entities/book.entity';
+import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 
 @Module({
   imports: [
@@ -20,7 +23,10 @@ import { BookCategory } from '@features/book/entities/book-category.entity';
       UserStatus,
       Role,
       UserFavorite,
+      Book,
+      BookReadingHistory,
       BookCategory,
+      UserSettings,
     ]),
     forwardRef(() => BookModule),
     JwtModule,
