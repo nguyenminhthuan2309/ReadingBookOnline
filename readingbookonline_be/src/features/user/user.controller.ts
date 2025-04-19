@@ -16,6 +16,7 @@ import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import {
   GetUsersFilterDto,
   UserProfileResponseDto,
+  UserPublicDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
@@ -27,7 +28,10 @@ import { UpdatePasswordDto } from './dto/update-password-dto';
 import { AdminGuard } from '@core/auth/admin.guard';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
-import { AddFavoriteCategoriesDto } from './dto/user-favorite.dto';
+import {
+  AddFavoriteCategoriesDto,
+  updateFavoriteCategoriesDto,
+} from './dto/user-favorite.dto';
 import { UpdateSettingsDto } from './dto/user-setting.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 
@@ -117,25 +121,20 @@ export class UserController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Thêm thể loại sách với người dùng' })
   @ApiBody({ type: AddFavoriteCategoriesDto })
   @Post('favorite/categories')
-  async addFavorites(
-    @Req() req: Request,
-    @Body() body: { categoryIds: number[] },
-  ) {
-    const userId = (req as any).user?.id;
-    return this.userService.addFavorite(userId, body.categoryIds);
+  async addFavorites(@Body() body: { userId: number; categoryIds: number[] }) {
+    return this.userService.addFavorite(body);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Chỉnh sửa thể loại sách yêu thích của người dùng' })
-  @ApiBody({ type: AddFavoriteCategoriesDto })
+  @ApiBody({ type: updateFavoriteCategoriesDto })
   @Patch('favorite/categories')
   async updateFavorite(
     @Req() req: Request,
-    @Body() body: AddFavoriteCategoriesDto,
+    @Body() body: updateFavoriteCategoriesDto,
   ) {
     const userId = (req as any).user?.id;
     return this.userService.updateFavorite(userId, body.categoryIds);
@@ -172,6 +171,14 @@ export class UserController {
   ) {
     const userId = (req as any).user?.id;
     return this.userService.updateSettings(userId, updateSettingsDto);
+  }
+
+  @Get('search')
+  @ApiOperation({
+    summary: 'Tìm kiếm người dùng theo tên',
+  })
+  async searchUsers(@Query('search') search: string): Promise<UserPublicDto[]> {
+    return this.userService.searchUsersByName(search);
   }
 
   @Get(':id')

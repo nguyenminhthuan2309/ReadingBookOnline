@@ -168,3 +168,36 @@ export class GetUsersFilterDto {
   @IsNumber()
   role?: number;
 }
+
+export class UserPublicDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  name: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  facebook?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  twitter?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  instagram?: string;
+}

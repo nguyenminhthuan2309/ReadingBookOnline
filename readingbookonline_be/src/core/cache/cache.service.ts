@@ -22,8 +22,6 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       username: this.redisUserName,
       password: this.redisPassword,
     });
-
-    console.log(this.redis);
   }
 
   async onModuleInit() {

@@ -17,6 +17,7 @@ import { plainToInstance } from 'class-transformer';
 import {
   GetUsersFilterDto,
   UserProfileResponseDto,
+  UserPublicDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
 import { jwtConfig, userConfig } from '@core/config/global';
@@ -490,6 +491,28 @@ export class UserService {
     }
   }
 
+  async searchUsersByName(search: string): Promise<UserPublicDto[]> {
+    try {
+      if (!search) return [];
+
+      const users = await this.userRepository
+        .createQueryBuilder('user')
+        .where(`unaccent(lower(user.name)) LIKE unaccent(lower(:search))`, {
+          search: `%${search}%`,
+        })
+        .andWhere('user.status_id = :statusId', { statusId: 1 })
+        .andWhere('user.role_id = :roleId', { roleId: 3 })
+        .getMany();
+
+      return plainToInstance(UserPublicDto, users, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.searchUsersByName');
+      throw error;
+    }
+  }
+
   async createManagerAccount(createDto: CreateManagerDto): Promise<User> {
     try {
       const { email, password, name } = createDto;
@@ -542,22 +565,28 @@ export class UserService {
     }
   }
 
-  async addFavorite(userId: number, categoryId: number[]) {
+  async addFavorite(body) {
     try {
+      const { userId, categoryIds } = body;
+
       const user = await this.userRepository.findOne({ where: { id: userId } });
       if (!user) throw new NotFoundException('User not found');
 
-      const categories = await this.bookCategoryRepository.find({
-        where: { id: In(categoryId) },
-      });
-      if (!categories.length)
-        throw new NotFoundException('No valid categories found');
+      if (!categoryIds || categoryIds.length === 0) return true;
 
-      const categoryIds = categories.map((c) => c.id);
+      const categories = await this.bookCategoryRepository.find({
+        where: { id: In(categoryIds) },
+      });
+
+      if (!categories.length) {
+        throw new NotFoundException('No valid categories found');
+      }
+
+      const categoryIdsFound = categories.map((c) => c.id);
       const existingFavorites = await this.userFavoriteRepository.find({
         where: {
           user: { id: userId },
-          category: { id: In(categoryIds) },
+          category: { id: In(categoryIdsFound) },
         },
         relations: ['category'],
       });
@@ -583,22 +612,34 @@ export class UserService {
     }
   }
 
-  async updateFavorite(userId: number, categoryIds: number[]) {
+  async updateFavorite(
+    userId: number,
+    categoryIds: number[],
+  ): Promise<boolean> {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
-
       if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
       }
 
       const currentFavorites = await this.userFavoriteRepository.find({
         where: { user: { id: userId } },
+        relations: ['category'],
       });
+
+      if (!categoryIds || categoryIds.length === 0) {
+        if (currentFavorites.length > 0) {
+          await this.userFavoriteRepository.remove(currentFavorites);
+        }
+        return true;
+      }
 
       const categoriesToRemove = currentFavorites.filter(
         (fav) => !categoryIds.includes(fav.category.id),
       );
-      await this.userFavoriteRepository.remove(categoriesToRemove);
+      if (categoriesToRemove.length > 0) {
+        await this.userFavoriteRepository.remove(categoriesToRemove);
+      }
 
       const categoriesToAdd = categoryIds.filter(
         (categoryId) =>
@@ -613,9 +654,10 @@ export class UserService {
         });
 
         if (category) {
-          const userFavorite = new UserFavorite();
-          userFavorite.user = user;
-          userFavorite.category = category;
+          const userFavorite = this.userFavoriteRepository.create({
+            user,
+            category,
+          });
           favoriteEntries.push(userFavorite);
         }
       }

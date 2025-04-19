@@ -20,16 +20,15 @@ import {
   GetBookRequestDto,
   GetBookResponseDto,
 } from './dto/get-book-request.dto';
-import {
-  GetBookCategoryRequestDto,
-  GetBookCateogryResponseDto,
-} from './dto/get-book-category.dto';
 import { GetProgressStatusDto } from './dto/get-book-progess-status.dto';
 import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
 import { GetAccessStatusDto } from './dto/get-book-access-status.dto';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import { CreateBookChapterDto } from './dto/create-book-chapter.dto';
+import {
+  CreateBookChapterDto,
+  CreateMultipleBookChaptersDto,
+} from './dto/create-book-chapter.dto';
 import { UpdateBookChapterDto } from './dto/update-book-chapter.dto';
 import {
   CreateBookReviewDto,
@@ -49,6 +48,15 @@ import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.d
 import { UpdateBookStatusDto } from './dto/book-status.dto';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
+import {
+  BookTrendingResponseDto,
+  GetTrendingBooksDto,
+} from './dto/book-trending.dto';
+import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
+import {
+  BookRelatedResponseDto,
+  GetRelatedBooksDto,
+} from './dto/book-related.dto';
 
 @Controller('book')
 export class BookController {
@@ -67,10 +75,8 @@ export class BookController {
 
   @ApiOperation({ summary: 'Lấy danh mục' })
   @Get('category')
-  async getBookCategory(
-    @Query() params: GetBookCategoryRequestDto,
-  ): Promise<GetBookCateogryResponseDto> {
-    return await this.bookService.getBookCategory(params);
+  async getBookCategory() {
+    return await this.bookService.getBookCategory();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -109,15 +115,15 @@ export class BookController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Tạo chương sách mới' })
   @Post('/chapter/:bookId')
-  async createChapter(
+  async createChapters(
     @Param('bookId') bookId: number,
-    @Body() dto: CreateBookChapterDto,
+    @Body() dto: CreateMultipleBookChaptersDto,
     @Request() req,
   ): Promise<boolean> {
     const author = req.user;
     if (!author) throw new ForbiddenException('Bạn không có quyền');
 
-    return this.bookService.createChapter(dto, bookId, author);
+    return this.bookService.createChapters(dto, bookId, author);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -362,7 +368,6 @@ export class BookController {
   })
   async markAllNotificationsAsRead(@Req() req): Promise<Boolean> {
     const user = req.user;
-
     return await this.bookService.markAllNotificationsAsRead(user);
   }
 
@@ -377,6 +382,37 @@ export class BookController {
   ) {
     const author = req.user;
     return this.bookService.getBookNotification(author, pagination);
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: 'Lấy danh sách sách đọc nhiều nhất trong 30 ngày' })
+  async getTrendingBooks(
+    @Query() req: GetTrendingBooksDto,
+  ): Promise<PaginationResponseDto<BookTrendingResponseDto>> {
+    return this.bookService.getTrendingBooks(req);
+  }
+
+  @UseGuards(OptionalAuthGuard)
+  @Get('recommend')
+  @ApiOperation({ summary: 'Lấy danh sách sách khuyến nghị cho người dùng' })
+  async getRecommendedBooks(
+    @Req() req,
+    @Query() params: GetRecommendedBooksDto,
+  ): Promise<BookTrendingResponseDto[]> {
+    const userId = (req as any).user.id;
+    return this.bookService.getRecommendedBooks(userId, params);
+  }
+
+  @Get('related/:bookId')
+  @ApiOperation({
+    summary:
+      'Lấy danh sách sách liên quan tới danh mục + tác giả, sau đó tới khác danh mục cùng tác giả',
+  })
+  async getRelatedBooks(
+    @Param('bookId') bookId: number,
+    @Query() req: GetRelatedBooksDto,
+  ): Promise<PaginationResponseDto<BookRelatedResponseDto>> {
+    return this.bookService.getRelatedBooks(bookId, req);
   }
 
   @UseGuards(OptionalAuthGuard)
@@ -411,6 +447,15 @@ export class BookController {
   ): Promise<boolean> {
     const author = req.user;
     return await this.bookService.deleteBook(id, author);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Xóa hết tất cả chương trong sách',
+  })
+  @Delete(':bookId/chapters')
+  async clearAllChapters(@Param('bookId') bookId: number) {
+    return this.bookService.clearAllChapters(bookId);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)

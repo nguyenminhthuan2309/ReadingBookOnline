@@ -18,6 +18,7 @@ import { BookType } from './entities/book-type.entity';
 import { BookNotification } from './entities/book-notification.entity';
 import { BookNotificationModule } from '@core/gateway/book-notification.module';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
+import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase
       BookChapterComment,
       BookNotification,
       ChapterPurchase,
+      UserFavorite,
     ]),
     forwardRef(() => UserModule),
     BookNotificationModule,

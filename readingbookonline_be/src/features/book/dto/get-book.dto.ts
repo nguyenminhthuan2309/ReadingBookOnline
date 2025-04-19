@@ -104,4 +104,14 @@ export class GetBookDetail extends GetBookDto {
   @IsNumber()
   @Expose()
   rating: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Expose()
+  totalReads: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Expose()
+  totalPurchases: number;
 }
