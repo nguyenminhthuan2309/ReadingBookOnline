@@ -80,7 +80,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Đổi mật khẩu' })
-  @Put('update-password')
+  @Patch('update-password')
   async updatePassword(@Req() req: Request, @Body() body: UpdatePasswordDto) {
     return this.userService.updatePassword(req, body);
   }

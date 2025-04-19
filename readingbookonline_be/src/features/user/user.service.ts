@@ -320,6 +320,8 @@ export class UserService {
         { relations: ['role', 'status'], where: { id } },
       );
 
+      if (!infoUser) throw new NotFoundException('User not found');
+
       const booksRead = await this.bookReadingHistoryRepository
         .createQueryBuilder('readingHistory')
         .select('DISTINCT readingHistory.book')

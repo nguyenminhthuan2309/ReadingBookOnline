@@ -5,9 +5,10 @@ import { DataSourceOptions } from 'typeorm';
 config({ path: path.join(process.cwd(), 'src', '.env') });
 
 export const redisConfig = {
-  host: process.env.REDIS_HOST || '',
-  port: process.env.REDIS_PORT || '',
-  password: process.env.REDIS_PASSWORD || '',
+  host: process.env.REDIS_HOST || 'localhost',
+  port: Number(process.env.REDIS_PORT) || 6379,
+  username: process.env.REDIS_USERNAME || 'default',
+  password: process.env.REDIS_PASSWORD || '1234',
 };
 
 export const postgresConfig: DataSourceOptions = {
