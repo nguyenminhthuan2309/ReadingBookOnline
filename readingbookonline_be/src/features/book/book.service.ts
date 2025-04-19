@@ -60,7 +60,8 @@ import { BookReport } from './entities/book-report.entity';
 import { GetBookTypeDto } from './dto/book-type.dto';
 import { BookType } from './entities/book-type.entity';
 import {
-  BookReadingHistoryResponseDto,
+  BookReadingSummaryDto,
+  ChapterReadDto,
   CreateBookReadingHistoryDto,
 } from './dto/create-book-reading-history.dto';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
@@ -1268,65 +1269,111 @@ export class BookService {
     }
   }
 
-  async getReadingHistory(
+  async getReadingHistorySummary(
     user: User,
     pagination: PaginationRequestDto,
-  ): Promise<PaginationResponseDto<BookReadingHistoryResponseDto>> {
-    try {
-      const { limit = 10, page = 1 } = pagination;
+  ): Promise<PaginationResponseDto<BookReadingSummaryDto>> {
+    const { page = 1, limit = 10 } = pagination;
 
-      const subQuery = this.bookReadingHistoryRepository
-        .createQueryBuilder('sub')
-        .select('MAX(sub.id)', 'id')
-        .where('sub.user_id = :userId', { userId: user.id })
-        .groupBy('sub.book_id, sub.chapter_id');
+    const readingHistories = await this.bookReadingHistoryRepository.find({
+      where: { user: { id: user.id } },
+      relations: ['book', 'chapter'],
+      order: { createdAt: 'DESC' },
+    });
 
-      const rawResult = await subQuery.getRawMany();
+    if (!readingHistories.length) {
+      return {
+        totalItems: 0,
+        totalPages: 0,
+        data: [],
+      };
+    }
 
-      const ids = rawResult.map((row) => row.id);
+    const chapterIds = Array.from(
+      new Set(readingHistories.map((r) => r.chapter.id)),
+    );
 
-      if (ids.length === 0) {
-        return {
-          totalItems: 0,
-          totalPages: 0,
-          data: [],
-        };
+    const purchased = await this.chapterPurchaseRepository.find({
+      where: {
+        user: { id: user.id },
+        chapter: { id: In(chapterIds) },
+      },
+    });
+
+    const purchasedSet = new Set(purchased.map((p) => p.chapter.id));
+
+    const bookMap = new Map<
+      number,
+      {
+        bookDto: BookReadingSummaryDto;
+        chapterMap: Map<number, ChapterReadDto>;
+        latestTime: number;
+      }
+    >();
+
+    for (const history of readingHistories) {
+      const { book, chapter, createdAt } = history;
+
+      if (!bookMap.has(book.id)) {
+        bookMap.set(book.id, {
+          bookDto: {
+            id: book.id,
+            title: book.title,
+            cover: book.cover,
+            chaptersRead: [],
+          },
+          chapterMap: new Map<number, ChapterReadDto>(),
+          latestTime: createdAt.getTime(),
+        });
       }
 
-      const [data, totalItems] =
-        await this.bookReadingHistoryRepository.findAndCount({
-          where: { id: In(ids) },
-          relations: [
-            'book',
-            'chapter',
-            'book.author',
-            'book.bookType',
-            'book.accessStatus',
-            'book.progressStatus',
-            'book.bookCategoryRelations',
-            'book.bookCategoryRelations.category',
-          ],
-          order: { createdAt: 'DESC' },
-          take: limit,
-          skip: (page - 1) * limit,
+      const entry = bookMap.get(book.id)!;
+      entry.latestTime = Math.max(entry.latestTime, createdAt.getTime());
+
+      const existing = entry.chapterMap.get(chapter.id);
+      if (!existing || createdAt.getTime() > existing.lastReadAt.getTime()) {
+        entry.chapterMap.set(chapter.id, {
+          id: chapter.id,
+          title: chapter.title,
+          lastReadAt: createdAt,
+          isLocked: chapter.isLocked,
         });
-
-      const dtos = plainToInstance(BookReadingHistoryResponseDto, data, {
-        excludeExtraneousValues: true,
-      });
-
-      return {
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-        data: dtos,
-      };
-    } catch (error) {
-      this.loggerService.err(
-        error.message,
-        'BookReadingHistoryService.getReadingHistory',
-      );
-      throw error;
+      }
     }
+
+    const allBooks = Array.from(bookMap.values())
+      .map(({ bookDto, chapterMap, latestTime }) => {
+        const chapters = Array.from(chapterMap.values())
+          .map((c) => ({
+            ...c,
+            isLocked: c.isLocked === false ? false : !purchasedSet.has(c.id),
+          }))
+          .sort((a, b) => b.lastReadAt.getTime() - a.lastReadAt.getTime());
+
+        bookDto.chaptersRead = chapters;
+
+        return {
+          ...bookDto,
+          _latestTime: latestTime,
+        };
+      })
+      .sort((a, b) => b._latestTime - a._latestTime);
+
+    const totalItems = allBooks.length;
+    const totalPages = Math.ceil(totalItems / limit);
+    const paginated = allBooks.slice((page - 1) * limit, page * limit);
+
+    const data = paginated.map(({ _latestTime, ...dto }) =>
+      plainToInstance(BookReadingSummaryDto, dto, {
+        excludeExtraneousValues: true,
+      }),
+    );
+
+    return {
+      totalItems,
+      totalPages,
+      data,
+    };
   }
 
   async updateBookStatus(

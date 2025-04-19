@@ -10,14 +10,15 @@ import {
   Patch,
   Param,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { UserService } from './user.service';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import {
   GetUsersFilterDto,
+  UserProfileResponseDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
@@ -26,6 +27,9 @@ import { UpdatePasswordDto } from './dto/update-password-dto';
 import { AdminGuard } from '@core/auth/admin.guard';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import { AddFavoriteCategoriesDto } from './dto/user-favorite.dto';
+import { UpdateSettingsDto } from './dto/user-setting.dto';
+import { UserProfileDto } from './dto/user-profile.dto';
 
 @Controller('user')
 export class UserController {
@@ -59,14 +63,14 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
-  @Get('/detail')
-  async getProfile(@Req() req: Request): Promise<UserResponseDto> {
+  @Get('/me')
+  async getProfile(@Req() req: Request): Promise<UserProfileResponseDto> {
     return await this.userService.getProfile(req);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cập nhật thông tin người dùng' })
-  @Put()
+  @Patch()
   async updateUser(
     @Req() req: Request,
     @Body() body: UpdateUserDto,
@@ -111,5 +115,68 @@ export class UserController {
       id,
       updateUserStatusDto.statusId,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Thêm thể loại sách với người dùng' })
+  @ApiBody({ type: AddFavoriteCategoriesDto })
+  @Post('favorite/categories')
+  async addFavorites(
+    @Req() req: Request,
+    @Body() body: { categoryIds: number[] },
+  ) {
+    const userId = (req as any).user?.id;
+    return this.userService.addFavorite(userId, body.categoryIds);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Chỉnh sửa thể loại sách yêu thích của người dùng' })
+  @ApiBody({ type: AddFavoriteCategoriesDto })
+  @Patch('favorite/categories')
+  async updateFavorite(
+    @Req() req: Request,
+    @Body() body: AddFavoriteCategoriesDto,
+  ) {
+    const userId = (req as any).user?.id;
+    return this.userService.updateFavorite(userId, body.categoryIds);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy danh sách thể loại sách yêu thích của người dùng',
+  })
+  @Get('favorite/categories')
+  async getFavoriteCategories(@Req() req: Request) {
+    const userId = (req as any).user?.id;
+    return this.userService.getFavoriteCategories(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy setting của người dùng',
+  })
+  @Get('settings')
+  async getSettings(@Req() req: Request) {
+    const userId = (req as any).user?.id;
+    return this.userService.getSettings(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Cập nhật setting của người dùng',
+  })
+  @Patch('settings')
+  async updateSettings(
+    @Req() req: Request,
+    @Body() updateSettingsDto: UpdateSettingsDto,
+  ) {
+    const userId = (req as any).user?.id;
+    return this.userService.updateSettings(userId, updateSettingsDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
+  async getUserProfile(@Param('id') id: number): Promise<UserProfileDto> {
+    return await this.userService.getUserProfileById(id);
   }
 }

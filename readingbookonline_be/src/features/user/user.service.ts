@@ -10,12 +10,13 @@ import {
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { GENDER_ENUM, User } from './entities/user.entity';
+import { In, Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
 import { plainToInstance } from 'class-transformer';
 import {
   GetUsersFilterDto,
+  UserProfileResponseDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
 import { jwtConfig, userConfig } from '@core/config/global';
@@ -29,6 +30,13 @@ import { UpdatePasswordDto } from './dto/update-password-dto';
 import { JwtService } from '@nestjs/jwt';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination-response.dto';
+import { UserFavorite } from './entities/user-favorite.entity';
+import { BookCategory } from '@features/book/entities/book-category.entity';
+import { UserSettings } from './entities/user-setting.entity';
+import { UpdateSettingsDto } from './dto/user-setting.dto';
+import { Book } from '@features/book/entities/book.entity';
+import { UserProfileDto } from './dto/user-profile.dto';
+import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 
 @Injectable()
 export class UserService {
@@ -41,6 +49,16 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserFavorite)
+    private readonly userFavoriteRepository: Repository<UserFavorite>,
+    @InjectRepository(BookCategory)
+    private readonly bookCategoryRepository: Repository<BookCategory>,
+    @InjectRepository(BookReadingHistory)
+    private readonly bookReadingHistoryRepository: Repository<BookReadingHistory>,
+    @InjectRepository(Book)
+    private readonly bookRepository: Repository<Book>,
+    @InjectRepository(UserSettings)
+    private readonly userSettingsRepository: Repository<UserSettings>,
     private readonly dataBaseService: DatabaseService,
     private readonly mailerService: MailerService,
     private readonly loggerService: LoggerService,
@@ -79,7 +97,18 @@ export class UserService {
 
   async register(body: CreateUserDto): Promise<UserResponseDto> {
     try {
-      const { email, password, name, birth_date } = body;
+      const {
+        email,
+        password,
+        name,
+        gender,
+        avatar,
+        birthDate,
+        bio,
+        facebook,
+        instagram,
+        twitter,
+      } = body;
 
       const emailExists = await this.dataBaseService.findOne<User>(
         this.userRepository,
@@ -96,7 +125,13 @@ export class UserService {
           email,
           password,
           name,
-          birthDate: birth_date ? new Date(birth_date) : undefined,
+          gender,
+          avatar,
+          birthDate: birthDate ? new Date(birthDate) : undefined,
+          bio,
+          facebook,
+          instagram,
+          twitter,
           role: { id: this.roleUserId },
           status: { id: this.statusUserId },
         },
@@ -276,7 +311,7 @@ export class UserService {
     }
   }
 
-  async getProfile(req: Request): Promise<UserResponseDto> {
+  async getProfile(req: Request): Promise<UserProfileResponseDto> {
     try {
       const id = (req as any).user?.id;
 
@@ -285,9 +320,24 @@ export class UserService {
         { relations: ['role', 'status'], where: { id } },
       );
 
-      const user = plainToInstance(UserResponseDto, infoUser, {
+      const booksRead = await this.bookReadingHistoryRepository
+        .createQueryBuilder('readingHistory')
+        .select('DISTINCT readingHistory.book')
+        .where('readingHistory.user = :userId', { userId: id })
+        .getCount();
+
+      const chaptersRead = await this.bookReadingHistoryRepository
+        .createQueryBuilder('readingHistory')
+        .select('DISTINCT readingHistory.chapter')
+        .where('readingHistory.user = :userId', { userId: id })
+        .getCount();
+
+      const user = plainToInstance(UserProfileResponseDto, infoUser, {
         excludeExtraneousValues: true,
       });
+
+      user.booksRead = booksRead;
+      user.chaptersRead = chaptersRead;
 
       return user;
     } catch (error) {
@@ -321,11 +371,18 @@ export class UserService {
 
       if (body.name) user.name = body.name;
       if (body.avatar) user.avatar = body.avatar;
-      if (body.birthDate) user.birthDate = body.birthDate;
+      if (body.birthDate) user.birthDate = new Date(body.birthDate);
+      if (body.bio) user.bio = body.bio;
+      if (body.facebook) user.facebook = body.facebook;
+      if (body.twitter) user.twitter = body.twitter;
+      if (body.instagram) user.instagram = body.instagram;
+      if (body.gender) user.gender = body.gender;
 
-      await this.dataBaseService.update<User>(this.userRepository, userId, {
-        ...body,
-      });
+      await this.dataBaseService.update<User>(
+        this.userRepository,
+        userId,
+        user,
+      );
 
       this.loggerService.info('User updated', 'UserService.updateUser');
 
@@ -479,6 +536,195 @@ export class UserService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.updateUserStatus');
+      throw error;
+    }
+  }
+
+  async addFavorite(userId: number, categoryId: number[]) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) throw new NotFoundException('User not found');
+
+      const categories = await this.bookCategoryRepository.find({
+        where: { id: In(categoryId) },
+      });
+      if (!categories.length)
+        throw new NotFoundException('No valid categories found');
+
+      const categoryIds = categories.map((c) => c.id);
+      const existingFavorites = await this.userFavoriteRepository.find({
+        where: {
+          user: { id: userId },
+          category: { id: In(categoryIds) },
+        },
+        relations: ['category'],
+      });
+
+      const existingCategoryIds = new Set(
+        existingFavorites.map((fav) => fav.category.id),
+      );
+
+      const newFavorites = categories
+        .filter((category) => !existingCategoryIds.has(category.id))
+        .map((category) =>
+          this.userFavoriteRepository.create({ user, category }),
+        );
+
+      if (newFavorites.length > 0) {
+        await this.userFavoriteRepository.save(newFavorites);
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.addFavorite');
+      throw error;
+    }
+  }
+
+  async updateFavorite(userId: number, categoryIds: number[]) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const currentFavorites = await this.userFavoriteRepository.find({
+        where: { user: { id: userId } },
+      });
+
+      const categoriesToRemove = currentFavorites.filter(
+        (fav) => !categoryIds.includes(fav.category.id),
+      );
+      await this.userFavoriteRepository.remove(categoriesToRemove);
+
+      const categoriesToAdd = categoryIds.filter(
+        (categoryId) =>
+          !currentFavorites.some((fav) => fav.category.id === categoryId),
+      );
+
+      const favoriteEntries: UserFavorite[] = [];
+
+      for (const categoryId of categoriesToAdd) {
+        const category = await this.bookCategoryRepository.findOne({
+          where: { id: categoryId },
+        });
+
+        if (category) {
+          const userFavorite = new UserFavorite();
+          userFavorite.user = user;
+          userFavorite.category = category;
+          favoriteEntries.push(userFavorite);
+        }
+      }
+
+      if (favoriteEntries.length > 0) {
+        await this.userFavoriteRepository.save(favoriteEntries);
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.updateFavorite');
+      throw error;
+    }
+  }
+
+  async getFavoriteCategories(userId: number) {
+    try {
+      const favorites = await this.userFavoriteRepository.find({
+        where: { user: { id: userId } },
+        relations: ['category'],
+      });
+
+      return favorites.map((fav) => fav.category);
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'UserService.getFavoriteCategories',
+      );
+      throw error;
+    }
+  }
+
+  async getSettings(userId: number): Promise<UserSettings> {
+    try {
+      let settings = await this.userSettingsRepository.findOne({
+        where: { user: { id: userId } },
+      });
+
+      if (!settings) {
+        settings = this.userSettingsRepository.create({
+          user: { id: userId },
+        });
+        await this.userSettingsRepository.save(settings);
+      }
+
+      return settings;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getSettings');
+      throw error;
+    }
+  }
+
+  async updateSettings(
+    userId: number,
+    updateSettingsDto: UpdateSettingsDto,
+  ): Promise<UserSettings> {
+    try {
+      let settings = await this.userSettingsRepository.findOne({
+        where: { user: { id: userId } },
+      });
+
+      if (!settings) {
+        settings = this.userSettingsRepository.create({
+          user: { id: userId },
+          ...updateSettingsDto,
+        });
+      } else {
+        settings = Object.assign(settings, updateSettingsDto);
+      }
+
+      return this.userSettingsRepository.save(settings);
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.updateSettings');
+      throw error;
+    }
+  }
+
+  async getUserProfileById(userId: number): Promise<UserProfileDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        select: ['name', 'avatar', 'bio', 'facebook', 'instagram', 'twitter'],
+      });
+
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      }
+
+      const books = await this.bookRepository.find({
+        where: { author: { id: userId }, accessStatus: { id: 1 } },
+        select: ['id', 'title', 'description', 'cover'],
+        order: { createdAt: 'DESC' },
+      });
+
+      return {
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+        facebook: user.facebook,
+        instagram: user.instagram,
+        twitter: user.twitter,
+        books: books.map((book) => ({
+          id: book.id,
+          title: book.title,
+          description: book.description,
+          cover: book.cover,
+          createdAt: book.createdAt,
+        })),
+      };
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getUserProfileById');
       throw error;
     }
   }

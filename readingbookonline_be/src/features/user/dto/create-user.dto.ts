@@ -2,12 +2,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEmail,
+  IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
+import { GENDER_ENUM } from '../entities/user.entity';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'iiiimanhiiii007@gmail.com', type: String })
@@ -22,22 +25,66 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({ example: 'Nguyễn Minh Thuận', type: String })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString({ message: 'Tên người dùng phải là chuỗi' })
-  name?: string;
+  name: string;
 
-  @ApiPropertyOptional({ example: 'https://google.com.vn', type: String })
+  @ApiPropertyOptional({
+    example: 'male',
+    enum: ['male', 'female', 'other'],
+    description: 'Giới tính của người dùng (optional)',
+  })
+  @IsOptional()
+  @IsEnum(GENDER_ENUM, { message: 'Giới tính không hợp lệ' })
+  gender: GENDER_ENUM;
+
+  @ApiPropertyOptional({
+    example: 'https://google.com.vn (optional)',
+    type: String,
+  })
   @IsOptional()
   @IsString({ message: 'Ảnh đại diện phỉa là chuỗi' })
   avatar?: string;
 
-  @ApiPropertyOptional({ example: '1990-01-01', type: String })
+  @ApiPropertyOptional({ example: '2000-02-14 (optional)', type: String })
   @IsOptional()
   @IsDateString(
     {},
     { message: 'Ngày sinh không hợp lệ, định dạng ISO (YYYY-MM-DD)' },
   )
-  birth_date?: string;
+  birthDate?: string;
+
+  @ApiPropertyOptional({
+    example: 'Tôi là một lập trình viên thích đọc sách (optional)',
+    type: String,
+  })
+  @IsOptional()
+  @IsString({ message: 'Giới thiệu phải là chuỗi' })
+  bio?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://facebook.com/yourprofile (optional)',
+    type: String,
+  })
+  @IsOptional()
+  @IsString({ message: 'Facebook link phải là chuỗi' })
+  facebook?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://twitter.com/yourhandle (optional)',
+    type: String,
+  })
+  @IsOptional()
+  @IsString({ message: 'Twitter phải là chuỗi' })
+  twitter?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://instagram.com/yourhandle (optional)',
+    type: String,
+  })
+  @IsOptional()
+  @IsString({ message: 'Instagram phải là chuỗi' })
+  instagram?: string;
 
   @IsNumber()
   roleId: number = 3;

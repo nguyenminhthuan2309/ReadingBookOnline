@@ -312,12 +312,12 @@ export class BookController {
     summary: 'Lấy danh sách lịch sử đọc sách của user (phân trang)',
   })
   @Get('reading-history')
-  async getReadingHistory(
+  async getReadingHistorySummary(
     @Req() req,
     @Query() pagination: PaginationRequestDto,
   ) {
     const author = req.user;
-    return this.bookService.getReadingHistory(author, pagination);
+    return this.bookService.getReadingHistorySummary(author, pagination);
   }
 
   // @UseGuards(JwtAuthGuard)
