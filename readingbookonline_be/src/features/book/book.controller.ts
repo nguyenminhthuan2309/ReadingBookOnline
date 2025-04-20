@@ -398,18 +398,19 @@ export class BookController {
     return this.bookService.getRecommendedBooks(userId, params);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get('related/:bookId')
   @ApiOperation({
     summary:
       'Lấy danh sách sách liên quan tới danh mục + tác giả, sau đó tới khác danh mục cùng tác giả',
   })
   async getRelatedBooks(
-    @Req() req,
     @Param('bookId') bookId: number,
+    @Req() req,
     @Query() params: GetRelatedBooksDto,
   ): Promise<PaginationResponseDto<GetListBookDto>> {
     const userId = (req as any)?.user?.id ?? null;
-    return this.bookService.getRelatedBooks(userId, bookId, params);
+    return this.bookService.getRelatedBooks(bookId, userId, params);
   }
 
   @UseGuards(OptionalAuthGuard)
