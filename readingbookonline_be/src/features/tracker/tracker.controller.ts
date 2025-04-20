@@ -61,6 +61,9 @@ export class TrackerController {
   }
 
   @Get('reading-book-history')
+  @ApiOperation({
+    summary: 'Lấy lịch sử đọc sách',
+  })
   @ApiQuery({
     name: 'bookId',
     required: true,
