@@ -1,6 +1,5 @@
 import { IsInt, Min, IsOptional } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BookTrendingResponseDto } from './book-trending.dto';
 import { Type } from 'class-transformer';
 
 export class GetRecommendedBooksDto {
@@ -15,5 +14,3 @@ export class GetRecommendedBooksDto {
   @Min(1)
   limit?: number = 15;
 }
-
-export class BookRecommendResponseDto extends BookTrendingResponseDto {}

@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -47,6 +47,7 @@ export class GetBookChapterDto {
   @IsNotEmpty()
   @Expose()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   price: number;
 
   @IsNotEmpty()

@@ -25,10 +25,7 @@ import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
 import { GetAccessStatusDto } from './dto/get-book-access-status.dto';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import {
-  CreateBookChapterDto,
-  CreateMultipleBookChaptersDto,
-} from './dto/create-book-chapter.dto';
+import { CreateMultipleBookChaptersDto } from './dto/create-book-chapter.dto';
 import { UpdateBookChapterDto } from './dto/update-book-chapter.dto';
 import {
   CreateBookReviewDto,
@@ -48,15 +45,10 @@ import { CreateBookReadingHistoryDto } from './dto/create-book-reading-history.d
 import { UpdateBookStatusDto } from './dto/book-status.dto';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
-import {
-  BookTrendingResponseDto,
-  GetTrendingBooksDto,
-} from './dto/book-trending.dto';
+import { GetTrendingBooksDto } from './dto/book-trending.dto';
 import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
-import {
-  BookRelatedResponseDto,
-  GetRelatedBooksDto,
-} from './dto/book-related.dto';
+import { GetRelatedBooksDto } from './dto/book-related.dto';
+import { GetListBookDto } from './dto/get-book.dto';
 
 @Controller('book')
 export class BookController {
@@ -384,12 +376,15 @@ export class BookController {
     return this.bookService.getBookNotification(author, pagination);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get('trending')
   @ApiOperation({ summary: 'Lấy danh sách sách đọc nhiều nhất trong 30 ngày' })
   async getTrendingBooks(
-    @Query() req: GetTrendingBooksDto,
-  ): Promise<PaginationResponseDto<BookTrendingResponseDto>> {
-    return this.bookService.getTrendingBooks(req);
+    @Req() req,
+    @Query() params: GetTrendingBooksDto,
+  ): Promise<PaginationResponseDto<GetListBookDto>> {
+    const userId = (req as any)?.user?.id ?? null;
+    return this.bookService.getTrendingBooks(userId, params);
   }
 
   @UseGuards(OptionalAuthGuard)
@@ -398,8 +393,8 @@ export class BookController {
   async getRecommendedBooks(
     @Req() req,
     @Query() params: GetRecommendedBooksDto,
-  ): Promise<BookTrendingResponseDto[]> {
-    const userId = (req as any).user.id;
+  ): Promise<GetListBookDto[]> {
+    const userId = (req as any)?.user?.id ?? null;
     return this.bookService.getRecommendedBooks(userId, params);
   }
 
@@ -409,10 +404,12 @@ export class BookController {
       'Lấy danh sách sách liên quan tới danh mục + tác giả, sau đó tới khác danh mục cùng tác giả',
   })
   async getRelatedBooks(
+    @Req() req,
     @Param('bookId') bookId: number,
-    @Query() req: GetRelatedBooksDto,
-  ): Promise<PaginationResponseDto<BookRelatedResponseDto>> {
-    return this.bookService.getRelatedBooks(bookId, req);
+    @Query() params: GetRelatedBooksDto,
+  ): Promise<PaginationResponseDto<GetListBookDto>> {
+    const userId = (req as any)?.user?.id ?? null;
+    return this.bookService.getRelatedBooks(userId, bookId, params);
   }
 
   @UseGuards(OptionalAuthGuard)

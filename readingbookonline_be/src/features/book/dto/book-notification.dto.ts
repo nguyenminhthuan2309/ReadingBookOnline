@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 
 export class BookNotificationResponseDto {
@@ -17,6 +17,14 @@ export class BookNotificationResponseDto {
   @IsNotEmpty()
   @Expose()
   isRead: boolean;
+
+  @Expose()
+  @Transform(({ obj }) => {
+    return {
+      id: obj.book?.id,
+    };
+  })
+  book: { id: number };
 
   @IsNotEmpty()
   @Expose()

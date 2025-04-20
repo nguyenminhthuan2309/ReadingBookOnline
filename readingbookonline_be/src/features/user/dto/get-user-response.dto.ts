@@ -83,31 +83,37 @@ export class UserResponseDto {
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenBalance?: number;
 
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenSpent?: number;
 
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenReceived?: number;
 
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenPurchased?: number;
 
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenWithdrawn?: number;
 
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }) => parseFloat(value), { toClassOnly: true })
   tokenEarned?: number;
 
   @Expose()

@@ -17,14 +17,10 @@ import {
 } from './dto/get-book-request.dto';
 import { LoggerService } from '@core/logger/logger.service';
 import { CacheService } from '@core/cache/cache.service';
-import {
-  GetBookCategoryDto,
-  GetBookCategoryRequestDto,
-  GetBookCateogryResponseDto,
-} from './dto/get-book-category.dto';
+import { GetBookCategoryDto } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
-import { GetBookDetail, GetBookDto } from './dto/get-book.dto';
+import { GetBookDetail, GetListBookDto } from './dto/get-book.dto';
 import { GetProgressStatusDto } from './dto/get-book-progess-status.dto';
 import { BookProgressStatus } from './entities/book-progess-status.entity';
 import { BookAccessStatus } from './entities/book-access-status.entity';
@@ -32,10 +28,7 @@ import { GetAccessStatusDto } from './dto/get-book-access-status.dto';
 import { CreateBookDto } from './dto/create-book.dto';
 import { BookCategoryRelation } from './entities/book-category-relation.entity';
 import { UpdateBookDto } from './dto/update-book.dto';
-import {
-  CreateBookChapterDto,
-  CreateMultipleBookChaptersDto,
-} from './dto/create-book-chapter.dto';
+import { CreateMultipleBookChaptersDto } from './dto/create-book-chapter.dto';
 import { BookChapter } from './entities/book-chapter.entity';
 import { UpdateBookChapterDto } from './dto/update-book-chapter.dto';
 import { User } from '@features/user/entities/user.entity';
@@ -57,7 +50,7 @@ import {
 import { BookChapterComment } from './entities/book-chapter-comment.entity';
 import { BookReviewResponseDto } from './dto/get-book-review.dto';
 import { BookFollow } from './entities/book-follow.entity';
-import { BookFollowDto, BookFollowResponseDto } from './dto/book-follow.dto';
+import { BookFollowDto } from './dto/book-follow.dto';
 import { BookReportDto, BookReportResponseDto } from './dto/book-report.dto';
 import { BookReport } from './entities/book-report.entity';
 import { GetBookTypeDto } from './dto/book-type.dto';
@@ -75,19 +68,10 @@ import { BookNotificationGateway } from '@core/gateway/book-notification.gateway
 import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
 import { BookNotificationResponseDto } from './dto/book-notification.dto';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
-import {
-  BookTrendingResponseDto,
-  GetTrendingBooksDto,
-} from './dto/book-trending.dto';
-import {
-  BookRecommendResponseDto,
-  GetRecommendedBooksDto,
-} from './dto/book-recommend.dto';
+import { GetTrendingBooksDto } from './dto/book-trending.dto';
+import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
-import {
-  BookRelatedResponseDto,
-  GetRelatedBooksDto,
-} from './dto/book-related.dto';
+import { GetRelatedBooksDto } from './dto/book-related.dto';
 
 @Injectable()
 export class BookService {
@@ -177,7 +161,8 @@ export class BookService {
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
-        .leftJoinAndSelect('book.chapters', 'chapters');
+        .leftJoinAndSelect('book.chapters', 'chapters')
+        .leftJoinAndSelect('book.reviews', 'reviews');
 
       if (userId) {
         qb.andWhere('author.id = :userId', { userId });
@@ -237,58 +222,42 @@ export class BookService {
 
       const [books, total] = await qb.getManyAndCount();
 
-      let purchasedChapterIds = new Set<number>();
       let followedBookIds = new Set<number>();
       if (user && user.id) {
-        const purchases = await this.chapterPurchaseRepository.find({
-          where: { user: { id: user.id } },
-          relations: ['chapter'],
-        });
         const follows = await this.bookFollowRepository.find({
           where: { user: { id: user.id } },
           relations: ['book'],
         });
-        purchasedChapterIds = new Set(purchases.map((p) => p.chapter.id));
         followedBookIds = new Set(follows.map((f) => f.book.id));
       }
 
       books.forEach((book) => {
         book['isFollowed'] = followedBookIds.has(book.id);
 
-        if (book.chapters && book.chapters.length > 0) {
-          book.chapters.sort((a, b) => Number(a.chapter) - Number(b.chapter));
+        const chapters = book.chapters || [];
+        book['totalChapters'] = chapters.length;
 
-          book.chapters = book.chapters.map((chapter) => {
-            if (user && user.id && book.author && book.author.id === user.id) {
-              return { ...chapter, isLocked: false } as BookChapter;
-            } else if (chapter.isLocked) {
-              if (purchasedChapterIds.has(chapter.id)) {
-                return { ...chapter, isLocked: false } as BookChapter;
-              } else {
-                return {
-                  id: chapter.id,
-                  title: chapter.title,
-                  chapter: chapter.chapter,
-                  isLocked: true,
-                  content: undefined,
-                  cover: undefined,
-                  price: undefined,
-                  book: undefined,
-                  createdAt: chapter.createdAt,
-                  updatedAt: chapter.updatedAt,
-                } as unknown as BookChapter;
-              }
-            }
-            return chapter;
-          });
-        }
+        book['totalPrice'] = chapters.reduce(
+          (sum, chapter) => sum + Number(chapter.price || 0),
+          0,
+        );
+
+        const reviews = book.reviews || [];
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+        book['rating'] =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
       });
 
       const response: GetBookResponseDto = {
         totalItems: total,
         totalPages: total > 0 ? Math.ceil(total / limit) : 1,
         data: books.map((book) =>
-          plainToInstance(GetBookDto, book, { excludeExtraneousValues: true }),
+          plainToInstance(GetListBookDto, book, {
+            excludeExtraneousValues: true,
+          }),
         ),
       };
 
@@ -307,6 +276,7 @@ export class BookService {
 
   async getBookDetail(user: UserResponseDto, bookId: number): Promise<any> {
     try {
+      let totalPrice = 0;
       const cachedKey = `book:detail:${bookId}`;
 
       const cachedBook = await this.cacheService.get(cachedKey);
@@ -384,6 +354,9 @@ export class BookService {
       }
 
       book.chapters = book.chapters.map((chapter) => {
+        const chapterPrice = Number(chapter.price || 0);
+        totalPrice += chapterPrice;
+
         if (user && user.id && book.author && book.author.id === user.id) {
           return { ...chapter, isLocked: false } as BookChapter;
         } else if (chapter.isLocked) {
@@ -397,7 +370,7 @@ export class BookService {
               isLocked: true,
               content: undefined,
               cover: undefined,
-              price: undefined,
+              price: chapter.price,
               book: undefined,
               createdAt: chapter.createdAt,
               updatedAt: chapter.updatedAt,
@@ -410,6 +383,8 @@ export class BookService {
       const bookDto = plainToInstance(GetBookDetail, book, {
         excludeExtraneousValues: true,
       });
+      bookDto.totalChapters = book.chapters.length;
+      bookDto.totalPrice = totalPrice;
       bookDto.rating = avgRating;
       bookDto.isFollowed = isFollowed;
       bookDto.totalReads = totalReads;
@@ -750,6 +725,7 @@ export class BookService {
           user: follow.user,
           title: notificationData.title,
           message: notificationData.message,
+          book: { id: book.id },
         });
 
         await this.bookNotificationGateway.sendNewChapterNotification(
@@ -1202,32 +1178,63 @@ export class BookService {
   async getFollow(
     userId: number,
     pagination: PaginationRequestDto,
-  ): Promise<PaginationResponseDto<BookFollowResponseDto>> {
+  ): Promise<PaginationResponseDto<GetListBookDto>> {
     try {
       const { limit = 10, page = 1 } = pagination;
-      const [data, totalItems] = await this.bookFollowRepository.findAndCount({
-        where: { user: { id: userId } },
-        order: { createdAt: 'DESC' },
-        take: limit,
-        skip: (page - 1) * limit,
-        relations: [
-          'book',
-          'book.author',
-          'book.bookType',
-          'book.accessStatus',
-          'book.progressStatus',
-          'book.progressStatus',
-          'book.bookCategoryRelations',
-          'book.bookCategoryRelations.category',
-        ],
+
+      const [follows, totalItems] =
+        await this.bookFollowRepository.findAndCount({
+          where: { user: { id: userId } },
+          order: { createdAt: 'DESC' },
+          take: limit,
+          skip: (page - 1) * limit,
+          relations: [
+            'book',
+            'book.author',
+            'book.bookType',
+            'book.accessStatus',
+            'book.progressStatus',
+            'book.bookCategoryRelations',
+            'book.bookCategoryRelations.category',
+            'book.chapters',
+            'book.reviews',
+          ],
+        });
+
+      const books = follows.map(({ book }) => {
+        const chapters = book.chapters || [];
+        const reviews = book.reviews || [];
+
+        const totalChapters = chapters.length;
+        const totalPrice = chapters.reduce(
+          (sum, ch) => sum + Number(ch.price || 0),
+          0,
+        );
+
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+        const rating =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+        return {
+          ...book,
+          totalChapters,
+          totalPrice,
+          rating,
+          isFollowed: true,
+        };
       });
 
       return {
         totalItems,
         totalPages: Math.ceil(totalItems / limit),
-        data: plainToInstance(BookFollowResponseDto, data, {
-          excludeExtraneousValues: true,
-        }),
+        data: books.map((book) =>
+          plainToInstance(GetListBookDto, book, {
+            excludeExtraneousValues: true,
+          }),
+        ),
       };
     } catch (error) {
       this.loggerService.err(error.message, 'BookFollowService.getFollow');
@@ -1320,107 +1327,184 @@ export class BookService {
     user: User,
     pagination: PaginationRequestDto,
   ): Promise<PaginationResponseDto<BookReadingSummaryDto>> {
-    const { page = 1, limit = 10 } = pagination;
+    try {
+      const { page = 1, limit = 10 } = pagination;
 
-    const readingHistories = await this.bookReadingHistoryRepository.find({
-      where: { user: { id: user.id } },
-      relations: ['book', 'chapter'],
-      order: { createdAt: 'DESC' },
-    });
+      const readingHistories = await this.bookReadingHistoryRepository.find({
+        where: { user: { id: user.id } },
+        relations: [
+          'book',
+          'chapter',
+          'book.author',
+          'book.bookType',
+          'book.accessStatus',
+          'book.progressStatus',
+          'book.bookCategoryRelations',
+          'book.bookCategoryRelations.category',
+        ],
+        order: { createdAt: 'DESC' },
+      });
 
-    if (!readingHistories.length) {
-      return {
-        totalItems: 0,
-        totalPages: 0,
-        data: [],
-      };
-    }
-
-    const chapterIds = Array.from(
-      new Set(readingHistories.map((r) => r.chapter.id)),
-    );
-
-    const purchased = await this.chapterPurchaseRepository.find({
-      where: {
-        user: { id: user.id },
-        chapter: { id: In(chapterIds) },
-      },
-    });
-
-    const purchasedSet = new Set(purchased.map((p) => p.chapter.id));
-
-    const bookMap = new Map<
-      number,
-      {
-        bookDto: BookReadingSummaryDto;
-        chapterMap: Map<number, ChapterReadDto>;
-        latestTime: number;
-      }
-    >();
-
-    for (const history of readingHistories) {
-      const { book, chapter, createdAt } = history;
-
-      if (!bookMap.has(book.id)) {
-        bookMap.set(book.id, {
-          bookDto: {
-            id: book.id,
-            title: book.title,
-            cover: book.cover,
-            chaptersRead: [],
-          },
-          chapterMap: new Map<number, ChapterReadDto>(),
-          latestTime: createdAt.getTime(),
-        });
-      }
-
-      const entry = bookMap.get(book.id)!;
-      entry.latestTime = Math.max(entry.latestTime, createdAt.getTime());
-
-      const existing = entry.chapterMap.get(chapter.id);
-      if (!existing || createdAt.getTime() > existing.lastReadAt.getTime()) {
-        entry.chapterMap.set(chapter.id, {
-          id: chapter.id,
-          title: chapter.title,
-          lastReadAt: createdAt,
-          isLocked: chapter.isLocked,
-        });
-      }
-    }
-
-    const allBooks = Array.from(bookMap.values())
-      .map(({ bookDto, chapterMap, latestTime }) => {
-        const chapters = Array.from(chapterMap.values())
-          .map((c) => ({
-            ...c,
-            isLocked: c.isLocked === false ? false : !purchasedSet.has(c.id),
-          }))
-          .sort((a, b) => b.lastReadAt.getTime() - a.lastReadAt.getTime());
-
-        bookDto.chaptersRead = chapters;
-
+      if (!readingHistories.length) {
         return {
-          ...bookDto,
-          _latestTime: latestTime,
+          totalItems: 0,
+          totalPages: 0,
+          data: [],
         };
-      })
-      .sort((a, b) => b._latestTime - a._latestTime);
+      }
 
-    const totalItems = allBooks.length;
-    const totalPages = Math.ceil(totalItems / limit);
-    const paginated = allBooks.slice((page - 1) * limit, page * limit);
+      const chapterIds = Array.from(
+        new Set(readingHistories.map((r) => r.chapter.id)),
+      );
 
-    const data = paginated.map(({ _latestTime, ...dto }) =>
-      plainToInstance(BookReadingSummaryDto, dto, {
-        excludeExtraneousValues: true,
-      }),
-    );
+      const purchased = await this.chapterPurchaseRepository.find({
+        where: {
+          user: { id: user.id },
+          chapter: { id: In(chapterIds) },
+        },
+        relations: ['chapter'],
+      });
 
-    return {
-      totalItems,
-      totalPages,
-      data,
-    };
+      const purchasedSet = new Set(purchased.map((p) => p.chapter.id));
+
+      const bookMap = new Map<
+        number,
+        {
+          bookDto: BookReadingSummaryDto;
+          chapterMap: Map<number, ChapterReadDto>;
+          latestTime: number;
+        }
+      >();
+
+      const follows = await this.bookFollowRepository.find({
+        where: { user: { id: user.id } },
+        relations: ['book'],
+      });
+
+      const followedBookIds = new Set(follows.map((f) => f.book.id));
+
+      for (const history of readingHistories) {
+        const { book, chapter, createdAt } = history;
+
+        if (!bookMap.has(book.id)) {
+          const chapters = await this.bookChapterRepository.find({
+            where: { book: { id: book.id } },
+          });
+          const totalPrice = chapters.reduce(
+            (sum, chapter) => sum + Number(chapter.price || 0),
+            0,
+          );
+
+          const reviews = await this.bookReviewRepository.find({
+            where: { book: { id: book.id } },
+          });
+          const totalRating = reviews.reduce(
+            (sum, r) => sum + (r.rating || 0),
+            0,
+          );
+          const rating =
+            reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+          bookMap.set(book.id, {
+            bookDto: {
+              id: book.id,
+              title: book.title,
+              description: book.description,
+              cover: book.cover,
+              views: book.views,
+              rating: rating,
+              totalChapters: chapters.length,
+              totalPrice: totalPrice,
+              followsCount: book.followsCount,
+              isFollowed: followedBookIds.has(book.id),
+              author: {
+                id: book.author.id,
+                email: book.author.email,
+                name: book.author.name,
+                avatar: book.author.avatar,
+              },
+              bookType: {
+                id: book.bookType.id,
+                name: book.bookType.name,
+              },
+              accessStatus: {
+                id: book.accessStatus.id,
+                name: book.accessStatus.name,
+                description: book.accessStatus.description,
+              },
+              progressStatus: {
+                id: book.progressStatus.id,
+                name: book.progressStatus.name,
+                description: book.progressStatus.description,
+              },
+              categories: book.bookCategoryRelations.map((bcr) => {
+                return {
+                  id: bcr.category.id,
+                  name: bcr.category.name,
+                };
+              }),
+              createdAt: book.createdAt,
+              chaptersRead: [],
+            },
+            chapterMap: new Map<number, ChapterReadDto>(),
+            latestTime: createdAt.getTime(),
+          });
+        }
+
+        const entry = bookMap.get(book.id)!;
+        entry.latestTime = Math.max(entry.latestTime, createdAt.getTime());
+
+        const existing = entry.chapterMap.get(chapter.id);
+        if (!existing || createdAt.getTime() > existing.lastReadAt.getTime()) {
+          entry.chapterMap.set(chapter.id, {
+            id: chapter.id,
+            title: chapter.title,
+            lastReadAt: createdAt,
+            isLocked: chapter.isLocked,
+          });
+        }
+      }
+
+      const allBooks = Array.from(bookMap.values())
+        .map(({ bookDto, chapterMap, latestTime }) => {
+          const chapters = Array.from(chapterMap.values())
+            .map((c) => ({
+              ...c,
+              isLocked: c.isLocked === false ? false : !purchasedSet.has(c.id),
+            }))
+            .sort((a, b) => b.lastReadAt.getTime() - a.lastReadAt.getTime());
+
+          bookDto.chaptersRead = chapters;
+
+          return {
+            ...bookDto,
+            _latestTime: latestTime,
+          };
+        })
+        .sort((a, b) => b._latestTime - a._latestTime);
+
+      const totalItems = allBooks.length;
+      const totalPages = Math.ceil(totalItems / limit);
+      const paginated = allBooks.slice((page - 1) * limit, page * limit);
+
+      const data = paginated.map(({ _latestTime, ...dto }) =>
+        plainToInstance(BookReadingSummaryDto, dto, {
+          excludeExtraneousValues: true,
+        }),
+      );
+
+      return {
+        totalItems,
+        totalPages,
+        data,
+      };
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookReadingHistoryService.getReadingHistorySummary',
+      );
+      throw error;
+    }
   }
 
   async updateBookStatus(
@@ -1467,6 +1551,7 @@ export class BookService {
           user: { id: book.author.id },
           title: 'Book Status Updated',
           message: statusMessage,
+          book: { id: book.id },
         });
 
         this.loggerService.info(
@@ -1661,7 +1746,7 @@ export class BookService {
         await this.bookNotificationRepository.findAndCount({
           where: { user: { id: user.id } },
           order: { createdAt: 'DESC' },
-          relations: ['user'],
+          relations: ['user', 'book'],
           take: limit,
           skip: (page - 1) * limit,
         });
@@ -1693,8 +1778,9 @@ export class BookService {
   }
 
   async getTrendingBooks(
+    userId: number | null,
     params: GetTrendingBooksDto,
-  ): Promise<PaginationResponseDto<BookTrendingResponseDto>> {
+  ): Promise<PaginationResponseDto<GetListBookDto>> {
     try {
       const { page = 1, limit = 10 } = params;
       const offset = (page - 1) * limit;
@@ -1712,9 +1798,10 @@ export class BookService {
 
       let books: Book[] = [];
       let totalItems = 0;
+      let bookIds: number[] = [];
 
       if (rawTrending.length > 0) {
-        const bookIds = rawTrending.map((row) => Number(row.bookId));
+        bookIds = rawTrending.map((row) => Number(row.bookId));
 
         totalItems = await this.bookReadingHistoryRepository
           .createQueryBuilder('brh')
@@ -1732,6 +1819,8 @@ export class BookService {
             'progressStatus',
             'bookCategoryRelations',
             'bookCategoryRelations.category',
+            'chapters',
+            'reviews',
           ],
         });
 
@@ -1752,14 +1841,56 @@ export class BookService {
             'progressStatus',
             'bookCategoryRelations',
             'bookCategoryRelations.category',
+            'chapters',
+            'reviews',
           ],
         });
+
+        bookIds = books.map((b) => b.id);
       }
 
-      const response: PaginationResponseDto<BookTrendingResponseDto> = {
+      let followedBookIds = new Set<number>();
+      if (userId && bookIds.length > 0) {
+        const followedBooks = await this.bookFollowRepository.find({
+          where: {
+            user: { id: userId },
+            book: In(bookIds),
+          },
+          relations: ['book'],
+        });
+        followedBookIds = new Set(followedBooks.map((f) => f.book.id));
+      }
+
+      const booksWithDetails = books.map((book) => {
+        const chapters = book.chapters || [];
+        const reviews = book.reviews || [];
+
+        const totalChapters = chapters.length;
+        const totalPrice = chapters.reduce(
+          (sum, chapter) => sum + Number(chapter.price || 0),
+          0,
+        );
+
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+        const rating =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+        return {
+          ...book,
+          totalChapters,
+          totalPrice,
+          rating,
+          isFollowed: followedBookIds.has(book.id),
+        };
+      });
+
+      const response: PaginationResponseDto<GetListBookDto> = {
         totalItems,
         totalPages: Math.ceil(totalItems / limit),
-        data: plainToInstance(BookTrendingResponseDto, books, {
+        data: plainToInstance(GetListBookDto, booksWithDetails, {
           excludeExtraneousValues: true,
         }),
       };
@@ -1774,7 +1905,7 @@ export class BookService {
   async getRecommendedBooks(
     userId: number | null,
     params: GetRecommendedBooksDto,
-  ): Promise<BookRecommendResponseDto[]> {
+  ): Promise<GetListBookDto[]> {
     try {
       const limit = params.limit ?? 15;
       let books: Book[] = [];
@@ -1788,7 +1919,8 @@ export class BookService {
           .leftJoinAndSelect('book.progressStatus', 'progressStatus')
           .leftJoinAndSelect('book.bookCategoryRelations', 'relation')
           .leftJoinAndSelect('relation.category', 'category')
-          .leftJoin('book.reviews', 'review')
+          .leftJoinAndSelect('book.chapters', 'chapters')
+          .leftJoinAndSelect('book.reviews', 'reviews')
           .addSelect(
             (subQuery) =>
               subQuery
@@ -1810,7 +1942,7 @@ export class BookService {
           const rawBooks = await buildBaseQuery()
             .where('relation.category_id IN (:...categoryIds)', { categoryIds })
             .groupBy(
-              'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id',
+              'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id, chapters.id, reviews.id',
             )
             .orderBy('rating', 'DESC')
             .addOrderBy('book.createdAt', 'DESC')
@@ -1827,7 +1959,7 @@ export class BookService {
 
         let moreBooksQuery = buildBaseQuery()
           .groupBy(
-            'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id',
+            'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id, chapters.id, reviews.id',
           )
           .orderBy('rating', 'DESC')
           .addOrderBy('book.createdAt', 'DESC')
@@ -1844,7 +1976,45 @@ export class BookService {
         books = books.concat(moreBooks);
       }
 
-      return plainToInstance(BookRecommendResponseDto, books, {
+      let followedBookIds = new Set<number>();
+      if (userId && books.length > 0) {
+        const followed = await this.bookFollowRepository.find({
+          where: {
+            user: { id: userId },
+            book: In(books.map((b) => b.id)),
+          },
+          relations: ['book'],
+        });
+        followedBookIds = new Set(followed.map((f) => f.book.id));
+      }
+
+      const booksWithDetails = books.map((book) => {
+        const chapters = book.chapters || [];
+        const reviews = book.reviews || [];
+
+        const totalChapters = chapters.length;
+        const totalPrice = chapters.reduce(
+          (sum, chapter) => sum + Number(chapter.price || 0),
+          0,
+        );
+
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+        const rating =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+        return {
+          ...book,
+          totalChapters,
+          totalPrice,
+          rating,
+          isFollowed: followedBookIds.has(book.id),
+        };
+      });
+
+      return plainToInstance(GetListBookDto, booksWithDetails, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -1854,9 +2024,10 @@ export class BookService {
   }
 
   async getRelatedBooks(
+    userId: number | null,
     bookId: number,
     params: GetRelatedBooksDto,
-  ): Promise<PaginationResponseDto<BookRelatedResponseDto>> {
+  ): Promise<PaginationResponseDto<GetListBookDto>> {
     try {
       const { page = 1, limit = 10 } = params;
       const offset = (page - 1) * limit;
@@ -1887,23 +2058,31 @@ export class BookService {
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'relation')
         .leftJoinAndSelect('relation.category', 'category')
+        .leftJoinAndSelect('book.reviews', 'reviews')
+        .leftJoinAndSelect('book.chapters', 'chapters')
         .where('book.id != :bookId', { bookId })
         .addSelect(
-          `
-          CASE
-            WHEN author.id = :authorId AND relation.category_id IN (:...categoryIds) THEN 3
+          `CASE
+            WHEN author.id = :authorId THEN 3
             WHEN relation.category_id IN (:...categoryIds) THEN 2
-            WHEN author.id = :authorId THEN 1
-            ELSE 0
-          END
-        `,
+            ELSE 1
+          END`,
           'priority',
+        )
+        .addSelect(
+          (subQuery) =>
+            subQuery
+              .select('COALESCE(AVG(review.rating), 0)', 'avgRating')
+              .from(BookReview, 'review')
+              .where('review.book = book.id'),
+          'rating',
         )
         .setParameters({ authorId, categoryIds })
         .groupBy(
-          'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id',
+          'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id, chapters.id, reviews.id',
         )
         .orderBy('priority', 'DESC')
+        .addOrderBy('rating', 'DESC')
         .addOrderBy('book.createdAt', 'DESC')
         .offset(offset)
         .limit(limit);
@@ -1926,10 +2105,49 @@ export class BookService {
           .getCount(),
       ]);
 
+      let followedBookIds = new Set<number>();
+      if (userId && books.length > 0) {
+        const followed = await this.bookFollowRepository.find({
+          where: {
+            user: { id: userId },
+            book: In(books.map((b) => b.id)),
+          },
+          relations: ['book'],
+        });
+        followedBookIds = new Set(followed.map((f) => f.book.id));
+      }
+
+      const booksWithDetails = books.map((book) => {
+        const chapters = book.chapters || [];
+        const reviews = book.reviews || [];
+
+        const totalChapters = chapters.length;
+        const totalPrice = chapters.reduce(
+          (sum, chapter) => sum + Number(chapter.price || 0),
+          0,
+        );
+
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+
+        const rating =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+        return {
+          ...book,
+          totalChapters,
+          totalPrice,
+          rating,
+          isFollowed: followedBookIds.has(book.id),
+        };
+      });
+
       return {
         totalItems,
         totalPages: Math.ceil(totalItems / limit),
-        data: plainToInstance(BookRecommendResponseDto, books, {
+        data: plainToInstance(GetListBookDto, booksWithDetails, {
           excludeExtraneousValues: true,
         }),
       };
