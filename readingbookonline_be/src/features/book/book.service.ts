@@ -274,11 +274,12 @@ export class BookService {
     }
   }
 
-  async getBookDetail(user: UserResponseDto, bookId: number): Promise<any> {
+  async getBookDetail(
+    user: UserResponseDto,
+    bookId: number,
+  ): Promise<GetBookResponseDto> {
     try {
-      let totalPrice = 0;
       const cachedKey = `book:detail:${bookId}`;
-
       const cachedBook = await this.cacheService.get(cachedKey);
       if (cachedBook) {
         return JSON.parse(cachedBook);
@@ -293,8 +294,7 @@ export class BookService {
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
         .leftJoinAndSelect('book.chapters', 'chapters')
-        .where('book.id = :bookId', { bookId })
-        .addOrderBy('chapters.chapter', 'ASC');
+        .where('book.id = :bookId', { bookId });
 
       const book = await qb.getOne();
 
@@ -324,7 +324,6 @@ export class BookService {
       const totalReads = await this.databaseService
         .queryBuilder(this.bookReadingHistoryRepository, 'readingHistory')
         .where('readingHistory.book_id = :bookId', { bookId })
-        .select('COUNT(*)', 'totalChaptersRead')
         .getCount();
 
       const totalPurchases = await this.databaseService
@@ -334,13 +333,8 @@ export class BookService {
         .groupBy('purchase.user_id')
         .getCount();
 
-      const purchasedChapterIds = new Set<number>();
       let isFollowed = false;
-      if (user && user.id) {
-        const purchases = await this.chapterPurchaseRepository.find({
-          where: { user: { id: user.id } },
-          relations: ['chapter'],
-        });
+      if (user?.id) {
         const follow = await this.bookFollowRepository.findOne({
           where: {
             user: { id: user.id },
@@ -348,43 +342,17 @@ export class BookService {
           },
         });
         isFollowed = !!follow;
-        purchases.forEach((purchase) =>
-          purchasedChapterIds.add(purchase.chapter.id),
-        );
       }
-
-      book.chapters = book.chapters.map((chapter) => {
-        const chapterPrice = Number(chapter.price || 0);
-        totalPrice += chapterPrice;
-
-        if (user && user.id && book.author && book.author.id === user.id) {
-          return { ...chapter, isLocked: false } as BookChapter;
-        } else if (chapter.isLocked) {
-          if (purchasedChapterIds.has(chapter.id)) {
-            return { ...chapter, isLocked: false } as BookChapter;
-          } else {
-            return {
-              id: chapter.id,
-              title: chapter.title,
-              chapter: chapter.chapter,
-              isLocked: true,
-              content: undefined,
-              cover: undefined,
-              price: chapter.price,
-              book: undefined,
-              createdAt: chapter.createdAt,
-              updatedAt: chapter.updatedAt,
-            } as unknown as BookChapter;
-          }
-        }
-        return chapter;
-      });
 
       const bookDto = plainToInstance(GetBookDetail, book, {
         excludeExtraneousValues: true,
       });
-      bookDto.totalChapters = book.chapters.length;
-      bookDto.totalPrice = totalPrice;
+
+      bookDto.totalChapters = book.chapters?.length || 0;
+      bookDto.totalPrice = book.chapters?.reduce(
+        (sum, chapter) => sum + Number(chapter.price || 0),
+        0,
+      );
       bookDto.rating = avgRating;
       bookDto.isFollowed = isFollowed;
       bookDto.totalReads = totalReads;
@@ -405,6 +373,59 @@ export class BookService {
       return response;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.getBookDetail');
+      throw error;
+    }
+  }
+
+  async getBookChapters(
+    user: UserResponseDto,
+    bookId: number,
+  ): Promise<BookChapter[]> {
+    try {
+      const book = await this.bookRepository
+        .createQueryBuilder('book')
+        .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.chapters', 'chapters')
+        .where('book.id = :bookId', { bookId })
+        .orderBy('chapters.chapter', 'ASC')
+        .getOne();
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+
+      const purchasedChapterIds = new Set<number>();
+      if (user?.id) {
+        const purchases = await this.chapterPurchaseRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['chapter'],
+        });
+        purchases.forEach((p) => purchasedChapterIds.add(p.chapter.id));
+      }
+
+      const chapters = book.chapters
+        .sort((a, b) => a.chapter - b.chapter)
+        .map((chapter) => {
+          if (user?.id && book.author.id === user.id) {
+            return { ...chapter, isLocked: false };
+          } else if (chapter.isLocked && !purchasedChapterIds.has(chapter.id)) {
+            return {
+              id: chapter.id,
+              title: chapter.title,
+              chapter: chapter.chapter,
+              cover: chapter.cover,
+              isLocked: true,
+              price: Number(chapter.price),
+              createdAt: chapter.createdAt,
+              updatedAt: chapter.updatedAt,
+            } as BookChapter;
+          } else {
+            return { ...chapter, isLocked: false };
+          }
+        });
+
+      return chapters;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getBookChapters');
       throw error;
     }
   }
