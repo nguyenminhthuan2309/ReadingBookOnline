@@ -17,7 +17,10 @@ import {
 } from './dto/get-book-request.dto';
 import { LoggerService } from '@core/logger/logger.service';
 import { CacheService } from '@core/cache/cache.service';
-import { GetBookCategoryDto } from './dto/get-book-category.dto';
+import {
+  GetBookCategoryDetailDto,
+  GetBookCategoryDto,
+} from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
 import { GetBookDetail, GetListBookDto } from './dto/get-book.dto';
@@ -430,7 +433,7 @@ export class BookService {
     }
   }
 
-  async getBookCategory(params: GetBookRequestDto) {
+  async getBookCategory(params: GetBookCategoryDetailDto) {
     try {
       let {
         userId,
