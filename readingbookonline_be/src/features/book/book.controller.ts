@@ -67,8 +67,8 @@ export class BookController {
 
   @ApiOperation({ summary: 'Lấy danh mục' })
   @Get('category')
-  async getBookCategory() {
-    return await this.bookService.getBookCategory();
+  async getBookCategory(@Query() params: GetBookRequestDto) {
+    return await this.bookService.getBookCategory(params);
   }
 
   @UseGuards(JwtAuthGuard)
