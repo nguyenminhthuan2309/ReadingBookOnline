@@ -292,11 +292,6 @@ export class GetBookDetail {
   @IsArray()
   categories: GetBookCategoryDto[];
 
-  @IsOptional()
-  @Expose()
-  @Type(() => GetBookChapterDto)
-  chapters?: GetBookChapterDto[];
-
   @IsNotEmpty()
   @Expose()
   createdAt: Date;

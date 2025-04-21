@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Brackets, In, IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Book } from '@features/book/entities/book.entity';
 import { DatabaseService } from '@core/database/database.service';
 import {
@@ -274,11 +274,12 @@ export class BookService {
     }
   }
 
-  async getBookDetail(user: UserResponseDto, bookId: number): Promise<any> {
+  async getBookDetail(
+    user: UserResponseDto,
+    bookId: number,
+  ): Promise<GetBookResponseDto> {
     try {
-      let totalPrice = 0;
       const cachedKey = `book:detail:${bookId}`;
-
       const cachedBook = await this.cacheService.get(cachedKey);
       if (cachedBook) {
         return JSON.parse(cachedBook);
@@ -293,8 +294,7 @@ export class BookService {
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
         .leftJoinAndSelect('book.chapters', 'chapters')
-        .where('book.id = :bookId', { bookId })
-        .addOrderBy('chapters.chapter', 'ASC');
+        .where('book.id = :bookId', { bookId });
 
       const book = await qb.getOne();
 
@@ -324,7 +324,6 @@ export class BookService {
       const totalReads = await this.databaseService
         .queryBuilder(this.bookReadingHistoryRepository, 'readingHistory')
         .where('readingHistory.book_id = :bookId', { bookId })
-        .select('COUNT(*)', 'totalChaptersRead')
         .getCount();
 
       const totalPurchases = await this.databaseService
@@ -334,13 +333,8 @@ export class BookService {
         .groupBy('purchase.user_id')
         .getCount();
 
-      const purchasedChapterIds = new Set<number>();
       let isFollowed = false;
-      if (user && user.id) {
-        const purchases = await this.chapterPurchaseRepository.find({
-          where: { user: { id: user.id } },
-          relations: ['chapter'],
-        });
+      if (user?.id) {
         const follow = await this.bookFollowRepository.findOne({
           where: {
             user: { id: user.id },
@@ -348,43 +342,17 @@ export class BookService {
           },
         });
         isFollowed = !!follow;
-        purchases.forEach((purchase) =>
-          purchasedChapterIds.add(purchase.chapter.id),
-        );
       }
-
-      book.chapters = book.chapters.map((chapter) => {
-        const chapterPrice = Number(chapter.price || 0);
-        totalPrice += chapterPrice;
-
-        if (user && user.id && book.author && book.author.id === user.id) {
-          return { ...chapter, isLocked: false } as BookChapter;
-        } else if (chapter.isLocked) {
-          if (purchasedChapterIds.has(chapter.id)) {
-            return { ...chapter, isLocked: false } as BookChapter;
-          } else {
-            return {
-              id: chapter.id,
-              title: chapter.title,
-              chapter: chapter.chapter,
-              isLocked: true,
-              content: undefined,
-              cover: undefined,
-              price: chapter.price,
-              book: undefined,
-              createdAt: chapter.createdAt,
-              updatedAt: chapter.updatedAt,
-            } as unknown as BookChapter;
-          }
-        }
-        return chapter;
-      });
 
       const bookDto = plainToInstance(GetBookDetail, book, {
         excludeExtraneousValues: true,
       });
-      bookDto.totalChapters = book.chapters.length;
-      bookDto.totalPrice = totalPrice;
+
+      bookDto.totalChapters = book.chapters?.length || 0;
+      bookDto.totalPrice = book.chapters?.reduce(
+        (sum, chapter) => sum + Number(chapter.price || 0),
+        0,
+      );
       bookDto.rating = avgRating;
       bookDto.isFollowed = isFollowed;
       bookDto.totalReads = totalReads;
@@ -405,6 +373,59 @@ export class BookService {
       return response;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.getBookDetail');
+      throw error;
+    }
+  }
+
+  async getBookChapters(
+    user: UserResponseDto,
+    bookId: number,
+  ): Promise<BookChapter[]> {
+    try {
+      const book = await this.bookRepository
+        .createQueryBuilder('book')
+        .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.chapters', 'chapters')
+        .where('book.id = :bookId', { bookId })
+        .orderBy('chapters.chapter', 'ASC')
+        .getOne();
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+
+      const purchasedChapterIds = new Set<number>();
+      if (user?.id) {
+        const purchases = await this.chapterPurchaseRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['chapter'],
+        });
+        purchases.forEach((p) => purchasedChapterIds.add(p.chapter.id));
+      }
+
+      const chapters = book.chapters
+        .sort((a, b) => a.chapter - b.chapter)
+        .map((chapter) => {
+          if (user?.id && book.author.id === user.id) {
+            return { ...chapter, isLocked: false };
+          } else if (chapter.isLocked && !purchasedChapterIds.has(chapter.id)) {
+            return {
+              id: chapter.id,
+              title: chapter.title,
+              chapter: chapter.chapter,
+              cover: chapter.cover,
+              isLocked: true,
+              price: Number(chapter.price),
+              createdAt: chapter.createdAt,
+              updatedAt: chapter.updatedAt,
+            } as BookChapter;
+          } else {
+            return { ...chapter, isLocked: false };
+          }
+        });
+
+      return chapters;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getBookChapters');
       throw error;
     }
   }
@@ -1788,10 +1809,11 @@ export class BookService {
       const rawTrending = await this.bookReadingHistoryRepository
         .createQueryBuilder('brh')
         .select('brh.book_id', 'bookId')
-        .addSelect('COUNT(*)', 'viewCount')
+        .addSelect('COUNT(*)', 'view_count')
+        .innerJoin(Book, 'b', 'b.id = brh.book_id AND b.accessStatus = 1')
         .where("brh.created_at >= NOW() - INTERVAL '30 days'")
         .groupBy('brh.book_id')
-        .orderBy('COUNT(*)', 'DESC')
+        .orderBy('view_count', 'DESC')
         .offset(offset)
         .limit(limit)
         .getRawMany();
@@ -1803,15 +1825,18 @@ export class BookService {
       if (rawTrending.length > 0) {
         bookIds = rawTrending.map((row) => Number(row.bookId));
 
-        totalItems = await this.bookReadingHistoryRepository
+        const countRows = await this.bookReadingHistoryRepository
           .createQueryBuilder('brh')
           .select('brh.book_id')
+          .innerJoin(Book, 'b', 'b.id = brh.book_id AND b.accessStatus = 1')
           .where("brh.created_at >= NOW() - INTERVAL '30 days'")
           .groupBy('brh.book_id')
-          .getCount();
+          .getRawMany();
+
+        totalItems = countRows.length;
 
         const rawBooks = await this.bookRepository.find({
-          where: { id: In(bookIds) },
+          where: { id: In(bookIds), accessStatus: { id: 1 } },
           relations: [
             'author',
             'bookType',
@@ -1831,6 +1856,7 @@ export class BookService {
         totalItems = await this.bookRepository.count();
 
         books = await this.bookRepository.find({
+          where: { accessStatus: { id: 1 } },
           take: limit,
           skip: offset,
           order: { createdAt: 'DESC' },
@@ -1928,7 +1954,8 @@ export class BookService {
                 .from(BookReview, 'review')
                 .where('review.book = book.id'),
             'rating',
-          );
+          )
+          .where('book.accessStatus.id = 1');
       };
 
       if (userId) {
@@ -2024,104 +2051,150 @@ export class BookService {
   }
 
   async getRelatedBooks(
-    userId: number | null,
     bookId: number,
+    userId: number | null,
     params: GetRelatedBooksDto,
   ): Promise<PaginationResponseDto<GetListBookDto>> {
     try {
       const { page = 1, limit = 10 } = params;
       const offset = (page - 1) * limit;
 
-      const currentBook = await this.bookRepository.findOne({
-        where: { id: bookId },
-        relations: [
-          'author',
-          'bookCategoryRelations',
-          'bookCategoryRelations.category',
-        ],
-      });
+      const originBookQuery = `
+      SELECT 
+        author.id AS originAuthorId,
+        ARRAY(
+          SELECT category.id 
+          FROM book_category_relation bcr
+          JOIN book_category category ON category.id = bcr.category_id
+          WHERE bcr.book_id = $1
+        ) AS originCategoryIds
+      FROM book book
+      LEFT JOIN "user" author ON author.id = book.author_id
+      WHERE book.id = $1`;
 
-      if (!currentBook) {
-        throw new NotFoundException(`Book with id ${bookId} not found`);
-      }
-
-      const authorId = currentBook.author.id;
-      const categoryIds = currentBook.bookCategoryRelations.map(
-        (rel) => rel.category.id,
+      const originBookResult = await this.bookRepository.query(
+        originBookQuery,
+        [bookId],
       );
+      if (!originBookResult?.length)
+        throw new NotFoundException('Book not found');
 
-      const relatedBooksQuery = this.bookRepository
-        .createQueryBuilder('book')
-        .leftJoinAndSelect('book.author', 'author')
-        .leftJoinAndSelect('book.bookType', 'bookType')
-        .leftJoinAndSelect('book.accessStatus', 'accessStatus')
-        .leftJoinAndSelect('book.progressStatus', 'progressStatus')
-        .leftJoinAndSelect('book.bookCategoryRelations', 'relation')
-        .leftJoinAndSelect('relation.category', 'category')
-        .leftJoinAndSelect('book.reviews', 'reviews')
-        .leftJoinAndSelect('book.chapters', 'chapters')
-        .where('book.id != :bookId', { bookId })
-        .addSelect(
-          `CASE
-            WHEN author.id = :authorId THEN 3
-            WHEN relation.category_id IN (:...categoryIds) THEN 2
-            ELSE 1
-          END`,
-          'priority',
-        )
-        .addSelect(
-          (subQuery) =>
-            subQuery
-              .select('COALESCE(AVG(review.rating), 0)', 'avgRating')
-              .from(BookReview, 'review')
-              .where('review.book = book.id'),
-          'rating',
-        )
-        .setParameters({ authorId, categoryIds })
-        .groupBy(
-          'book.id, author.id, bookType.id, accessStatus.id, progressStatus.id, relation.id, category.id, chapters.id, reviews.id',
-        )
-        .orderBy('priority', 'DESC')
-        .addOrderBy('rating', 'DESC')
-        .addOrderBy('book.createdAt', 'DESC')
-        .offset(offset)
-        .limit(limit);
+      const { originAuthorId, originCategoryIds } = originBookResult[0];
 
-      const [books, totalItems] = await Promise.all([
-        relatedBooksQuery.getMany(),
-        this.bookRepository
-          .createQueryBuilder('book')
-          .leftJoin('book.bookCategoryRelations', 'relation')
-          .leftJoin('book.author', 'author')
-          .where('book.id != :bookId', { bookId })
-          .andWhere(
-            new Brackets((qb) => {
-              qb.where('author.id = :authorId', { authorId }).orWhere(
-                'relation.category_id IN (:...categoryIds)',
-                { categoryIds },
-              );
-            }),
-          )
-          .getCount(),
+      const booksQuery = `
+      SELECT 
+        DISTINCT ON (book.id) book.*, 
+        author.id AS author_id,
+        author.name AS author_name,
+        author.avatar AS author_avatar,
+        book_type.id AS book_type_id,
+        book_type.name AS book_type_name,
+        access_status.id AS access_status_id,
+        access_status.name AS access_status_name,
+        access_status.description AS access_status_description,
+        progress_status.id AS progress_status_id,
+        progress_status.name AS progress_status_name,
+        progress_status.description AS progress_status_description
+      FROM book book
+      LEFT JOIN "user" author ON author.id = book.author_id
+      LEFT JOIN book_type ON book_type.id = book.book_type_id
+      LEFT JOIN book_access_status access_status ON access_status.id = book.access_status_id
+      LEFT JOIN book_progress_status progress_status ON progress_status.id = book.progress_status_id
+      LEFT JOIN book_category_relation bcr ON bcr.book_id = book.id
+      LEFT JOIN book_category category ON category.id = bcr.category_id
+      WHERE book.id != $1 AND book.access_status_id = 1
+      ORDER BY
+        book.id,
+        CASE
+          WHEN author.id = $2 AND category.id = ANY($3) THEN 0
+          WHEN author.id = $2 THEN 1
+          WHEN category.id = ANY($3) THEN 2
+          ELSE 3
+        END,
+        COALESCE((SELECT AVG(rating) FROM book_review WHERE book_id = book.id), 0) DESC,
+        book.id DESC
+      LIMIT $4 OFFSET $5`;
+
+      const books: Book[] = await this.bookRepository.query(booksQuery, [
+        bookId,
+        originAuthorId,
+        originCategoryIds,
+        limit,
+        offset,
       ]);
 
+      const bookIds = books.map((b) => b.id);
+
+      const categoriesQuery = `
+      SELECT
+        bcr.book_id AS book_id,
+        JSON_AGG(
+          JSON_BUILD_OBJECT('id', category.id, 'name', category.name)
+          ORDER BY category.id ASC
+        ) AS categories
+      FROM book_category_relation bcr
+      LEFT JOIN book_category category ON category.id = bcr.category_id
+      WHERE bcr.book_id = ANY($1::int[])
+      GROUP BY bcr.book_id`;
+      const categoriesRaw = await this.bookRepository.query(categoriesQuery, [
+        bookIds,
+      ]);
+      const categoriesMap = new Map<number, any>();
+      categoriesRaw.forEach((row) => {
+        categoriesMap.set(row.book_id, row.categories);
+      });
+
+      const countQuery = `
+      SELECT COUNT(DISTINCT book.id) AS total
+      FROM book book
+      LEFT JOIN "user" author ON author.id = book.author_id
+      LEFT JOIN book_category_relation bcr ON bcr.book_id = book.id
+      LEFT JOIN book_category category ON category.id = bcr.category_id
+      WHERE book.id != $1 AND book.access_status_id = 1`;
+      const countResult = await this.bookRepository.query(countQuery, [bookId]);
+      const totalItems = +countResult[0].total;
+
+      const chaptersRaw = await this.bookChapterRepository.find({
+        where: { book: { id: In(bookIds) } },
+        relations: ['book'],
+      });
+      const chaptersMap = new Map<number, BookChapter[]>();
+      chaptersRaw.forEach((c) => {
+        const list = chaptersMap.get(c.book.id) || [];
+        list.push(c);
+        chaptersMap.set(c.book.id, list);
+      });
+
+      const reviewsRaw = await this.bookReviewRepository.find({
+        where: { book: { id: In(bookIds) } },
+        relations: ['book'],
+      });
+      const reviewsMap = new Map<number, BookReview[]>();
+      reviewsRaw.forEach((r) => {
+        const list = reviewsMap.get(r.book.id) || [];
+        list.push(r);
+        reviewsMap.set(r.book.id, list);
+      });
+
       let followedBookIds = new Set<number>();
-      if (userId && books.length > 0) {
-        const followed = await this.bookFollowRepository.find({
+      if (userId && bookIds.length) {
+        const followedBooks = await this.bookFollowRepository.find({
           where: {
             user: { id: userId },
-            book: In(books.map((b) => b.id)),
+            book: { id: In(bookIds) },
           },
           relations: ['book'],
         });
-        followedBookIds = new Set(followed.map((f) => f.book.id));
+        followedBookIds = new Set(followedBooks.map((f) => f.book.id));
       }
 
-      const booksWithDetails = books.map((book) => {
-        const chapters = book.chapters || [];
-        const reviews = book.reviews || [];
+      const booksWithDetails = books.map((book: any) => {
+        const chapters = chaptersMap.get(book.id) || [];
+        const reviews = reviewsMap.get(book.id) || [];
+        const categories = categoriesMap.get(book.id) || [];
 
         const totalChapters = chapters.length;
+
         const totalPrice = chapters.reduce(
           (sum, chapter) => sum + Number(chapter.price || 0),
           0,
@@ -2131,28 +2204,51 @@ export class BookService {
           (sum, r) => sum + (r.rating || 0),
           0,
         );
-
         const rating =
           reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
 
         return {
-          ...book,
+          id: book.id,
+          title: book.title,
+          description: book.description,
+          cover: book.cover,
+          views: book.views,
+          rating,
           totalChapters,
           totalPrice,
-          rating,
+          followsCount: book.follows_count,
           isFollowed: followedBookIds.has(book.id),
+          author: {
+            id: book.author_id,
+            name: book.author_name || null,
+            avatar: book.author_avatar || null,
+          },
+          bookType: {
+            id: book.book_type_id,
+            name: book.book_type_name || null,
+          },
+          accessStatus: {
+            id: book.access_status_id,
+            name: book.access_status_name || null,
+            description: book.access_status_description || null,
+          },
+          progressStatus: {
+            id: book.progress_status_id,
+            name: book.progress_status_name || null,
+            description: book.progress_status_description || null,
+          },
+          categories: categories || [],
+          createdAt: book.created_at,
         };
       });
 
       return {
         totalItems,
         totalPages: Math.ceil(totalItems / limit),
-        data: plainToInstance(GetListBookDto, booksWithDetails, {
-          excludeExtraneousValues: true,
-        }),
+        data: booksWithDetails,
       };
     } catch (error) {
-      this.loggerService.err(error.message, 'BookService.getRelatedBooks');
+      this.loggerService.err(error.message, 'BookService.getBooks');
       throw error;
     }
   }
