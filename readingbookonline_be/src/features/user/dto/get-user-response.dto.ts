@@ -140,6 +140,16 @@ export class UserProfileResponseDto extends UserResponseDto {
   @Expose()
   @IsNumber()
   chaptersRead: number;
+
+  @IsOptional()
+  @Expose()
+  books?: {
+    id: number;
+    title: string;
+    description: string;
+    cover: string;
+    createdAt: Date;
+  }[];
 }
 
 export class GetUsersFilterDto {

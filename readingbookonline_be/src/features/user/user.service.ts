@@ -766,10 +766,59 @@ export class UserService {
     }
   }
 
-  async getUserProfileById(userId: number): Promise<UserProfileDto> {
+  async getUserProfileById(
+    id: number,
+    userId: number,
+  ): Promise<UserProfileDto | UserProfileResponseDto> {
     try {
+      const currentUserId = userId;
+      const isCurrentUser = id === currentUserId;
+
+      if (isCurrentUser) {
+        const infoUser: User | null = await this.dataBaseService.findOne<User>(
+          this.userRepository,
+          { relations: ['role', 'status'], where: { id } },
+        );
+
+        if (!infoUser) throw new NotFoundException('User not found');
+
+        const booksRead = await this.bookReadingHistoryRepository
+          .createQueryBuilder('readingHistory')
+          .select('DISTINCT readingHistory.book')
+          .where('readingHistory.user = :id', { id })
+          .getCount();
+
+        const chaptersRead = await this.bookReadingHistoryRepository
+          .createQueryBuilder('readingHistory')
+          .select('DISTINCT readingHistory.chapter')
+          .where('readingHistory.user = :id', { id })
+          .getCount();
+
+        const books = await this.bookRepository.find({
+          where: { author: { id }, accessStatus: { id: 1 } },
+          select: ['id', 'title', 'description', 'cover', 'createdAt'],
+          order: { createdAt: 'DESC' },
+        });
+
+        const userProfile = plainToInstance(UserProfileResponseDto, infoUser, {
+          excludeExtraneousValues: true,
+        });
+
+        userProfile.booksRead = booksRead;
+        userProfile.chaptersRead = chaptersRead;
+        userProfile.books = books.map((book) => ({
+          id: book.id,
+          title: book.title,
+          description: book.description,
+          cover: book.cover,
+          createdAt: book.createdAt,
+        }));
+
+        return userProfile;
+      }
+
       const user = await this.userRepository.findOne({
-        where: { id: userId },
+        where: { id },
         select: ['name', 'avatar', 'bio', 'facebook', 'instagram', 'twitter'],
       });
 
@@ -778,8 +827,8 @@ export class UserService {
       }
 
       const books = await this.bookRepository.find({
-        where: { author: { id: userId }, accessStatus: { id: 1 } },
-        select: ['id', 'title', 'description', 'cover'],
+        where: { author: { id }, accessStatus: { id: 1 } },
+        select: ['id', 'title', 'description', 'cover', 'createdAt'],
         order: { createdAt: 'DESC' },
       });
 
