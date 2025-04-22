@@ -28,6 +28,7 @@ import {
 import { BookChapter } from '@features/book/entities/book-chapter.entity';
 import { GetAdminChapterPurchasesDto } from './dto/admin-book-purchase.dto';
 import { MailerService } from '@nestjs-modules/mailer';
+import { log } from 'console';
 
 @Injectable()
 export class TransactionService {
@@ -75,6 +76,8 @@ export class TransactionService {
         this.momoSecretkey,
       );
 
+      console.log('Signature:', amount);
+
       const payload = {
         partnerCode: this.momoPartnerCode,
         accessKey: this.momoAccessKey,
@@ -90,6 +93,8 @@ export class TransactionService {
         lang: this.momoLang,
       };
 
+      console.log('Payload:', payload);
+
       const response = await axios.post(
         'https://test-payment.momo.vn/v2/gateway/api/create',
         payload,
@@ -98,7 +103,7 @@ export class TransactionService {
 
       if (momoResponse.resultCode !== 0) {
         this.loggerService.err(
-          momoResponse.message,
+          momoResponse,
           'TransactionService.createOrderMomo',
         );
 
@@ -119,6 +124,7 @@ export class TransactionService {
         requestId,
       };
     } catch (error) {
+      log('Error:', error);
       this.loggerService.err(
         error.message,
         'TransactionService.createOrderMomo',
