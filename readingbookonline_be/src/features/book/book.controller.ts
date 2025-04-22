@@ -49,6 +49,7 @@ import { GetTrendingBooksDto } from './dto/book-trending.dto';
 import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import { GetListBookDto } from './dto/get-book.dto';
+import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
 
 @Controller('book')
 export class BookController {
@@ -67,8 +68,8 @@ export class BookController {
 
   @ApiOperation({ summary: 'Lấy danh mục' })
   @Get('category')
-  async getBookCategory() {
-    return await this.bookService.getBookCategory();
+  async getBookCategory(@Query() params: GetBookCategoryDetailDto) {
+    return await this.bookService.getBookCategory(params);
   }
 
   @UseGuards(JwtAuthGuard)

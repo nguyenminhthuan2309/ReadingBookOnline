@@ -10,10 +10,10 @@ import {
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
-import { GENDER_ENUM, User } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import { In, Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
-import { plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import {
   GetUsersFilterDto,
   UserProfileResponseDto,
@@ -38,6 +38,7 @@ import { UpdateSettingsDto } from './dto/user-setting.dto';
 import { Book } from '@features/book/entities/book.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
+import { LoginResponseDto } from './dto/login.dto';
 
 @Injectable()
 export class UserService {
@@ -177,7 +178,7 @@ export class UserService {
     }
   }
 
-  async verify(token: string): Promise<Boolean> {
+  async verify(token: string): Promise<LoginResponseDto> {
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.jwtSecret,
@@ -212,9 +213,39 @@ export class UserService {
                <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
       });
 
+      await this.dataBaseService.update<User>(this.userRepository, user.id, {
+        status: { id: 1 },
+        tokenBalance: Number(user.tokenBalance || 0) + 50,
+        tokenReceived: Number(user.tokenEarned || 0) + 50,
+      });
+
+      const payloadAccessToken = plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      });
+
+      const expiresInSeconds = 60 * 60 * 8;
+      const issuedAt = Math.floor(Date.now() / 1000);
+      const expirationTime = issuedAt + expiresInSeconds;
+
+      const accessToken = await this.jwtService.signAsync(
+        instanceToPlain(payloadAccessToken),
+        { secret: this.jwtSecret },
+      );
+
+      user.tokenBalance = Number(user.tokenBalance || 0) + 50;
+      user.tokenReceived = Number(user.tokenReceived || 0) + 50;
+
+      const userDto = plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      });
+
       this.loggerService.info('Welcome email sent', 'UserService.verify');
 
-      return true;
+      return {
+        accessToken,
+        expiresIn: expirationTime,
+        user: userDto,
+      };
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.verify');
       throw error;

@@ -17,7 +17,10 @@ import {
 } from './dto/get-book-request.dto';
 import { LoggerService } from '@core/logger/logger.service';
 import { CacheService } from '@core/cache/cache.service';
-import { GetBookCategoryDto } from './dto/get-book-category.dto';
+import {
+  GetBookCategoryDetailDto,
+  GetBookCategoryDto,
+} from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
 import { bookConfig } from '@core/config/global';
 import { GetBookDetail, GetListBookDto } from './dto/get-book.dto';
@@ -430,46 +433,105 @@ export class BookService {
     }
   }
 
-  async getBookCategory() {
+  async getBookCategory(params: GetBookCategoryDetailDto) {
     try {
-      const cachedKey = `books:category:list`;
+      let {
+        userId,
+        search,
+        bookTypeId,
+        accessStatusId,
+        progressStatusId,
+        categoryId,
+        hasChapters = false,
+      } = params;
 
+      const cachedKey = `books:category:list:${userId || 'all'}:${search || 'all'}:${bookTypeId || 'all'}:${accessStatusId || 'all'}:${progressStatusId || 'all'}:${categoryId || 'all'}`;
       const cachedPage = await this.cacheService.get(cachedKey);
       if (cachedPage) {
         return JSON.parse(cachedPage);
       }
 
-      const categories = await this.bookCategoryRepository.find({
-        select: ['id', 'name', 'createdAt', 'updatedAt'],
-        order: { id: 'ASC' },
-      });
+      const qb = this.databaseService
+        .queryBuilder(this.bookCategoryRepository, 'category')
+        .leftJoinAndSelect('category.bookCategoryRelations', 'bcr')
+        .leftJoinAndSelect('bcr.book', 'book')
+        .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.bookType', 'bookType')
+        .leftJoinAndSelect('book.accessStatus', 'accessStatus')
+        .leftJoinAndSelect('book.progressStatus', 'progressStatus')
+        .leftJoinAndSelect('book.chapters', 'chapters')
+        .leftJoinAndSelect('book.reviews', 'reviews');
 
-      const categoryIds = categories.map((c) => c.id);
+      if (userId) {
+        qb.andWhere('author.id = :userId', { userId });
+      }
+      if (bookTypeId) {
+        qb.andWhere('bookType.id = :bookTypeId', { bookTypeId });
+      }
+      if (accessStatusId) {
+        qb.andWhere('accessStatus.id IN (:...accessStatusId)', {
+          accessStatusId,
+        });
+      }
+      if (progressStatusId) {
+        qb.andWhere('progressStatus.id = :progressStatusId', {
+          progressStatusId,
+        });
+      }
+      if (categoryId && Array.isArray(categoryId)) {
+        qb.andWhere('bcr.category_id IN (:...categoryId)', { categoryId });
+      }
+      if (search) {
+        qb.andWhere(
+          `(to_tsvector('simple', unaccent(lower(book.title))) @@ websearch_to_tsquery(unaccent(lower(:search))) 
+               OR to_tsvector('simple', unaccent(lower(author.name))) @@ websearch_to_tsquery(unaccent(lower(:search)))
+               OR unaccent(lower(book.title)) ILIKE :prefixSearch 
+               OR unaccent(lower(author.name)) ILIKE :prefixSearch)`,
+          {
+            search: search.replace(/\s+/g, ' & '),
+            prefixSearch: `%${search}%`,
+          },
+        );
+      }
+      if (hasChapters) {
+        qb.andWhere('chapters.id IS NOT NULL');
+      }
 
-      const rawCounts: {
-        category_id: number;
-        book_count: number;
-      }[] = await this.bookCategoryRelationRepository
-        .createQueryBuilder('relation')
-        .select('relation.category_id', 'category_id')
-        .addSelect('COUNT(DISTINCT relation.book_id)', 'book_count')
-        .where('relation.category_id IN (:...categoryIds)', { categoryIds })
-        .groupBy('relation.category_id')
-        .getRawMany();
+      const categories = await qb.getMany();
 
-      const bookCountMap = new Map<number, number>();
-      rawCounts.forEach((row) => {
-        bookCountMap.set(Number(row.category_id), Number(row.book_count));
-      });
+      const allCategories = await this.bookCategoryRepository.find();
+      const categoryMap = new Map<number, any>();
 
-      const response = categories.map((category) => {
+      categories.forEach((category) => {
         const dto = plainToInstance(GetBookCategoryDto, category, {
           excludeExtraneousValues: true,
         });
-
-        dto.totalBooks = bookCountMap.get(category.id) || 0;
-        return dto;
+        const booksInCategory = category.bookCategoryRelations.map(
+          (relation) => relation.book,
+        );
+        dto.totalBooks = booksInCategory.length || 0;
+        categoryMap.set(category.id, dto);
       });
+
+      allCategories.forEach((category) => {
+        if (!categoryMap.has(category.id)) {
+          const dto = plainToInstance(GetBookCategoryDto, category, {
+            excludeExtraneousValues: true,
+          });
+          dto.totalBooks = 0;
+          categoryMap.set(category.id, dto);
+        }
+      });
+
+      const response = Array.from(categoryMap.values()).sort(
+        (a, b) => a.id - b.id,
+      );
+
+      // await this.cacheService.set(
+      //   cachedKey,
+      //   JSON.stringify(response),
+      //   this.redisBookTtl,
+      // );
 
       return response;
     } catch (error) {

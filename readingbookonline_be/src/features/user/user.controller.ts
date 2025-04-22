@@ -34,6 +34,7 @@ import {
 } from './dto/user-favorite.dto';
 import { UpdateSettingsDto } from './dto/user-setting.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { LoginResponseDto } from './dto/login.dto';
 
 @Controller('user')
 export class UserController {
@@ -47,7 +48,7 @@ export class UserController {
 
   @ApiOperation({ summary: 'Xác thực tài khoản' })
   @Get('/verify')
-  async verify(@Query('token') token: string): Promise<Boolean> {
+  async verify(@Query('token') token: string): Promise<LoginResponseDto> {
     return await this.userService.verify(token);
   }
 
