@@ -3,7 +3,6 @@ import {
   Injectable,
   HttpException,
   HttpStatus,
-  BadGatewayException,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
@@ -102,7 +101,12 @@ export class TransactionService {
           'TransactionService.createOrderMomo',
         );
 
-        throw new HttpException(momoResponse.message, HttpStatus.BAD_REQUEST);
+        return {
+          status: false,
+          code: 400,
+          data: { momoResponse: { ...momoResponse } },
+          msg: 'Fail',
+        };
       }
 
       await this.dataBaseService.create(this.transactionRepository, {
@@ -117,6 +121,10 @@ export class TransactionService {
         url: momoResponse.payUrl,
         orderId,
         requestId,
+        momoResponse: {
+          resultCode: momoResponse.resultCode,
+          message: momoResponse.message,
+        },
       };
     } catch (error) {
       this.loggerService.err(
@@ -127,9 +135,9 @@ export class TransactionService {
     }
   }
 
-  async handleMoMoWebhook(payload: any): Promise<Boolean> {
+  async handleMoMoWebhook(payload: any): Promise<any> {
     try {
-      const { orderId, resultCode } = payload;
+      const { orderId, resultCode, message } = payload;
       this.loggerService.info(
         `Received MoMo webhook for orderId: ${orderId} with resultCode: ${resultCode}`,
         'TransactionService.handleMoMoWebhook',
@@ -179,7 +187,12 @@ export class TransactionService {
           });
         }
 
-        throw new BadGatewayException('Transaction already processed');
+        return {
+          status: true,
+          code: 200,
+          data: { momoResponse: { resultCode, message } },
+          msg: 'Success',
+        };
       } else {
         transaction.status = TransactionStatus.FAILED;
         await this.transactionRepository.save(transaction);
@@ -198,7 +211,12 @@ export class TransactionService {
         });
       }
 
-      return true;
+      return {
+        status: true,
+        code: 200,
+        data: { momoResponse: { resultCode, message } },
+        msg: 'Success',
+      };
     } catch (error) {
       this.loggerService.err(
         error.message,
@@ -226,7 +244,7 @@ export class TransactionService {
         requestId,
         orderId,
         signature,
-        lang: 'en',
+        lang: this.momoLang,
       };
 
       const response = await axios.post(
@@ -288,6 +306,18 @@ export class TransactionService {
               <p>Chúc bạn một ngày tuyệt vời!</p>
             `,
           });
+
+          return {
+            status: true,
+            code: 200,
+            data: {
+              momoResponse: {
+                resultCode: momoResponse.resultCode,
+                message: momoResponse.message,
+              },
+            },
+            msg: 'Success',
+          };
         }
       } else {
         const transaction = await this.transactionRepository.findOne({
@@ -321,7 +351,17 @@ export class TransactionService {
         }
       }
 
-      return momoResponse;
+      return {
+        status: true,
+        code: 200,
+        data: {
+          momoResponse: {
+            resultCode: momoResponse.resultCode,
+            message: momoResponse.message,
+          },
+        },
+        msg: 'Success',
+      };
     } catch (error) {
       this.loggerService.err(
         error.message,
