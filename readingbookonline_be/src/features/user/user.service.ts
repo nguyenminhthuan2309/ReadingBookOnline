@@ -201,25 +201,19 @@ export class UserService {
 
       await this.dataBaseService.update<User>(this.userRepository, user.id, {
         status: { id: 1 },
-      });
-
-      await this.cacheService.delete(`verify:${user.id}`);
-
-      await this.mailerService.sendMail({
-        to: user.email,
-        subject: 'Chào mừng bạn tham gia!',
-        text: `Xin chào ${user.name}, chào mừng bạn đến với ứng dụng của chúng tôi!`,
-        html: `<h3>Xin chào ${user.name},</h3>
-               <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
-      });
-
-      await this.dataBaseService.update<User>(this.userRepository, user.id, {
-        status: { id: 1 },
         tokenBalance: Number(user.tokenBalance || 0) + 50,
         tokenReceived: Number(user.tokenEarned || 0) + 50,
       });
 
-      const payloadAccessToken = plainToInstance(UserResponseDto, user, {
+      const newUser = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        {
+          where: { id: user.id },
+          relations: ['role', 'status'],
+        },
+      );
+
+      const payloadAccessToken = plainToInstance(UserResponseDto, newUser, {
         excludeExtraneousValues: true,
       });
 
@@ -237,6 +231,16 @@ export class UserService {
 
       const userDto = plainToInstance(UserResponseDto, user, {
         excludeExtraneousValues: true,
+      });
+
+      await this.cacheService.delete(`verify:${user.id}`);
+
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject: 'Chào mừng bạn tham gia!',
+        text: `Xin chào ${user.name}, chào mừng bạn đến với ứng dụng của chúng tôi!`,
+        html: `<h3>Xin chào ${user.name},</h3>
+               <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
       });
 
       this.loggerService.info('Welcome email sent', 'UserService.verify');
