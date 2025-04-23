@@ -234,7 +234,15 @@ export class BookService {
         }
       > = new Map();
 
-      if (user && user.id && books.length > 0) {
+      if (!user) {
+        books.forEach((book) => {
+          readingHistoriesMap.set(book.id, {
+            lastReadChapterId: 0,
+            lastReadChapterNumber: 0,
+            totalReadChapters: 0,
+          });
+        });
+      } else if (user && user.id && books.length > 0) {
         const bookIds = books.map((book) => book.id);
 
         const subQuery = this.bookReadingHistoryRepository
