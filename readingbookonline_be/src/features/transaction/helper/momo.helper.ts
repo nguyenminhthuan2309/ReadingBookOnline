@@ -9,7 +9,7 @@ export const MomoConfig = {
     'https://9b01-125-235-232-217.ngrok-free.app/transaction/momo/webhook',
   requestType: 'captureWallet',
   extraData: '',
-  lang: 'vi',
+  lang: 'en',
 
   getRawSignature: (
     accessKey: string,

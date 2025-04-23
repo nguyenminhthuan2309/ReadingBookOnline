@@ -5,7 +5,6 @@ import {
   Get,
   UseGuards,
   Req,
-  Put,
   Query,
   Patch,
   Param,
@@ -35,6 +34,7 @@ import {
 import { UpdateSettingsDto } from './dto/user-setting.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { LoginResponseDto } from './dto/login.dto';
+import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
 
 @Controller('user')
 export class UserController {
@@ -182,9 +182,14 @@ export class UserController {
     return this.userService.searchUsersByName(search);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
-  async getUserProfile(@Param('id') id: number): Promise<UserProfileDto> {
-    return await this.userService.getUserProfileById(id);
+  async getUserProfile(
+    @Param('id') id: number,
+    @Req() req: any,
+  ): Promise<UserProfileDto | UserProfileResponseDto> {
+    const userId = (req as any).user?.id;
+    return await this.userService.getUserProfileById(id, userId);
   }
 }

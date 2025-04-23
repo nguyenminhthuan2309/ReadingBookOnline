@@ -201,25 +201,19 @@ export class UserService {
 
       await this.dataBaseService.update<User>(this.userRepository, user.id, {
         status: { id: 1 },
-      });
-
-      await this.cacheService.delete(`verify:${user.id}`);
-
-      await this.mailerService.sendMail({
-        to: user.email,
-        subject: 'Chào mừng bạn tham gia!',
-        text: `Xin chào ${user.name}, chào mừng bạn đến với ứng dụng của chúng tôi!`,
-        html: `<h3>Xin chào ${user.name},</h3>
-               <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
-      });
-
-      await this.dataBaseService.update<User>(this.userRepository, user.id, {
-        status: { id: 1 },
         tokenBalance: Number(user.tokenBalance || 0) + 50,
         tokenReceived: Number(user.tokenEarned || 0) + 50,
       });
 
-      const payloadAccessToken = plainToInstance(UserResponseDto, user, {
+      const newUser = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        {
+          where: { id: user.id },
+          relations: ['role', 'status'],
+        },
+      );
+
+      const payloadAccessToken = plainToInstance(UserResponseDto, newUser, {
         excludeExtraneousValues: true,
       });
 
@@ -237,6 +231,16 @@ export class UserService {
 
       const userDto = plainToInstance(UserResponseDto, user, {
         excludeExtraneousValues: true,
+      });
+
+      await this.cacheService.delete(`verify:${user.id}`);
+
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject: 'Chào mừng bạn tham gia!',
+        text: `Xin chào ${user.name}, chào mừng bạn đến với ứng dụng của chúng tôi!`,
+        html: `<h3>Xin chào ${user.name},</h3>
+               <p>Chào mừng bạn đến với ứng dụng của chúng tôi!</p>`,
       });
 
       this.loggerService.info('Welcome email sent', 'UserService.verify');
@@ -766,10 +770,59 @@ export class UserService {
     }
   }
 
-  async getUserProfileById(userId: number): Promise<UserProfileDto> {
+  async getUserProfileById(
+    id: number,
+    userId: number,
+  ): Promise<UserProfileDto | UserProfileResponseDto> {
     try {
+      const currentUserId = userId;
+      const isCurrentUser = id === currentUserId;
+
+      if (isCurrentUser) {
+        const infoUser: User | null = await this.dataBaseService.findOne<User>(
+          this.userRepository,
+          { relations: ['role', 'status'], where: { id } },
+        );
+
+        if (!infoUser) throw new NotFoundException('User not found');
+
+        const booksRead = await this.bookReadingHistoryRepository
+          .createQueryBuilder('readingHistory')
+          .select('DISTINCT readingHistory.book')
+          .where('readingHistory.user = :id', { id })
+          .getCount();
+
+        const chaptersRead = await this.bookReadingHistoryRepository
+          .createQueryBuilder('readingHistory')
+          .select('DISTINCT readingHistory.chapter')
+          .where('readingHistory.user = :id', { id })
+          .getCount();
+
+        const books = await this.bookRepository.find({
+          where: { author: { id }, accessStatus: { id: 1 } },
+          select: ['id', 'title', 'description', 'cover', 'createdAt'],
+          order: { createdAt: 'DESC' },
+        });
+
+        const userProfile = plainToInstance(UserProfileResponseDto, infoUser, {
+          excludeExtraneousValues: true,
+        });
+
+        userProfile.booksRead = booksRead;
+        userProfile.chaptersRead = chaptersRead;
+        userProfile.books = books.map((book) => ({
+          id: book.id,
+          title: book.title,
+          description: book.description,
+          cover: book.cover,
+          createdAt: book.createdAt,
+        }));
+
+        return userProfile;
+      }
+
       const user = await this.userRepository.findOne({
-        where: { id: userId },
+        where: { id },
         select: ['name', 'avatar', 'bio', 'facebook', 'instagram', 'twitter'],
       });
 
@@ -778,8 +831,8 @@ export class UserService {
       }
 
       const books = await this.bookRepository.find({
-        where: { author: { id: userId }, accessStatus: { id: 1 } },
-        select: ['id', 'title', 'description', 'cover'],
+        where: { author: { id }, accessStatus: { id: 1 } },
+        select: ['id', 'title', 'description', 'cover', 'createdAt'],
         order: { createdAt: 'DESC' },
       });
 

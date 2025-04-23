@@ -109,6 +109,14 @@ export class GetListBookDto {
   @IsArray()
   categories: GetBookCategoryDto[];
 
+  @IsOptional()
+  @Expose()
+  readingProgress?: {
+    lastReadChapterId: number;
+    lastReadChapterNumber: number;
+    totalReadChapters: number;
+  };
+
   @IsNotEmpty()
   @Expose()
   createdAt: Date;
