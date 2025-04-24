@@ -5,8 +5,7 @@ export const MomoConfig = {
   accessKey: 'bzSgjHNtsL8SZxqr',
   secretkey: 'TD2PwNHAY6KlXBNn2gu4HKH7PbVxuFdO',
   redirectUrl: 'http://localhost:3001/kiem-tra-thanh-toan',
-  ipnUrl:
-    'https://e090-2402-800-63a9-cff4-e5c5-3abc-3917-16e1.ngrok-free.app/transaction/momo/webhook',
+  ipnUrl: 'https://0c02-123-20-157-167.ngrok-free.app/transaction/momo/webhook',
   requestType: 'captureWallet',
   extraData: '',
   lang: 'en',
