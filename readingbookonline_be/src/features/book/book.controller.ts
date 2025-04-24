@@ -418,6 +418,7 @@ export class BookController {
     return this.bookService.migrateBookEmbedding(id);
   }
 
+  @UseGuards(OptionalAuthGuard)
   @Get('recommend-ai')
   @ApiOperation({
     summary: 'Search books using AI semantic search',
