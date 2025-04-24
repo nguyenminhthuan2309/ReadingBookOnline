@@ -15,7 +15,12 @@ import {
   Patch,
 } from '@nestjs/common';
 import { BookService } from './book.service';
-import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiProperty,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 import {
   GetBookRequestDto,
   GetBookResponseDto,
@@ -50,6 +55,7 @@ import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import { GetListBookDto } from './dto/get-book.dto';
 import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
+import { AiSearchDto } from './dto/book-search-ai.dto';
 
 @Controller('book')
 export class BookController {
@@ -397,6 +403,32 @@ export class BookController {
   ): Promise<GetListBookDto[]> {
     const userId = (req as any)?.user?.id ?? null;
     return this.bookService.getRecommendedBooks(userId, params);
+  }
+
+  @Get('migrate-embedded-column-book')
+  @ApiOperation({ summary: 'Migrate embedded column book' })
+  async migrateAddEmbeddingColumn(): Promise<Boolean> {
+    return this.bookService.migrateAddEmbeddingColumn();
+  }
+
+  @Get('migrate-embedded-book/:id')
+  @ApiOperation({ summary: 'Migrate embedded book' })
+  @ApiProperty({ example: 1 })
+  async migrateBookEmbedding(@Param('id') id: number): Promise<Boolean> {
+    return this.bookService.migrateBookEmbedding(id);
+  }
+
+  @Get('recommend-ai')
+  @ApiOperation({
+    summary: 'Search books using AI semantic search',
+    description: 'Find books based on semantic similarity to the search query',
+  })
+  async searchBookByAI(
+    @Req() req,
+    @Query() params: AiSearchDto,
+  ): Promise<GetBookResponseDto> {
+    const user = (req as any)?.user ?? null;
+    return this.bookService.searchBookByAI(user, params);
   }
 
   @UseGuards(OptionalAuthGuard)

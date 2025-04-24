@@ -22,7 +22,7 @@ import {
   GetBookCategoryDto,
 } from './dto/get-book-category.dto';
 import { BookCategory } from './entities/book-category.entity';
-import { bookConfig } from '@core/config/global';
+import { bookConfig, openAIConfig } from '@core/config/global';
 import { GetBookDetail, GetListBookDto } from './dto/get-book.dto';
 import { GetProgressStatusDto } from './dto/get-book-progess-status.dto';
 import { BookProgressStatus } from './entities/book-progess-status.entity';
@@ -75,9 +75,12 @@ import { GetTrendingBooksDto } from './dto/book-trending.dto';
 import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
+import OpenAI from 'openai';
+import { AiSearchDto } from './dto/book-search-ai.dto';
 
 @Injectable()
 export class BookService {
+  private readonly openAIKey = openAIConfig.openAIKey;
   private readonly redisBookTtl = bookConfig.redisBookTtl;
   private readonly adminMail = 'iiiimanhiiii007@gmail.com';
   private readonly privateBookStatus = 2;
@@ -119,6 +122,20 @@ export class BookService {
     private readonly bookNotificationGateway: BookNotificationGateway,
   ) {}
 
+  private async getQueryEmbedding(query: string) {
+    try {
+      const openai = new OpenAI({ apiKey: this.openAIKey });
+      const response = await openai.embeddings.create({
+        model: 'text-embedding-ada-002',
+        input: query,
+      });
+      return response.data[0].embedding;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getQueryEmbedding');
+      throw error;
+    }
+  }
+
   private getStatusMessage(title: string, accessStatusId: number): string {
     if (accessStatusId === 3) {
       return `Blocked: ${title} has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
@@ -129,6 +146,65 @@ export class BookService {
     }
 
     return '';
+  }
+
+  async migrateAddEmbeddingColumn(): Promise<Boolean> {
+    try {
+      await this.databaseService.executeRawQuery(
+        `CREATE EXTENSION IF NOT EXISTS vector`,
+      );
+
+      await this.databaseService.executeRawQuery(
+        `ALTER TABLE "book"  ADD COLUMN IF NOT EXISTS "embedding" vector(1536)`,
+      );
+
+      await this.databaseService.executeRawQuery(
+        `CREATE INDEX IF NOT EXISTS idx_book_embedding ON "book" USING ivfflat ("embedding" vector_l2_ops) WITH (lists = 100)`,
+      );
+
+      console.log(
+        '✅ Migration completed: embedding column added with ivfflat index',
+      );
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(
+        error.message,
+        'BookService.migrateAddEmbeddingColumn',
+      );
+      throw error;
+    }
+  }
+
+  async migrateBookEmbedding(id: number): Promise<Boolean> {
+    try {
+      const books = await this.databaseService.findAll(this.bookRepository, {
+        where: { id },
+        select: ['id', 'description', 'title'],
+      });
+
+      for (const book of books) {
+        try {
+          const combinedText = `${book.title} ${book.description}`;
+          const queryEmbedding = await this.getQueryEmbedding(combinedText);
+          const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+          await this.databaseService.executeRawQuery(
+            `UPDATE "book" SET "embedding" = $1::vector WHERE id = $2`,
+            [embeddingStr, book.id],
+          );
+
+          console.log(`✅ Book ID ${book.id} embedding updated`);
+        } catch (error) {
+          console.error(`❌ Failed embedding for book ID ${book.id}:`, error);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.migrateBookEmbedding');
+      throw error;
+    }
   }
 
   async getAllBooks(
@@ -720,6 +796,24 @@ export class BookService {
         progressStatus: { id: dto.progressStatusId },
         author: { id: author.id },
       });
+
+      try {
+        const combinedText = `${book.title} ${book.description}`;
+        const queryEmbedding = await this.getQueryEmbedding(combinedText);
+        const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+        await this.databaseService.executeRawQuery(
+          `UPDATE "book" SET "embedding" = $1::vector WHERE id = $2`,
+          [embeddingStr, book.id],
+        );
+
+        console.log(`✅ Embedding generated for book ID ${book.id}`);
+      } catch (err) {
+        console.error(
+          `❌ Failed to generate embedding for book ID ${book.id}`,
+          err,
+        );
+      }
 
       if (dto.categoryIds && dto.categoryIds.length > 0) {
         dto.categoryIds.map((categoryId) =>
@@ -2432,6 +2526,216 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.clearAllChapters');
+      throw error;
+    }
+  }
+
+  async searchBookByAI(
+    user: UserResponseDto,
+    params: AiSearchDto,
+  ): Promise<GetBookResponseDto> {
+    try {
+      let { page = 1, limit = 10, search } = params;
+
+      const queryEmbedding = await this.getQueryEmbedding(search);
+      const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+      const similarBooks = await this.databaseService.executeRawQuery(
+        `SELECT 
+          id, 
+          1 - (embedding <=> $1::vector) AS similarity
+        FROM "book"
+        WHERE embedding IS NOT NULL
+        ORDER BY similarity DESC
+        LIMIT $2 OFFSET $3`,
+        [embeddingStr, limit, (page - 1) * limit],
+      );
+
+      const totalResult = await this.databaseService.executeRawQuery(
+        `SELECT COUNT(*) FROM "book" WHERE embedding IS NOT NULL`,
+      );
+
+      const total = parseInt(totalResult[0]?.count || '0');
+
+      if (similarBooks.length === 0) {
+        return {
+          totalItems: 0,
+          totalPages: 0,
+          data: [],
+        };
+      }
+
+      const bookIds = similarBooks.map((b) => b.id);
+      const qb = this.databaseService
+        .queryBuilder(this.bookRepository, 'book')
+        .leftJoinAndSelect('book.author', 'author')
+        .leftJoinAndSelect('book.bookType', 'bookType')
+        .leftJoinAndSelect('book.accessStatus', 'accessStatus')
+        .leftJoinAndSelect('book.progressStatus', 'progressStatus')
+        .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
+        .leftJoinAndSelect('bcr.category', 'category')
+        .leftJoinAndSelect('book.chapters', 'chapters')
+        .leftJoinAndSelect('book.reviews', 'reviews')
+        .whereInIds(bookIds);
+
+      const books = await qb.getMany();
+
+      const similarityMap = new Map<number, number>();
+      similarBooks.forEach((b) => similarityMap.set(b.id, b.similarity));
+
+      // let readingHistoriesMap: Map<
+      //   number,
+      //   {
+      //     lastReadChapterId: number;
+      //     lastReadChapterNumber: number;
+      //     totalReadChapters: number;
+      //   }
+      // > = new Map();
+
+      // if (!user) {
+      //   books.forEach((book) => {
+      //     readingHistoriesMap.set(book.id, {
+      //       lastReadChapterId: 0,
+      //       lastReadChapterNumber: 0,
+      //       totalReadChapters: 0,
+      //     });
+      //   });
+      // } else if (user && user.id && books.length > 0) {
+      //   const bookIds = books.map((book) => book.id);
+
+      //   const subQuery = this.bookReadingHistoryRepository
+      //     .createQueryBuilder('sub_history')
+      //     .select([
+      //       'MAX(sub_history.created_at) AS max_created_at',
+      //       'sub_history.user_id AS user_id',
+      //       'sub_history.book_id AS book_id',
+      //     ])
+      //     .where('sub_history.user_id = :userId', { userId: user.id })
+      //     .andWhere('sub_history.book_id IN (:...bookIds)', { bookIds })
+      //     .groupBy('sub_history.user_id, sub_history.book_id');
+
+      //   const rawHistories = await this.bookReadingHistoryRepository
+      //     .createQueryBuilder('history')
+      //     .select([
+      //       'history.chapter_id AS lastReadChapterId',
+      //       'history.book_id AS bookId',
+      //       'history.created_at AS createdAt',
+      //     ])
+      //     .innerJoin(
+      //       `(${subQuery.getQuery()})`,
+      //       'latest',
+      //       'history.user_id = latest.user_id AND history.book_id = latest.book_id AND history.created_at = latest.max_created_at',
+      //     )
+      //     .setParameters(subQuery.getParameters())
+      //     .getRawMany();
+
+      //   const totalChaptersRead = await this.bookReadingHistoryRepository
+      //     .createQueryBuilder('history')
+      //     .select([
+      //       'history.book_id AS bookid',
+      //       'COUNT(DISTINCT history.chapter_id) AS totalreadchapters',
+      //     ])
+      //     .where('history.user_id = :userId', { userId: user.id })
+      //     .andWhere('history.book_id IN (:...bookIds)', { bookIds })
+      //     .groupBy('history.book_id')
+      //     .getRawMany();
+
+      //   const totalChaptersMap = new Map<number, number>();
+      //   totalChaptersRead.forEach((item) => {
+      //     totalChaptersMap.set(
+      //       Number(item.bookid),
+      //       Number(item.totalreadchapters),
+      //     );
+      //   });
+
+      //   const chapterMap = new Map<number, number>();
+      //   if (rawHistories.length > 0) {
+      //     const chapterIds = rawHistories.map((h) =>
+      //       Number(h.lastreadchapterid),
+      //     );
+      //     const chapters = await this.bookChapterRepository.find({
+      //       where: { id: In(chapterIds) },
+      //     });
+
+      //     chapters.forEach((chapter) => {
+      //       chapterMap.set(chapter.id, chapter.chapter);
+      //     });
+
+      //     rawHistories.forEach((history) => {
+      //       const bookId = Number(history.bookid);
+      //       readingHistoriesMap.set(bookId, {
+      //         lastReadChapterId: Number(history.lastreadchapterid) || 0,
+      //         lastReadChapterNumber:
+      //           chapterMap.get(Number(history.lastreadchapterid)) || 0,
+      //         totalReadChapters: totalChaptersMap.get(bookId) || 0,
+      //       });
+      //     });
+      //   }
+
+      //   books.forEach((book) => {
+      //     if (!readingHistoriesMap.has(book.id)) {
+      //       readingHistoriesMap.set(book.id, {
+      //         lastReadChapterId: 0,
+      //         lastReadChapterNumber: 0,
+      //         totalReadChapters: 0,
+      //       });
+      //     }
+      //   });
+      // }
+
+      let followedBookIds = new Set<number>();
+      if (user && user.id) {
+        const follows = await this.bookFollowRepository.find({
+          where: { user: { id: user.id } },
+          relations: ['book'],
+        });
+        followedBookIds = new Set(follows.map((f) => f.book.id));
+      }
+
+      const enrichedBooks = books.map((book) => {
+        const similarity = similarityMap.get(book.id) || 0;
+
+        book['isFollowed'] = followedBookIds.has(book.id);
+
+        const chapters = book.chapters || [];
+        book['totalChapters'] = chapters.length;
+
+        book['totalPrice'] = chapters.reduce(
+          (sum, chapter) => sum + Number(chapter.price || 0),
+          0,
+        );
+
+        const reviews = book.reviews || [];
+        const totalRating = reviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0,
+        );
+        book['rating'] =
+          reviews.length > 0 ? +(totalRating / reviews.length).toFixed(2) : 0;
+
+        book['similarity'] = similarity;
+
+        // const readingProgress = readingHistoriesMap.get(book.id);
+        // if (readingProgress) {
+        //   book['readingProgress'] = readingProgress;
+        // }
+
+        return plainToInstance(GetListBookDto, book, {
+          excludeExtraneousValues: true,
+        });
+      });
+
+      enrichedBooks.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+
+      const response: GetBookResponseDto = {
+        totalItems: total,
+        totalPages: total > 0 ? Math.ceil(total / limit) : 1,
+        data: enrichedBooks,
+      };
+
+      return response;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.searchBookByAI');
       throw error;
     }
   }

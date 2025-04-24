@@ -30,7 +30,7 @@ import { BookNotification } from './book-notification.entity';
 @Index('idx_book_book_type', ['bookType'])
 @Index('idx_book_created_at', ['createdAt'])
 @Index('idx_book_updated_at', ['updatedAt'])
-@Entity('book')
+@Entity('book', { synchronize: false })
 export class Book {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
