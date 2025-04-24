@@ -9,6 +9,7 @@ export const redisConfig = {
   username: process.env.REDIS_USERNAME || 'default',
   password: process.env.REDIS_PASSWORD || '1234',
 };
+
 export const postgresConfig: DataSourceOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_HOST || '',
