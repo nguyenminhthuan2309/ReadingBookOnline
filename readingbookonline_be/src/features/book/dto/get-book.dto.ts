@@ -117,6 +117,11 @@ export class GetListBookDto {
     totalReadChapters: number;
   };
 
+  @IsNumber()
+  @IsOptional()
+  @Expose()
+  similarity?: number;
+
   @IsNotEmpty()
   @Expose()
   createdAt: Date;

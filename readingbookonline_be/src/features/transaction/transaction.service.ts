@@ -117,7 +117,7 @@ export class TransactionService {
       await this.dataBaseService.create(this.transactionRepository, {
         id: orderId,
         amount,
-        tokens: amount,
+        tokens: Math.floor(amount / 1000) || 0,
         status: TransactionStatus.PENDING,
         user: { id: user.id },
       });
@@ -166,7 +166,7 @@ export class TransactionService {
           transaction.status = TransactionStatus.SUCCESS;
           await this.transactionRepository.save(transaction);
 
-          const tokens = Math.floor(transaction.amount / 1000);
+          const tokens = transaction.tokens;
 
           await this.userRepository
             .createQueryBuilder()
@@ -281,13 +281,7 @@ export class TransactionService {
 
           await this.transactionRepository.save(transaction);
 
-          await this.userRepository.increment(
-            { id: transaction.user.id },
-            'tokenBalance',
-            transaction.amount,
-          );
-
-          const tokens = Math.floor(transaction.amount / 1000);
+          const tokens = transaction.tokens;
 
           await this.userRepository
             .createQueryBuilder()

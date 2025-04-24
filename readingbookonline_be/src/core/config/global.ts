@@ -3,7 +3,6 @@ import { config } from 'dotenv';
 import { DataSourceOptions } from 'typeorm';
 
 config({ path: path.join(process.cwd(), 'src', '.env') });
-
 export const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
   port: Number(process.env.REDIS_PORT) || 6379,
@@ -50,4 +49,8 @@ export const cloudinaryConfig = {
   folderBookChapter: 'chapter',
   limitImageSize: 1024 * 1024,
   limitWordSize: 1024 * 1024 * 5,
+};
+
+export const openAIConfig = {
+  openAIKey: process.env.OPENAI_KEY || '',
 };
