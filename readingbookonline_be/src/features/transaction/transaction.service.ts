@@ -28,7 +28,8 @@ import { BookChapter } from '@features/book/entities/book-chapter.entity';
 import { GetAdminChapterPurchasesDto } from './dto/admin-book-purchase.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { log } from 'console';
-
+import { NotificationGateway } from '@core/gateway/notification.gateway';
+import { NotificationType } from '@features/notification/entities/notification.entity';
 @Injectable()
 export class TransactionService {
   private readonly momoAccessKey = MomoConfig.accessKey;
@@ -52,12 +53,14 @@ export class TransactionService {
     private readonly loggerService: LoggerService,
     private readonly dataBaseService: DatabaseService,
     private readonly mailerService: MailerService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async createOrderMomo(user: UserResponseDto, amount: number): Promise<any> {
     try {
       const orderCount = await this.transactionRepository.count();
-      const orderId = `BOT${(orderCount + 1).toString().padStart(5, '0')}`;
+      console.log('Order count:', orderCount);
+      const orderId = `BOT${(orderCount + 1).toString().padStart(6, '0')}`;
       const orderInfo = 'Nạp tiền cho giao dịch';
       const requestId = orderId;
 
@@ -75,8 +78,6 @@ export class TransactionService {
         this.momoSecretkey,
       );
 
-      console.log('Signature:', amount);
-
       const payload = {
         partnerCode: this.momoPartnerCode,
         accessKey: this.momoAccessKey,
@@ -92,8 +93,6 @@ export class TransactionService {
         lang: this.momoLang,
       };
 
-      console.log('Payload:', payload);
-
       const response = await axios.post(
         'https://test-payment.momo.vn/v2/gateway/api/create',
         payload,
@@ -101,6 +100,7 @@ export class TransactionService {
       const momoResponse = response.data;
 
       if (momoResponse.resultCode !== 0) {
+        console.log('Momo response:', momoResponse);
         this.loggerService.err(
           momoResponse,
           'TransactionService.createOrderMomo',
@@ -179,6 +179,12 @@ export class TransactionService {
             .where('id = :id', { id: transaction.user.id })
             .execute();
 
+          await this.notificationGateway.sendDepositSuccessNotification(
+            transaction.user.id,
+            tokens,
+            transaction.id,
+          );
+
           await this.mailerService.sendMail({
             to: transaction.user.email,
             subject: 'Cảm ơn bạn đã giao dịch với chúng tôi!',
@@ -202,6 +208,13 @@ export class TransactionService {
       } else {
         transaction.status = TransactionStatus.FAILED;
         await this.transactionRepository.save(transaction);
+
+        await this.notificationGateway.sendDepositFailedNotification(
+          transaction.user.id,
+          transaction.tokens,
+          transaction.id,
+          message,
+        );
 
         await this.mailerService.sendMail({
           to: transaction.user.email,

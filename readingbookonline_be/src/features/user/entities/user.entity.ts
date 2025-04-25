@@ -21,7 +21,7 @@ import { UserReport } from './user-report.entity';
 import { BookFollow } from '@features/book/entities/book-follow.entity';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { BookChapterComment } from '@features/book/entities/book-chapter-comment.entity';
-import { BookNotification } from '@features/book/entities/book-notification.entity';
+import { Notification } from '@features/notification/entities/notification.entity';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { Transaction } from '@features/transaction/entities/transaction.entity';
 import { UserFavorite } from './user-favorite.entity';
@@ -134,8 +134,8 @@ export class User {
   @OneToMany(() => UserReport, (report) => report.reporter)
   reportsMade: UserReport[];
 
-  @OneToMany(() => BookNotification, (notification) => notification.user)
-  notifications: BookNotification[];
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions: Transaction[];

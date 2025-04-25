@@ -14,6 +14,7 @@ import { CloudinaryModule } from '@core/cloudinary/cloudinary.module';
 import { TrackerModule } from '@features/tracker/tracker.module';
 import { BookNotificationModule } from '@core/gateway/book-notification.module';
 import { TransactionModule } from '@features/transaction/transaction.module';
+import { NotificationModule } from './features/notification/notification.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { TransactionModule } from '@features/transaction/transaction.module';
     CloudinaryModule,
     BookNotificationModule,
     TransactionModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

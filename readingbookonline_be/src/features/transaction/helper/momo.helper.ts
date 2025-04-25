@@ -6,7 +6,7 @@ export const MomoConfig = {
   secretkey: 'TD2PwNHAY6KlXBNn2gu4HKH7PbVxuFdO',
   redirectUrl: 'http://localhost:3001/deposit',
   ipnUrl:
-    'https://9b01-125-235-232-217.ngrok-free.app/transaction/momo/webhook',
+    'https://a9fb-125-235-232-217.ngrok-free.app/transaction/momo/webhook',
   requestType: 'captureWallet',
   extraData: '',
   lang: 'en',

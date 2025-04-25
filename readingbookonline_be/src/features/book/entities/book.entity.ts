@@ -19,7 +19,6 @@ import { BookReadingHistory } from './book-reading-history.entity';
 import { BookProgressStatus } from './book-progess-status.entity';
 import { BookAccessStatus } from './book-access-status.entity';
 import { BookType } from './book-type.entity';
-import { BookNotification } from './book-notification.entity';
 
 @Index('idx_book_title', ['title'])
 @Index('idx_book_views', ['views'])
@@ -83,9 +82,6 @@ export class Book {
 
   @OneToMany(() => BookReview, (review) => review.book)
   reviews: BookReview[];
-
-  @OneToMany(() => BookNotification, (notification) => notification.book)
-  notifications: BookNotification[];
 
   @OneToMany(() => BookReport, (report) => report.book)
   reports: BookReport[];

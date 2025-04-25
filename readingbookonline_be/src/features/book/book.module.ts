@@ -15,8 +15,8 @@ import { BookProgressStatus } from './entities/book-progess-status.entity';
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { BookChapterComment } from './entities/book-chapter-comment.entity';
 import { BookType } from './entities/book-type.entity';
-import { BookNotification } from './entities/book-notification.entity';
-import { BookNotificationModule } from '@core/gateway/book-notification.module';
+import { NotificationGatewayModule } from '@core/gateway/notification.module';
+import { NotificationModule } from '@features/notification/notification.module';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 
@@ -35,12 +35,12 @@ import { UserFavorite } from '@features/user/entities/user-favorite.entity';
       BookReview,
       Book,
       BookChapterComment,
-      BookNotification,
       ChapterPurchase,
       UserFavorite,
     ]),
     forwardRef(() => UserModule),
-    BookNotificationModule,
+    NotificationGatewayModule,
+    NotificationModule,
   ],
   controllers: [BookController],
   providers: [BookService],

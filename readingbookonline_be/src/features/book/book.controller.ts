@@ -20,6 +20,7 @@ import {
   ApiProperty,
   ApiQuery,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import {
   GetBookRequestDto,
@@ -57,6 +58,7 @@ import { GetListBookDto } from './dto/get-book.dto';
 import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
 import { AiSearchDto } from './dto/book-search-ai.dto';
 
+@ApiTags('book')
 @Controller('book')
 export class BookController {
   constructor(private readonly bookService: BookService) {}
@@ -340,47 +342,6 @@ export class BookController {
     @Query('timeRange') timeRange: 'daily' | 'weekly' | 'monthly' = 'daily',
   ): Promise<any[]> {
     return await this.bookService.getReadingHistoryChart(timeRange);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch('notification/:id')
-  @ApiOperation({
-    summary: 'Đánh dấu thông báo là đã đọc',
-    description:
-      'API này cho phép người dùng đánh dấu một thông báo cụ thể là đã đọc.',
-  })
-  async markNotificationAsRead(
-    @Param('id') id: number,
-    @Req() req,
-  ): Promise<Boolean> {
-    const user = req.user;
-
-    return await this.bookService.markNotificationAsRead(id, user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Patch('notification-all')
-  @ApiOperation({
-    summary: 'Đánh dấu tất cả thông báo là đã đọc',
-    description:
-      'API này cho phép người dùng đánh dấu tất cả thông báo của họ là đã đọc.',
-  })
-  async markAllNotificationsAsRead(@Req() req): Promise<Boolean> {
-    const user = req.user;
-    return await this.bookService.markAllNotificationsAsRead(user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({
-    summary: 'Lấy danh sách thông báo',
-  })
-  @Get('notification')
-  async getBookNotification(
-    @Req() req,
-    @Query() pagination: PaginationRequestDto,
-  ) {
-    const author = req.user;
-    return this.bookService.getBookNotification(author, pagination);
   }
 
   @UseGuards(OptionalAuthGuard)

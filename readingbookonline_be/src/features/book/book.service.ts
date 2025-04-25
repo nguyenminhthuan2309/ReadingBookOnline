@@ -66,10 +66,8 @@ import {
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 import { format, parseISO } from 'date-fns';
-import { BookNotification } from './entities/book-notification.entity';
 import { BookNotificationGateway } from '@core/gateway/book-notification.gateway';
 import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
-import { BookNotificationResponseDto } from './dto/book-notification.dto';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { GetTrendingBooksDto } from './dto/book-trending.dto';
 import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
@@ -77,6 +75,10 @@ import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import OpenAI from 'openai';
 import { AiSearchDto } from './dto/book-search-ai.dto';
+import { NotificationService } from '@features/notification/notification.service';
+import { NotificationType } from '@features/notification/entities/notification.entity';
+import { NotificationGateway } from '@core/gateway/notification.gateway';
+import { CreateNotificationDto } from '@features/notification/dto/create-notification.dto';
 
 @Injectable()
 export class BookService {
@@ -110,8 +112,6 @@ export class BookService {
     private readonly bookFollowRepository: Repository<BookFollow>,
     @InjectRepository(BookReadingHistory)
     private readonly bookReadingHistoryRepository: Repository<BookReadingHistory>,
-    @InjectRepository(BookNotification)
-    private readonly bookNotificationRepository: Repository<BookNotification>,
     @InjectRepository(ChapterPurchase)
     private readonly chapterPurchaseRepository: Repository<ChapterPurchase>,
     @InjectRepository(UserFavorite)
@@ -119,7 +119,8 @@ export class BookService {
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
-    private readonly bookNotificationGateway: BookNotificationGateway,
+    private readonly notificationGateway: NotificationGateway,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private async getQueryEmbedding(query: string) {
@@ -1051,28 +1052,16 @@ export class BookService {
         },
       );
 
-      const notificationData = {
-        title: 'New Chapters Added',
-        message: `New chapters of the book "${book.title}" have just been released: ${dto.chapters
-          .map((chapter) => `Chapter ${chapter.chapter}`)
-          .join(', ')}`,
-        bookId: book.id,
-        createdAt: new Date(),
-      };
+      console.warn('followers', followers);
 
-      for (const follow of followers) {
-        await this.databaseService.create(this.bookNotificationRepository, {
-          user: follow.user,
-          title: notificationData.title,
-          message: notificationData.message,
-          book: { id: book.id },
-        });
-
-        await this.bookNotificationGateway.sendNewChapterNotification(
-          follow.user.id,
-          notificationData,
-        );
-      }
+      // Send notification to followers
+      this.notificationGateway.sendNewChapterNotification(
+        book.id,
+        book.title,
+        chaptersToInsert.map((chapter) => chapter.title),
+        followers.map((follower) => follower.user.id),
+        author.id,
+      );
 
       return true;
     } catch (error) {
@@ -1246,6 +1235,16 @@ export class BookService {
     dto: CreateBookReviewDto,
   ): Promise<BookReview> {
     try {
+      // Get the book with author information
+      const book = await this.bookRepository.findOne({
+        where: { id: bookId },
+        relations: ['author']
+      });
+
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+
       const review = this.bookReviewRepository.create({
         book: { id: bookId },
         user: { id: user.id },
@@ -1253,7 +1252,20 @@ export class BookService {
         comment: dto.comment,
       });
 
-      return await this.bookReviewRepository.save(review);
+      const savedReview = await this.bookReviewRepository.save(review);
+
+      // Send rating notification to book author (if the reviewer is not the author)
+      if (book.author.id !== user.id) {
+        this.notificationGateway.sendBookRatingNotification(
+          book.id,
+          book.title,
+          book.author.id,
+          user.name,
+          dto.rating
+        );
+      }
+
+      return savedReview;
     } catch (error) {
       this.loggerService.err(error.message, 'BookReviewService.createReview');
       throw error;
@@ -1348,11 +1360,36 @@ export class BookService {
           this.bookChapterCommentRepository,
           {
             where: { id: dto.parentId },
+            relations: ['user', 'chapter', 'chapter.book']
           },
         );
         if (!parent) {
           throw new NotFoundException('Bình luận gốc không tồn tại');
         }
+
+        // This is a reply to another comment - send notification to parent comment owner
+        const commentOwner = parent.user;
+        if (commentOwner.id !== user.id) {
+          // Only notify if the comment owner is not the same as the replier
+          this.notificationGateway.sendCommentReplyNotification(
+            parent.chapter.book.id,
+            parent.chapter.book.title,
+            parent.chapter.id,
+            parent.chapter.title,
+            commentOwner.id,
+            user.name
+          );
+        }
+      }
+
+      // Get book chapter details for notification
+      const chapter = await this.bookChapterRepository.findOne({
+        where: { id: chapterId },
+        relations: ['book', 'book.author']
+      });
+
+      if (!chapter) {
+        throw new NotFoundException('Chapter not found');
       }
 
       await this.databaseService.create(this.bookChapterCommentRepository, {
@@ -1361,6 +1398,18 @@ export class BookService {
         comment: dto.comment,
         parent: dto.parentId ? { id: dto.parentId } : undefined,
       });
+
+      // Send notification to book author about the new comment (if it's not a reply and not the author's own comment)
+      if (!dto.parentId && user.id !== chapter.book.author.id) {
+        this.notificationGateway.sendChapterCommentNotification(
+          chapter.book.id,
+          chapter.book.title,
+          chapter.id,
+          chapter.title,
+          chapter.book.author.id,
+          user.name
+        );
+      }
 
       return true;
     } catch (error) {
@@ -1474,7 +1523,9 @@ export class BookService {
     try {
       const book = await this.bookRepository.findOne({
         where: { id: dto.bookId },
+        relations: ['author']
       });
+      
       if (!book) throw new NotFoundException('Book Not Found');
 
       const isFollowing = await this.bookFollowRepository.findOne({
@@ -1489,6 +1540,16 @@ export class BookService {
       });
 
       await this.bookRepository.increment({ id: book.id }, 'followsCount', 1);
+
+      // Send notification to book author about new follower (if not the author following their own book)
+      if (user.id !== book.author.id) {
+        this.notificationGateway.sendBookFollowNotification(
+          book.id,
+          book.title,
+          book.author.id,
+          user.name
+        );
+      }
 
       return true;
     } catch (error) {
@@ -1970,60 +2031,79 @@ export class BookService {
     progressStatusId?: number,
   ): Promise<boolean> {
     try {
-      const book = await this.databaseService.findOne(this.bookRepository, {
+      const book = await this.bookRepository.findOne({
         where: { id: bookId },
-        relations: ['author'],
+        relations: ['author', 'accessStatus', 'progressStatus'],
       });
 
       if (!book) {
-        throw new NotFoundException('Book not found');
+        throw new NotFoundException('Không tìm thấy sách này');
       }
 
-      const updatePayload: any = {};
-      if (accessStatusId !== undefined) {
-        updatePayload.accessStatus = { id: accessStatusId };
-      }
-      if (progressStatusId !== undefined) {
-        updatePayload.progressStatus = { id: progressStatusId };
-      }
-
-      if (Object.keys(updatePayload).length > 0) {
-        await this.databaseService.update(
-          this.bookRepository,
-          bookId,
-          updatePayload,
-        );
-      }
-
-      const roleId = user.role?.id;
-
-      if (
-        typeof accessStatusId === 'number' &&
-        [1, 3, 4].includes(accessStatusId)
-      ) {
-        const statusMessage = this.getStatusMessage(book.title, accessStatusId);
-
-        await this.databaseService.create(this.bookNotificationRepository, {
-          user: { id: book.author.id },
-          title: 'Book Status Updated',
-          message: statusMessage,
-          book: { id: book.id },
+      if (progressStatusId) {
+        const progressStatus = await this.bookProgressStatusRepository.findOne({
+          where: { id: progressStatusId },
         });
 
+        if (!progressStatus) {
+          throw new NotFoundException('Không tìm thấy trạng thái tiến độ này');
+        }
+
+        book.progressStatus = progressStatus;
+      }
+
+      if (accessStatusId) {
+        const accessStatus = await this.bookAccessStatusRepository.findOne({
+          where: { id: accessStatusId },
+        });
+
+        if (!accessStatus) {
+          throw new NotFoundException('Không tìm thấy trạng thái truy cập này');
+        }
+
+        book.accessStatus = accessStatus;
+      }
+
+      await this.bookRepository.save(book);
+
+      // Create notification for book status change
+      if (accessStatusId && accessStatusId !== book.accessStatus.id) {
+        const title = 'Trạng thái sách được cập nhật';
+        const statusMessage = this.getStatusMessage(book.title, accessStatusId);
+
         this.loggerService.info(
-          'Inserted book notification',
+          'Created book status notification',
           'BookService.updateBookStatuses',
         );
 
-        this.bookNotificationGateway.sendBookStatusNotification(
-          book.author.id,
-          {
-            title: 'Book Status Updated',
+        // Use the new notification gateway for book status notifications
+        if (accessStatusId === 1) {
+          // Book was approved
+          this.notificationGateway.sendBookApprovalNotification(
+            book.id,
+            book.title,
+            book.author.id
+          );
+        } else if (accessStatusId === 3) {
+          // Book was rejected
+          this.notificationGateway.sendBookRejectionNotification(
+            book.id,
+            book.title,
+            book.author.id,
+            statusMessage
+          );
+        } else {
+          // Other status changes - use generic book update notification
+          const notificationDto: CreateNotificationDto = {
+            userId: book.author.id,
+            type: NotificationType.BOOK_UPDATED,
+            title: title,
             message: statusMessage,
-            bookId: book.id,
-            createdAt: new Date(),
-          },
-        );
+            data: { bookId: book.id }
+          };
+          
+          await this.notificationService.create(notificationDto);
+        }
       }
 
       return true;
@@ -2104,130 +2184,6 @@ export class BookService {
       this.loggerService.err(
         error.message,
         'BookService.getReadingHistoryChart',
-      );
-      throw error;
-    }
-  }
-
-  async markNotificationAsRead(
-    notificationId: number,
-    user: UserResponseDto,
-  ): Promise<Boolean> {
-    try {
-      const userInfo = user;
-
-      const notification = await this.databaseService.findOne(
-        this.bookNotificationRepository,
-        {
-          where: { id: notificationId, user: { id: userInfo.id } },
-          relations: ['user'],
-        },
-      );
-      if (!notification) {
-        throw new NotFoundException('Notification not found');
-      }
-
-      if (userInfo.id !== notification.user.id) {
-        throw new ForbiddenException(
-          'You are not allowed to mark this notification as read',
-        );
-      }
-
-      if (notification.isRead) {
-        return true;
-      }
-
-      await this.databaseService.update(
-        this.bookNotificationRepository,
-        notification.id,
-        {
-          isRead: true,
-        },
-      );
-
-      return true;
-    } catch (error) {
-      this.loggerService.err(
-        error.message,
-        'BookService.markNotificationAsRead',
-      );
-      throw error;
-    }
-  }
-
-  async markAllNotificationsAsRead(user: UserResponseDto): Promise<Boolean> {
-    try {
-      const userInfo = user;
-
-      const unreadNotifications = await this.databaseService.findAll(
-        this.bookNotificationRepository,
-        {
-          where: { user: { id: userInfo.id }, isRead: false },
-          relations: ['user'],
-        },
-      );
-
-      if (unreadNotifications.length === 0) {
-        return true;
-      }
-
-      if (userInfo.id !== unreadNotifications[0].user.id) {
-        throw new ForbiddenException(
-          'You are not allowed to mark this notification as read',
-        );
-      }
-
-      await this.bookNotificationRepository.update(
-        { user: { id: userInfo.id }, isRead: false },
-        { isRead: true },
-      );
-
-      return true;
-    } catch (error) {
-      this.loggerService.err(
-        error.message,
-        'BookService.markAllNotificationAsRead',
-      );
-      throw error;
-    }
-  }
-
-  async getBookNotification(
-    user: User,
-    pagination: PaginationRequestDto,
-  ): Promise<PaginationNotificationResponseDto<BookNotificationResponseDto>> {
-    try {
-      const { limit = 10, page = 1 } = pagination;
-      const [data, totalItems] =
-        await this.bookNotificationRepository.findAndCount({
-          where: { user: { id: user.id } },
-          order: { createdAt: 'DESC' },
-          relations: ['user', 'book'],
-          take: limit,
-          skip: (page - 1) * limit,
-        });
-
-      const totalUnread = await this.bookNotificationRepository.count({
-        where: {
-          user: { id: user.id },
-          isRead: false,
-        },
-      });
-
-      const dtos = plainToInstance(BookNotificationResponseDto, data, {
-        excludeExtraneousValues: true,
-      });
-
-      return {
-        totalItems,
-        totalUnread,
-        totalPages: Math.ceil(totalItems / limit),
-        data: dtos,
-      };
-    } catch (error) {
-      this.loggerService.err(
-        error.message,
-        'BookReadingHistoryService.getBookNotification',
       );
       throw error;
     }
