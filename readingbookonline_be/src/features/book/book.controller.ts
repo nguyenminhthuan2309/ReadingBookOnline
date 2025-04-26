@@ -419,20 +419,6 @@ export class BookController {
   }
 
   @UseGuards(OptionalAuthGuard)
-  @Get('recommend-ai')
-  @ApiOperation({
-    summary: 'Search books using AI semantic search',
-    description: 'Find books based on semantic similarity to the search query',
-  })
-  async searchBookByAI(
-    @Req() req,
-    @Query() params: AiSearchDto,
-  ): Promise<GetBookResponseDto> {
-    const user = (req as any)?.user ?? null;
-    return this.bookService.searchBookByAI(user, params);
-  }
-
-  @UseGuards(OptionalAuthGuard)
   @Get('related/:bookId')
   @ApiOperation({
     summary:
