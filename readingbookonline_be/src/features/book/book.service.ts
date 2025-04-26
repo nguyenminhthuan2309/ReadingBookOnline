@@ -76,7 +76,6 @@ import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import OpenAI from 'openai';
-import { AiSearchDto } from './dto/book-search-ai.dto';
 
 @Injectable()
 export class BookService {

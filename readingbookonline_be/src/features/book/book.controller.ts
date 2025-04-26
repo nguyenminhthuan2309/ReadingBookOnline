@@ -55,7 +55,6 @@ import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import { GetListBookDto } from './dto/get-book.dto';
 import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
-import { AiSearchDto } from './dto/book-search-ai.dto';
 
 @Controller('book')
 export class BookController {
