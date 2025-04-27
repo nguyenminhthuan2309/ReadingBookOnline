@@ -29,7 +29,7 @@ import { BookType } from './book-type.entity';
 @Index('idx_book_book_type', ['bookType'])
 @Index('idx_book_created_at', ['createdAt'])
 @Index('idx_book_updated_at', ['updatedAt'])
-@Entity('book', { synchronize: false })
+@Entity('book')
 export class Book {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
