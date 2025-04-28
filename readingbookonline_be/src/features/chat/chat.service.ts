@@ -95,6 +95,7 @@ export class ChatService {
   async getBooksWithCategories(): Promise<string[]> {
     try {
       const books = await this.bookRepository.find({
+        where: { accessStatus: { id: 1 } },
         relations: [
           'author',
           'bookCategoryRelations',
