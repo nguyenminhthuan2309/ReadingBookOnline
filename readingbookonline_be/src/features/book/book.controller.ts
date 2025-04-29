@@ -56,6 +56,8 @@ import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import { GetListBookDto } from './dto/get-book.dto';
 import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
+import { PatchBookDto } from './dto/update-book.dto';
+import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
 
 @ApiTags('book')
 @Controller('book')
@@ -138,6 +140,20 @@ export class BookController {
     if (!author) throw new ForbiddenException('Bạn không có quyền');
 
     return this.bookService.updateChapter(chapterId, dto, author);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Cập nhật một phần chương sách' })
+  @Patch('/chapter/:chapterId')
+  async patchChapter(
+    @Param('chapterId') chapterId: number,
+    @Body() dto: PatchBookChapterDto,
+    @Request() req,
+  ): Promise<boolean> {
+    const author = req.user;
+    if (!author) throw new ForbiddenException('Bạn không có quyền');
+
+    return this.bookService.patchChapter(chapterId, dto, author);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -414,7 +430,7 @@ export class BookController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Cập nhật sách (không cập nhật tác giả)' })
+  @ApiOperation({ summary: 'Cập nhật sách' })
   @Put(':id')
   async updateBook(
     @Param('id', ParseIntPipe) id: number,
@@ -423,6 +439,18 @@ export class BookController {
   ): Promise<boolean> {
     const author = req.user;
     return await this.bookService.updateBook(id, dto, author);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Cập nhật một phần sách' })
+  @Patch(':id')
+  async patchBook(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: PatchBookDto,
+    @Request() req,
+  ): Promise<boolean> {
+    const author = req.user;
+    return await this.bookService.patchBook(id, dto, author);
   }
 
   @UseGuards(JwtAuthGuard)

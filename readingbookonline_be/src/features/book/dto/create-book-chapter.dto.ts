@@ -54,6 +54,14 @@ export class CreateBookChapterDto {
   @IsOptional()
   @IsNumber()
   price?: number;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái kiểm duyệt của chương sách',
+    example: 'approved',
+  })
+  @IsOptional()
+  @IsString()
+  moderated?: string;
 }
 
 export class MultiChapterDto {
@@ -93,6 +101,14 @@ export class MultiChapterDto {
   @IsOptional()
   @IsNumber()
   price?: number;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái kiểm duyệt của chương sách',
+    example: 'approved',
+  })
+  @IsOptional()
+  @IsString()
+  moderated?: string;
 }
 
 export class CreateMultipleBookChaptersDto {

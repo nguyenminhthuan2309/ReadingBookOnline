@@ -52,6 +52,9 @@ export class Book {
   @Column({ name: 'follows_count', type: 'int', default: 0 })
   followsCount: number;
 
+  @Column({ name: 'moderated', type: 'varchar', nullable: true })
+  moderated: string;
+
   @ManyToOne(() => BookType, (type) => type.books)
   @JoinColumn({ name: 'book_type_id' })
   bookType: BookType;

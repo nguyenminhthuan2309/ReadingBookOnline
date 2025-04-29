@@ -4,3 +4,5 @@ import { CreateBookDto } from './create-book.dto';
 export class UpdateBookDto extends PartialType(
   OmitType(CreateBookDto, ['bookTypeId']),
 ) {}
+
+export class PatchBookDto extends PartialType(CreateBookDto) {}

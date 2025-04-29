@@ -79,6 +79,9 @@ import { NotificationService } from '@features/notification/notification.service
 import { NotificationType } from '@features/notification/entities/notification.entity';
 import { NotificationGateway } from '@core/gateway/notification.gateway';
 import { CreateNotificationDto } from '@features/notification/dto/create-notification.dto';
+import { PatchBookDto } from './dto/update-book.dto';
+import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
+import { ChapterAccessStatus } from './entities/book-chapter.entity';
 
 @Injectable()
 export class BookService {
@@ -851,7 +854,7 @@ export class BookService {
         cover: dto.cover,
         ageRating: dto.ageRating,
         bookType: { id: dto.bookTypeId },
-        accessStatus: { id: this.privateBookStatus },
+        accessStatus: { id: dto.accessStatusId },
         progressStatus: { id: dto.progressStatusId },
         author: { id: author.id },
       });
@@ -921,6 +924,143 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.updateBook');
+      throw error;
+    }
+  }
+
+  async patchBook(
+    bookId: number,
+    dto: PatchBookDto,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const book = await this.databaseService.findOne(this.bookRepository, {
+        where: { id: bookId },
+        relations: ['author', 'accessStatus'],
+      });
+      if (!book) {
+        throw new NotFoundException('Không tìm thấy sách');
+      }
+
+      if (book.author.id !== author.id) {
+        throw new ForbiddenException('Bạn không có quyền cập nhật sách này');
+      }
+
+      // Create an update object with only the provided fields
+      const updateData: any = {};
+      
+      if (dto.title !== undefined) updateData.title = dto.title;
+      if (dto.description !== undefined) updateData.description = dto.description;
+      if (dto.cover !== undefined) updateData.cover = dto.cover;
+      if (dto.ageRating !== undefined) updateData.ageRating = dto.ageRating;
+      if (dto.progressStatusId !== undefined) {
+        updateData.progressStatus = { id: dto.progressStatusId };
+      }
+      if (dto.accessStatusId !== undefined) {
+        updateData.accessStatus = { id: dto.accessStatusId };
+      }
+      if (dto.moderated !== undefined) {
+        updateData.moderated = dto.moderated;
+      }
+      
+      // Only update if there are fields to update
+      if (Object.keys(updateData).length > 0) {
+        await this.databaseService.update(this.bookRepository, bookId, updateData);
+      }
+
+      // If access status is changed, update only necessary chapters
+      if (dto.accessStatusId !== undefined && (book.accessStatus?.id !== dto.accessStatusId)) {
+        // Get all chapters of the book
+        const chapters = await this.databaseService.findAll(
+          this.bookChapterRepository,
+          { where: { book: { id: bookId } } }
+        );
+
+        // Determine which chapter status is appropriate for the new book access status
+        let targetChapterStatus: ChapterAccessStatus;
+        switch (dto.accessStatusId) {
+          case 1: // Public book status
+            targetChapterStatus = ChapterAccessStatus.PUBLISHED;
+            break;
+          case 2: // Private book status
+            targetChapterStatus = ChapterAccessStatus.DRAFT;
+            break;
+          case 3: // Rejected book status
+            targetChapterStatus = ChapterAccessStatus.REJECTED;
+            break;
+          default:
+            targetChapterStatus = ChapterAccessStatus.PENDING_REVIEW;
+        }
+
+        // Determine which chapters need status updates
+        const chaptersToUpdate = chapters.filter(chapter => {
+          // For chapters that need protection when book is private
+          if (dto.accessStatusId === 1 && chapter.chapterAccessStatus !== ChapterAccessStatus.PUBLISHED) {
+            return true; // Published chapters need to be made private when book is private
+          }
+          
+          // For chapters that can be published when book is public
+          if (dto.accessStatusId === 2 && chapter.chapterAccessStatus !== ChapterAccessStatus.DRAFT) {
+            return true; // Draft chapters can be published when book is public
+          }
+          
+          // For special handling cases like PENDING_REVIEW
+          if (dto.accessStatusId === 3 && chapter.chapterAccessStatus !== ChapterAccessStatus.REJECTED) {
+            return true; // Other statuses should match the special status
+          }
+
+          // For chapters that need to be pending review
+          if (dto.accessStatusId === 1 && chapter.chapterAccessStatus !== ChapterAccessStatus.PENDING_REVIEW) {
+            return true; // Published chapters need to be made private when book is private
+          }
+          
+          return false; // No change needed
+        });
+        
+        // Update only the chapters that need changes
+        if (chaptersToUpdate.length > 0) {
+          for (const chapter of chaptersToUpdate) {
+            await this.databaseService.update(
+              this.bookChapterRepository,
+              chapter.id,
+              { chapterAccessStatus: targetChapterStatus }
+            );
+          }
+  
+          this.loggerService.info(
+            `Updated ${chaptersToUpdate.length} out of ${chapters.length} chapters to status ${targetChapterStatus} for book ID ${bookId}`,
+            'BookService.patchBook'
+          );
+        } else {
+          this.loggerService.info(
+            `No chapters needed status updates for book ID ${bookId}`,
+            'BookService.patchBook'
+          );
+        }
+      }
+
+      // Handle category IDs if provided
+      if (dto.categoryIds && dto.categoryIds.length > 0) {
+        await this.bookCategoryRelationRepository.delete({
+          book: { id: bookId },
+        });
+
+        for (const categoryId of dto.categoryIds) {
+          await this.databaseService.create(
+            this.bookCategoryRelationRepository,
+            {
+              book: { id: bookId },
+              category: { id: categoryId },
+            },
+          );
+        }
+      }
+
+      await this.cacheService.deletePattern('books:*');
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.patchBook');
       throw error;
     }
   }
@@ -1074,7 +1214,9 @@ export class BookService {
       }
 
       if (chapter.book.author.id !== author.id) {
-        throw new ForbiddenException('Bạn không có quyền cập nhật chương này');
+        throw new ForbiddenException(
+          'Bạn không có quyền cập nhật chương sách này',
+        );
       }
 
       await this.databaseService.update(this.bookChapterRepository, chapterId, {
@@ -1086,15 +1228,60 @@ export class BookService {
         price: dto.price,
       });
 
-      await this.databaseService.update(this.bookRepository, chapter.book.id, {
-        updatedAt: new Date(),
-      });
+      await this.cacheService.deletePattern('books:*');
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.updateChapter');
+      throw error;
+    }
+  }
+
+  async patchChapter(
+    chapterId: number,
+    dto: PatchBookChapterDto,
+    author: Book['author'],
+  ): Promise<boolean> {
+    try {
+      const chapter = await this.databaseService.findOne(
+        this.bookChapterRepository,
+        {
+          where: { id: chapterId },
+          relations: ['book', 'book.author'],
+        },
+      );
+
+      if (!chapter) {
+        throw new NotFoundException('Không tìm thấy chương sách');
+      }
+
+      if (chapter.book.author.id !== author.id) {
+        throw new ForbiddenException(
+          'Bạn không có quyền cập nhật chương sách này',
+        );
+      }
+
+      // Create an update object with only the provided fields
+      const updateData: any = {};
+      
+      if (dto.title !== undefined) updateData.title = dto.title;
+      if (dto.chapter !== undefined) updateData.chapter = dto.chapter;
+      if (dto.content !== undefined) updateData.content = dto.content;
+      if (dto.cover !== undefined) updateData.cover = dto.cover;
+      if (dto.isLocked !== undefined) updateData.isLocked = dto.isLocked;
+      if (dto.price !== undefined) updateData.price = dto.price;
+      if (dto.moderated !== undefined) updateData.moderated = dto.moderated;
+      
+      // Only update if there are fields to update
+      if (Object.keys(updateData).length > 0) {
+        await this.databaseService.update(this.bookChapterRepository, chapterId, updateData);
+      }
 
       await this.cacheService.deletePattern('books:*');
 
       return true;
     } catch (error) {
-      this.loggerService.err(error.message, 'BookChapterService.updateChapter');
+      this.loggerService.err(error.message, 'BookService.patchChapter');
       throw error;
     }
   }
@@ -1634,7 +1821,9 @@ export class BookService {
 
       const chapterMap = new Map<number, number>();
       if (rawHistories.length > 0) {
-        const chapterIds = rawHistories.map((h) => Number(h.lastreadchapterid));
+        const chapterIds = rawHistories.map((h) =>
+          Number(h.lastreadchapterid),
+        );
         const chapters = await this.bookChapterRepository.find({
           where: { id: In(chapterIds) },
         });

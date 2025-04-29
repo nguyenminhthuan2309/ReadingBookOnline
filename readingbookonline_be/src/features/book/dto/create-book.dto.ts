@@ -43,6 +43,19 @@ export class CreateBookDto {
   @IsNumber()
   progressStatusId: number;
 
+  @ApiProperty({ example: 1, description: 'ID của Access Status' })
+  @IsNotEmpty()
+  @IsNumber()
+  accessStatusId: number;
+
+  @ApiPropertyOptional({ 
+    example: 'approved', 
+    description: 'Trạng thái kiểm duyệt'
+  })
+  @IsOptional()
+  @IsString()
+  moderated?: string;
+
   @ApiProperty({
     example: [1, 3, 5],
     description: 'Danh sách các ID của thể loại',
