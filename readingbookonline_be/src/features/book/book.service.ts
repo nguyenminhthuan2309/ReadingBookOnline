@@ -901,6 +901,7 @@ export class BookService {
         cover: dto.cover,
         ageRating: dto.ageRating,
         progressStatus: { id: dto.progressStatusId },
+        moderated: dto.moderated,
       });
 
       if (dto.categoryIds && dto.categoryIds.length > 0) {
@@ -1154,11 +1155,12 @@ export class BookService {
           cover: chapterDto.cover,
           isLocked: chapterDto.isLocked,
           price: chapterDto.price,
+          moderated: chapterDto.moderated || null,
           book: { id: book.id },
         };
       });
 
-      await this.bookChapterRepository.save(chaptersToInsert);
+      await this.bookChapterRepository.save(chaptersToInsert as any);
 
       await this.databaseService.update(this.bookRepository, book.id, {
         updatedAt: new Date(),
@@ -1381,6 +1383,7 @@ export class BookService {
             book: undefined,
             createdAt: chapter.createdAt,
             updatedAt: chapter.updatedAt,
+            moderated: chapter.moderated || null,
           } as unknown as BookChapter;
 
           return plainToInstance(GetBookChapterDto, summaryChapter, {
@@ -3262,6 +3265,7 @@ export class BookService {
             lastReadChapterNumber: readingHistory?.lastReadChapterNumber || 0,
             totalReadChapters: readingHistory?.totalReadChapters || 0,
           },
+          moderated: book.moderated || null,
         };
       });
 

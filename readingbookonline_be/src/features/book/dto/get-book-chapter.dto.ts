@@ -53,4 +53,8 @@ export class GetBookChapterDto {
   @IsNotEmpty()
   @Expose()
   createdAt: Date;
+
+  @IsOptional()
+  @Expose()
+  moderated: string;
 }

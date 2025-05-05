@@ -125,6 +125,10 @@ export class GetListBookDto {
   @IsNotEmpty()
   @Expose()
   createdAt: Date;
+
+  @IsOptional()
+  @Expose()
+  moderated: string;
 }
 
 export class GetBookDto {
@@ -209,6 +213,10 @@ export class GetBookDto {
   @IsNotEmpty()
   @Expose()
   createdAt: Date;
+
+  @IsOptional()
+  @Expose()
+  moderated: string;
 }
 
 export class GetBookDetail {
@@ -308,4 +316,8 @@ export class GetBookDetail {
   @IsNotEmpty()
   @Expose()
   createdAt: Date;
+
+  @IsOptional()
+  @Expose()
+  moderated: string;
 }

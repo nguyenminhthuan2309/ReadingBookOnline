@@ -106,6 +106,7 @@ export class MultiChapterDto {
     description: 'Trạng thái kiểm duyệt của chương sách',
     example: 'approved',
   })
+  
   @IsOptional()
   @IsString()
   moderated?: string;
