@@ -3266,6 +3266,7 @@ export class BookService {
             totalReadChapters: readingHistory?.totalReadChapters || 0,
           },
           moderated: book.moderated || null,
+          ageRating: book.age_rating || null,
         };
       });
 

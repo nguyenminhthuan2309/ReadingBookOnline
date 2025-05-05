@@ -129,6 +129,10 @@ export class GetListBookDto {
   @IsOptional()
   @Expose()
   moderated: string;
+
+  @IsOptional()
+  @Expose()
+  ageRating: number;
 }
 
 export class GetBookDto {
@@ -217,6 +221,10 @@ export class GetBookDto {
   @IsOptional()
   @Expose()
   moderated: string;
+
+  @IsOptional()
+  @Expose()
+  ageRating: number;
 }
 
 export class GetBookDetail {
@@ -320,4 +328,8 @@ export class GetBookDetail {
   @IsOptional()
   @Expose()
   moderated: string;
+
+  @IsOptional()
+  @Expose()
+  ageRating: number;
 }
