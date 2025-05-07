@@ -3084,28 +3084,31 @@ export class BookService {
 
       if (!userId) {
         const booksWithChapters = books.filter((b) => chaptersMap.has(b.id));
-        const firstChapters = await this.bookChapterRepository
-          .createQueryBuilder('chapter')
-          .select([
-            'chapter.id AS id',
-            'chapter.chapter AS chapter',
-            'chapter.book_id AS bookId',
-          ])
-          .where('chapter.book_id IN (:...bookIds)', {
-            bookIds: booksWithChapters.map((b) => b.id),
-          })
-          .orderBy('chapter.book_id')
-          .addOrderBy('chapter.chapter', 'ASC')
-          .distinctOn(['chapter.book_id'])
-          .getRawMany();
 
-        firstChapters.forEach((chapter) => {
-          readingHistoriesMap.set(Number(chapter.bookid), {
-            lastReadChapterId: Number(chapter.id),
-            lastReadChapterNumber: Number(chapter.chapter),
-            totalReadChapters: 0,
+        if (booksWithChapters.length > 0) {
+          const firstChapters = await this.bookChapterRepository
+            .createQueryBuilder('chapter')
+            .select([
+              'chapter.id AS id',
+              'chapter.chapter AS chapter',
+              'chapter.book_id AS bookId',
+            ])
+            .where('chapter.book_id IN (:...bookIds)', {
+              bookIds: booksWithChapters.map((b) => b.id),
+            })
+            .orderBy('chapter.book_id')
+            .addOrderBy('chapter.chapter', 'ASC')
+            .distinctOn(['chapter.book_id'])
+            .getRawMany();
+
+          firstChapters.forEach((chapter) => {
+            readingHistoriesMap.set(Number(chapter.bookid), {
+              lastReadChapterId: Number(chapter.id),
+              lastReadChapterNumber: Number(chapter.chapter),
+              totalReadChapters: 0,
+            });
           });
-        });
+        }
 
         books.forEach((book) => {
           if (!readingHistoriesMap.has(book.id)) {

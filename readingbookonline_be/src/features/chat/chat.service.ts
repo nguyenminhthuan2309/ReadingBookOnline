@@ -95,6 +95,7 @@ export class ChatService {
   async getBooksWithCategories(): Promise<string[]> {
     try {
       const books = await this.bookRepository.find({
+        where: { accessStatus: { id: 1 } },
         relations: [
           'author',
           'bookCategoryRelations',
@@ -147,7 +148,9 @@ export class ChatService {
         - Bạn cần tự động hiểu và ánh xạ giữa tiếng Việt và tiếng Anh để tìm sách phù hợp.
         - Chỉ trả lời tên sách và tên tác giả.
         - Chỉ trả lời dựa trên danh sách này. Không được bịa thêm sách khác.
-        - Đảm bảo định dạng sách theo yêu cầu: "Tên sách (Tên tác giả)". Ví dụ: "Lord of the Rings (JRR Tolkien)"
+        - Đảm bảo trình bày đúng định dạng: "Tên sách (Tên tác giả)".
+        - Khi phản hồi người dùng, hãy viết một câu đầy đủ, có chủ ngữ và vị ngữ, thể hiện sự chuyên nghiệp.
+        - Ví dụ: "Cuốn sách bạn đang tìm là (hoặc câu tương tự): Lord of the Rings (JRR Tolkien), Lord of the Rings 2 (JRR Tolkien), Lord of the Rings 3 (JRR Tolkien)".
         - Trả lời bằng tiếng Việt nếu người dùng hỏi câu hiện tại bằng tiếng Việt. Trả lời bằng tiếng Anh nếu người dùng hỏi câu hiện tại bằng tiếng Anh. Không trộn lẫn cả hai ngôn ngữ.`,
         });
       }
