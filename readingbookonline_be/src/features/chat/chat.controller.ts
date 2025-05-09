@@ -14,7 +14,7 @@ export class ChatController {
     @Body() { sessionId, content }: ChatCompletionRequestDto,
   ) {
     const result = await this.chatService.chatCompletion(sessionId, content);
-    return { success: true, data: { response: result } };
+    return { success: true, data: result  };
   }
 
   @Get('with-categories')

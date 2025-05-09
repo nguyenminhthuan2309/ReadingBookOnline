@@ -123,7 +123,6 @@ export class BookService {
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
     private readonly notificationGateway: NotificationGateway,
-    private readonly notificationService: NotificationService,
   ) {}
 
   private async getQueryEmbedding(query: string) {
@@ -140,13 +139,13 @@ export class BookService {
     }
   }
 
-  private getStatusMessage(title: string, accessStatusId: number): string {
+  private getStatusMessage(title: string, accessStatusId: number, authorName: string): string {
     if (accessStatusId === 3) {
-      return `Blocked: ${title} has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
+      return `${title} has been blocked due to community standards violations. To appeal, please contact via email: ${this.adminMail}`;
     } else if (accessStatusId === 4) {
-      return `Pending: ${title} is under review for suspected community standards violations. You will temporarily not be able to update this book during the review. To appeal, please contact via email: ${this.adminMail}`;
+      return `${title} from ${authorName} has been submitted for review. Please check and approve or reject it.`;
     } else if (accessStatusId === 1) {
-      return `Your book "${title}" has successfully passed the review and has been restored. Thank you for your patience.`;
+      return `"${title}" has successfully passed the review and has been restored. Thank you for your patience.`;
     }
 
     return '';
@@ -626,6 +625,7 @@ export class BookService {
   async getBookChapters(
     user: UserResponseDto,
     bookId: number,
+    chapterAccessStatus?: ChapterAccessStatus,
   ): Promise<BookChapter[]> {
     try {
       const book = await this.bookRepository
@@ -648,7 +648,9 @@ export class BookService {
         purchases.forEach((p) => purchasedChapterIds.add(p.chapter.id));
       }
 
-      const chapters = book.chapters
+      const filteredChapters = chapterAccessStatus ? book.chapters.filter((chapter) => chapter.chapterAccessStatus === chapterAccessStatus) : book.chapters;
+
+      const chapters = filteredChapters
         .sort((a, b) => a.chapter - b.chapter)
         .map((chapter) => {
           if (user?.id && book.author.id === user.id) {
@@ -663,6 +665,7 @@ export class BookService {
               price: Number(chapter.price),
               createdAt: chapter.createdAt,
               updatedAt: chapter.updatedAt,
+              chapterAccessStatus: chapter.chapterAccessStatus,
             } as BookChapter;
           } else {
             return { ...chapter, isLocked: false };
@@ -868,6 +871,15 @@ export class BookService {
         );
       }
 
+      if (dto.accessStatusId === 4) {
+        this.notificationGateway.sendNewPendingReviewToAdmin(
+          book.id,
+          book.title,
+          this.getStatusMessage(book.title, book.accessStatus.id, book.author.name),
+          book.author.id
+        );
+      }
+
       await this.cacheService.deletePattern('books:*');
 
       return book.id;
@@ -902,6 +914,8 @@ export class BookService {
         ageRating: dto.ageRating,
         progressStatus: { id: dto.progressStatusId },
         moderated: dto.moderated,
+        bookType: { id: dto.bookTypeId },
+        accessStatus: { id: dto.accessStatusId },
       });
 
       if (dto.categoryIds && dto.categoryIds.length > 0) {
@@ -919,6 +933,16 @@ export class BookService {
           );
         }
       }
+
+      // Send notification to admin if book is pending review
+     if (dto.accessStatusId === 4) {
+      this.notificationGateway.sendNewPendingReviewToAdmin(
+        book.id,
+        book.title,
+        this.getStatusMessage(book.title, dto.accessStatusId, book.author.name),
+        book.author.id
+      );
+     }
 
       await this.cacheService.deletePattern('books:*');
 
@@ -967,77 +991,6 @@ export class BookService {
       // Only update if there are fields to update
       if (Object.keys(updateData).length > 0) {
         await this.databaseService.update(this.bookRepository, bookId, updateData);
-      }
-
-      // If access status is changed, update only necessary chapters
-      if (dto.accessStatusId !== undefined && (book.accessStatus?.id !== dto.accessStatusId)) {
-        // Get all chapters of the book
-        const chapters = await this.databaseService.findAll(
-          this.bookChapterRepository,
-          { where: { book: { id: bookId } } }
-        );
-
-        // Determine which chapter status is appropriate for the new book access status
-        let targetChapterStatus: ChapterAccessStatus;
-        switch (dto.accessStatusId) {
-          case 1: // Public book status
-            targetChapterStatus = ChapterAccessStatus.PUBLISHED;
-            break;
-          case 2: // Private book status
-            targetChapterStatus = ChapterAccessStatus.DRAFT;
-            break;
-          case 3: // Rejected book status
-            targetChapterStatus = ChapterAccessStatus.REJECTED;
-            break;
-          default:
-            targetChapterStatus = ChapterAccessStatus.PENDING_REVIEW;
-        }
-
-        // Determine which chapters need status updates
-        const chaptersToUpdate = chapters.filter(chapter => {
-          // For chapters that need protection when book is private
-          if (dto.accessStatusId === 1 && chapter.chapterAccessStatus !== ChapterAccessStatus.PUBLISHED) {
-            return true; // Published chapters need to be made private when book is private
-          }
-          
-          // For chapters that can be published when book is public
-          if (dto.accessStatusId === 2 && chapter.chapterAccessStatus !== ChapterAccessStatus.DRAFT) {
-            return true; // Draft chapters can be published when book is public
-          }
-          
-          // For special handling cases like PENDING_REVIEW
-          if (dto.accessStatusId === 3 && chapter.chapterAccessStatus !== ChapterAccessStatus.REJECTED) {
-            return true; // Other statuses should match the special status
-          }
-
-          // For chapters that need to be pending review
-          if (dto.accessStatusId === 1 && chapter.chapterAccessStatus !== ChapterAccessStatus.PENDING_REVIEW) {
-            return true; // Published chapters need to be made private when book is private
-          }
-          
-          return false; // No change needed
-        });
-        
-        // Update only the chapters that need changes
-        if (chaptersToUpdate.length > 0) {
-          for (const chapter of chaptersToUpdate) {
-            await this.databaseService.update(
-              this.bookChapterRepository,
-              chapter.id,
-              { chapterAccessStatus: targetChapterStatus }
-            );
-          }
-  
-          this.loggerService.info(
-            `Updated ${chaptersToUpdate.length} out of ${chapters.length} chapters to status ${targetChapterStatus} for book ID ${bookId}`,
-            'BookService.patchBook'
-          );
-        } else {
-          this.loggerService.info(
-            `No chapters needed status updates for book ID ${bookId}`,
-            'BookService.patchBook'
-          );
-        }
       }
 
       // Handle category IDs if provided
@@ -1157,6 +1110,7 @@ export class BookService {
           price: chapterDto.price,
           moderated: chapterDto.moderated || null,
           book: { id: book.id },
+          chapterAccessStatus: chapterDto.chapterAccessStatus,
         };
       });
 
@@ -1176,16 +1130,16 @@ export class BookService {
         },
       );
 
-      console.warn('followers', followers);
-
       // Send notification to followers
-      this.notificationGateway.sendNewChapterNotification(
-        book.id,
-        book.title,
-        chaptersToInsert.map((chapter) => chapter.title),
-        followers.map((follower) => follower.user.id),
-        author.id,
-      );
+      if (followers.length > 0) {
+        this.notificationGateway.sendNewChapterNotification(
+          book.id,
+          book.title,
+          chaptersToInsert.map((chapter) => chapter.title),
+          followers.map((follower) => follower.user.id),
+          author.id,
+        );
+      }
 
       return true;
     } catch (error) {
@@ -1228,6 +1182,7 @@ export class BookService {
         cover: dto.cover,
         isLocked: dto.isLocked,
         price: dto.price,
+        chapterAccessStatus: dto.chapterAccessStatus,
       });
 
       await this.cacheService.deletePattern('books:*');
@@ -2213,6 +2168,10 @@ export class BookService {
       if (!book) {
         throw new NotFoundException('Không tìm thấy sách này');
       }
+      
+      if (book.accessStatus.id === accessStatusId || book.progressStatus.id === progressStatusId) {
+        return true;
+      }
 
       if (progressStatusId) {
         const progressStatus = await this.bookProgressStatusRepository.findOne({
@@ -2240,10 +2199,32 @@ export class BookService {
 
       await this.bookRepository.save(book);
 
+      if (accessStatusId) {
+        // Update all chapters of the book
+        const chapters = await this.bookChapterRepository.find({
+          where: { book: { id: bookId } },
+        });
+
+        for (const chapter of chapters) {
+          if (accessStatusId === 1 && chapter.chapterAccessStatus !== ChapterAccessStatus.PUBLISHED) {
+            chapter.chapterAccessStatus = ChapterAccessStatus.PUBLISHED;
+          } else if (accessStatusId === 3 && chapter.chapterAccessStatus !== ChapterAccessStatus.REJECTED) {
+            chapter.chapterAccessStatus = ChapterAccessStatus.REJECTED;
+          } else if (
+            accessStatusId === 4 &&
+            chapter.chapterAccessStatus !== ChapterAccessStatus.PENDING_REVIEW &&
+            chapter.chapterAccessStatus !== ChapterAccessStatus.PUBLISHED
+          ) {
+            chapter.chapterAccessStatus = ChapterAccessStatus.PENDING_REVIEW;
+          }
+
+          await this.bookChapterRepository.save(chapter);
+        }
+      }
+
       // Create notification for book status change
-      if (accessStatusId && accessStatusId !== book.accessStatus.id) {
-        const title = 'Trạng thái sách được cập nhật';
-        const statusMessage = this.getStatusMessage(book.title, accessStatusId);
+      if (accessStatusId) {
+        const statusMessage = this.getStatusMessage(book.title, book.accessStatus.id, book.author.name);
 
         this.loggerService.info(
           'Created book status notification',
@@ -2258,7 +2239,7 @@ export class BookService {
             book.title,
             book.author.id
           );
-        } else if (accessStatusId === 3) {
+        } else if(accessStatusId === 2) {
           // Book was rejected
           this.notificationGateway.sendBookRejectionNotification(
             book.id,
@@ -2266,17 +2247,21 @@ export class BookService {
             book.author.id,
             statusMessage
           );
-        } else {
-          // Other status changes - use generic book update notification
-          const notificationDto: CreateNotificationDto = {
-            userId: book.author.id,
-            type: NotificationType.BOOK_UPDATED,
-            title: title,
-            message: statusMessage,
-            data: { bookId: book.id }
-          };
-          
-          await this.notificationService.create(notificationDto);
+        } else if (accessStatusId === 3) {
+          // Book was blocked
+          this.notificationGateway.sendBookBlockedNotification(
+            book.id,
+            book.title,
+            book.author.id,
+            statusMessage
+          );
+        } else if (accessStatusId === 4) {
+          this.notificationGateway.sendNewPendingReviewToAdmin(
+            book.id,
+            book.title,
+            statusMessage,
+            book.author.id
+          );
         }
       }
 

@@ -34,5 +34,6 @@ import { BookReadingHistory } from '@features/book/entities/book-reading-history
   ],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}

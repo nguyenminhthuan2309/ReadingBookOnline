@@ -856,6 +856,16 @@ export class UserService {
       throw error;
     }
   }
+
+  async findAllAdminAndManagerIds(): Promise<number[]> {
+    const admins = await this.userRepository.find({
+      where: { role: { id: 1 } },
+    });
+    const managers = await this.userRepository.find({
+      where: { role: { id: 2 } },
+    });
+    return [...admins.map((admin) => admin.id), ...managers.map((manager) => manager.id)];
+  }
 }
 
 const generatePassword = (length) => {

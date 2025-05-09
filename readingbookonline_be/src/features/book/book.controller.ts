@@ -58,6 +58,7 @@ import { GetListBookDto } from './dto/get-book.dto';
 import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
 import { PatchBookDto } from './dto/update-book.dto';
 import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
+import { ChapterAccessStatus } from './entities/book-chapter.entity';
 
 @ApiTags('book')
 @Controller('book')
@@ -412,10 +413,10 @@ export class BookController {
   @UseGuards(OptionalAuthGuard)
   @Get(':id/chapters')
   @ApiOperation({ summary: 'Lấy danh sách chương của sách (theo ID)' })
-  async getBookChapters(@Req() req: any, @Param('id') id: string) {
+  async getBookChapters(@Req() req: any, @Param('id') id: string, @Query() chapterAccessStatus: ChapterAccessStatus) {
     const user = req.user ?? null;
     const bookId = parseInt(id, 10);
-    return this.bookService.getBookChapters(user, bookId);
+    return this.bookService.getBookChapters(user, bookId, chapterAccessStatus);
   }
 
   @UseGuards(OptionalAuthGuard)

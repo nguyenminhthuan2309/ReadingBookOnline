@@ -7,7 +7,9 @@ import {
   IsNumber,
   ValidateNested,
   IsArray,
+  IsEnum,
 } from 'class-validator';
+import { ChapterAccessStatus } from '../entities/book-chapter.entity';
 
 export class CreateBookChapterDto {
   @ApiProperty({
@@ -54,6 +56,10 @@ export class CreateBookChapterDto {
   @IsOptional()
   @IsNumber()
   price?: number;
+
+  @IsOptional()
+  @IsEnum(ChapterAccessStatus)
+  chapterAccessStatus?: ChapterAccessStatus;
 
   @ApiPropertyOptional({
     description: 'Trạng thái kiểm duyệt của chương sách',
@@ -106,7 +112,11 @@ export class MultiChapterDto {
     description: 'Trạng thái kiểm duyệt của chương sách',
     example: 'approved',
   })
-  
+
+  @IsOptional()
+  @IsEnum(ChapterAccessStatus)
+  chapterAccessStatus?: ChapterAccessStatus;
+
   @IsOptional()
   @IsString()
   moderated?: string;

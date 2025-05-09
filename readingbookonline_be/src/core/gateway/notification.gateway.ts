@@ -11,7 +11,9 @@ import { NotificationService } from '@features/notification/notification.service
 import { CreateNotificationDto } from '@features/notification/dto/create-notification.dto';
 import { NotificationType } from '@features/notification/entities/notification.entity';
 import { Injectable } from '@nestjs/common';
-
+import { UserService } from '@features/user/user.service';
+import { User } from '@features/user/entities/user.entity';
+import { Repository } from 'typeorm';
 @Injectable()
 @WebSocketGateway(3002, { cors: true, namespace: 'notification' })
 export class NotificationGateway
@@ -19,7 +21,8 @@ export class NotificationGateway
 {
   constructor(
     private loggerService: LoggerService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private userService: UserService,
   ) {}
 
   @WebSocketServer()
@@ -230,6 +233,62 @@ export class NotificationGateway
     this.loggerService.info('Sent book rejection notification');
   }
 
+  async sendBookBlockedNotification(bookId: number, bookTitle: string, authorId: number, reason: string) {
+    const notificationData = {
+      bookId,
+      bookTitle,
+      status: 'blocked',
+      reason
+    };
+
+    // Create database notification
+    const notificationDto: CreateNotificationDto = {
+      userId: authorId,
+      type: NotificationType.BOOK_UPDATED,
+      title: 'Book Blocked',
+      message: `Your book "${bookTitle}" has been blocked. Reason: ${reason}`,
+      data: { bookId, status: 'blocked', reason }
+    };
+    
+    // Save to database first
+    await this.notificationService.create(notificationDto); 
+
+    // Then send via socket.io
+    this.server.to(`user-${authorId}`).emit('book_status', notificationData);
+
+    this.loggerService.info('Sent book blocked notification');
+  }
+
+  async sendNewPendingReviewToAdmin(bookId: number, bookTitle: string, statusMessage: string, authorId: number) {
+    const notificationData = {
+      bookId,
+      bookTitle
+    };
+
+    // Get all admin ids
+    const adminIds = await this.userService.findAllAdminAndManagerIds();
+
+    for (const adminId of adminIds) {
+      // Skip author
+      if (adminId === authorId) continue;
+      // Create database notification
+    const notificationDto: CreateNotificationDto = {
+        userId: adminId,
+        type: NotificationType.BOOK_UPDATED,
+        title: 'New Pending Review',
+        message: statusMessage,
+        data: { bookId, bookTitle }
+    };
+    
+      // Save to database first
+      await this.notificationService.create(notificationDto);
+      // Then send via socket.io
+      this.server.to(`user-${adminId}`).emit('book_status', notificationData);
+      this.loggerService.info('Sent new pending review to admins');
+    }
+
+  }
+
   // Transaction notifications
   async sendDepositSuccessNotification(userId: number, amount: number, transactionId: string) {
     const notificationData = {
@@ -348,7 +407,6 @@ export class NotificationGateway
 
     // Create database notification for each follower first
     for (const followerId of followerIds) {
-        console.error('followerId ===============================', followerId);
       // Skip author
       if (followerId === authorId) continue;
       
