@@ -75,6 +75,9 @@ export class ChapterReadDto {
   lastReadAt: Date;
 
   @Expose()
+  chapter: number;
+
+  @Expose()
   isLocked: boolean;
 }
 

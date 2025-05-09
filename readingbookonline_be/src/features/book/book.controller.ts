@@ -413,10 +413,14 @@ export class BookController {
   @UseGuards(OptionalAuthGuard)
   @Get(':id/chapters')
   @ApiOperation({ summary: 'Lấy danh sách chương của sách (theo ID)' })
-  async getBookChapters(@Req() req: any, @Param('id') id: string, @Query() chapterAccessStatus: ChapterAccessStatus) {
+  async getBookChapters(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query() params: { chapterAccessStatus?: string },
+  ) {
     const user = req.user ?? null;
     const bookId = parseInt(id, 10);
-    return this.bookService.getBookChapters(user, bookId, chapterAccessStatus);
+    return this.bookService.getBookChapters(user, bookId, params.chapterAccessStatus);
   }
 
   @UseGuards(OptionalAuthGuard)

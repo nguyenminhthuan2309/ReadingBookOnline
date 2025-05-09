@@ -625,7 +625,7 @@ export class BookService {
   async getBookChapters(
     user: UserResponseDto,
     bookId: number,
-    chapterAccessStatus?: ChapterAccessStatus,
+    chapterAccessStatus?: string,
   ): Promise<BookChapter[]> {
     try {
       const book = await this.bookRepository
@@ -2104,6 +2104,7 @@ export class BookService {
         if (!existing || createdAt.getTime() > existing.lastReadAt.getTime()) {
           entry.chapterMap.set(chapter.id, {
             id: chapter.id,
+            chapter: chapter.chapter,
             title: chapter.title,
             lastReadAt: createdAt,
             isLocked: chapter.isLocked,
@@ -2737,6 +2738,7 @@ export class BookService {
           (book) => book.chapters && book.chapters.length > 0,
         );
         const bookIds = booksWithChapters.map((book) => book.id);
+
 
         if (bookIds.length > 0) {
           const firstChapters = await this.bookChapterRepository
