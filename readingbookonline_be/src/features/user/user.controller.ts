@@ -206,16 +206,7 @@ export class UserController {
     return this.userService.searchUsersByName(search, { page, limit }, userId);
   }
 
-  @UseGuards(OptionalAuthGuard)
-  @Get(':id')
-  @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
-  async getUserProfile(
-    @Param('id') id: number,
-    @Req() req: ExpressRequest,
-  ): Promise<UserProfileDto | UserProfileResponseDto> {
-    const userId = (req as any).user?.id;
-    return await this.userService.getUserProfileById(id, userId);
-  }
+  
 
   @Get('recent-searches')
   @ApiOperation({
@@ -258,5 +249,16 @@ export class UserController {
       createRecentSearchDto.searchValue,
       createRecentSearchDto.relatedId
     );
+  }
+
+  @UseGuards(OptionalAuthGuard)
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
+  async getUserProfile(
+    @Param('id') id: number,
+    @Req() req: ExpressRequest,
+  ): Promise<UserProfileDto | UserProfileResponseDto> {
+    const userId = (req as any).user?.id;
+    return await this.userService.getUserProfileById(id, userId);
   }
 }
