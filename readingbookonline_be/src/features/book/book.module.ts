@@ -19,6 +19,8 @@ import { NotificationGatewayModule } from '@core/gateway/notification.module';
 import { NotificationModule } from '@features/notification/notification.module';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
+import { LoggerModule } from '@core/logger/logger.module';
+import { ModerationResult } from './entities/moderation-result.entity';
 
 @Module({
   imports: [
@@ -37,12 +39,15 @@ import { UserFavorite } from '@features/user/entities/user-favorite.entity';
       BookChapterComment,
       ChapterPurchase,
       UserFavorite,
+      ModerationResult,
     ]),
+    LoggerModule,
     forwardRef(() => UserModule),
     NotificationGatewayModule,
     NotificationModule,
   ],
   controllers: [BookController],
   providers: [BookService],
+  exports: [BookService],
 })
 export class BookModule {}

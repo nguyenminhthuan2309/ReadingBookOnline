@@ -42,7 +42,6 @@ import {
 import { BookReview } from './entities/book-review.entity';
 import { PaginationRequestDto } from '@shared/dto/common/pagnination/pagination-request.dto';
 import {
-  PaginationNotificationResponseDto,
   PaginationResponseDto,
 } from '@shared/dto/common/pagnination/pagination-response.dto';
 import {
@@ -66,7 +65,6 @@ import {
 import { BookReadingHistory } from './entities/book-reading-history.entity';
 import { GetBookChapterDto } from './dto/get-book-chapter.dto';
 import { format, parseISO } from 'date-fns';
-import { BookNotificationGateway } from '@core/gateway/book-notification.gateway';
 import { UserResponseDto } from '@features/user/dto/get-user-response.dto';
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { GetTrendingBooksDto } from './dto/book-trending.dto';
@@ -74,14 +72,12 @@ import { GetRecommendedBooksDto } from './dto/book-recommend.dto';
 import { UserFavorite } from '@features/user/entities/user-favorite.entity';
 import { GetRelatedBooksDto } from './dto/book-related.dto';
 import OpenAI from 'openai';
-import { AiSearchDto } from './dto/book-search-ai.dto';
-import { NotificationService } from '@features/notification/notification.service';
-import { NotificationType } from '@features/notification/entities/notification.entity';
 import { NotificationGateway } from '@core/gateway/notification.gateway';
-import { CreateNotificationDto } from '@features/notification/dto/create-notification.dto';
 import { PatchBookDto } from './dto/update-book.dto';
 import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
 import { ChapterAccessStatus } from './entities/book-chapter.entity';
+import { ModerationResult } from './entities/moderation-result.entity';
+import {ModerationResultResponseDto, UpdateModerationResultDto } from './dto/moderation-result.dto';
 
 @Injectable()
 export class BookService {
@@ -119,6 +115,8 @@ export class BookService {
     private readonly chapterPurchaseRepository: Repository<ChapterPurchase>,
     @InjectRepository(UserFavorite)
     private readonly userFavoriteRepository: Repository<UserFavorite>,
+    @InjectRepository(ModerationResult)
+    private readonly moderationResultRepository: Repository<ModerationResult>,
     private readonly cacheService: CacheService,
     private readonly databaseService: DatabaseService,
     private readonly loggerService: LoggerService,
@@ -3283,6 +3281,125 @@ export class BookService {
       return true;
     } catch (error) {
       this.loggerService.err(error.message, 'BookService.clearAllChapters');
+      throw error;
+    }
+  }
+
+  async createModerationResult(
+    createDto
+  ): Promise<ModerationResultResponseDto> {
+    try {
+      const book = await this.bookRepository.findOne({
+        where: { id: createDto.bookId },
+      });
+
+      if (!book) {
+        throw new NotFoundException(`Book with ID ${createDto.bookId} not found`);
+      }
+
+      const newModerationResult = this.moderationResultRepository.create({
+        book,
+        title: createDto.title,
+        description: createDto.description,
+        coverImage: createDto.coverImage,
+        chapters: createDto.chapters,
+        model: createDto.model,
+      });
+
+      const savedResult = await this.moderationResultRepository.save(newModerationResult);
+      
+      // Append new model to existing book.moderated value or set new value
+      let updatedModeratedValue = createDto.model;
+      if (book.moderated) {
+        // Check if the model is already in the moderated value
+        if (!book.moderated.includes(createDto.model)) {
+          updatedModeratedValue = `${book.moderated}, ${createDto.model}`;
+        } else {
+          updatedModeratedValue = book.moderated;
+        }
+      }
+      
+      // Update the book's moderated field
+      await this.bookRepository.update(createDto.bookId, { moderated: updatedModeratedValue });
+
+      const resultWithBook = await this.moderationResultRepository.findOne({
+        where: { id: savedResult.id },
+        relations: ['book'],
+      });
+
+      return plainToInstance(ModerationResultResponseDto, resultWithBook, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.createModerationResult');
+      throw error;
+    }
+  }
+
+  async getModerationResultsByBook(
+    bookId: number,
+    model?: string,
+  ): Promise<ModerationResultResponseDto[]> {
+    try {
+      // Build the where condition based on whether model is provided
+      const whereCondition: any = { book: { id: bookId } };
+      if (model) {
+        whereCondition.model = model;
+      }
+
+      const results = await this.moderationResultRepository.find({
+        where: whereCondition,
+        relations: ['book'],
+        order: { createdAt: 'DESC' },
+      });
+
+      return plainToInstance(ModerationResultResponseDto, results, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.getModerationResultsByBook');
+      throw error;
+    }
+  }
+
+  async updateModerationResult(
+    updateDto: UpdateModerationResultDto,
+  ): Promise<ModerationResultResponseDto> {
+    try {
+      // Find the moderation result by bookId and model
+      const moderationResult = await this.moderationResultRepository.findOne({
+        where: { 
+          book: { id: updateDto.bookId },
+          model: updateDto.model
+        },
+        relations: ['book'],
+      });
+
+      if (!moderationResult) {
+        throw new NotFoundException(`Moderation result for book ID ${updateDto.bookId} with model ${updateDto.model} not found`);
+      }
+      
+      // Update only the provided fields
+      if (updateDto.title !== undefined) {
+        moderationResult.title = updateDto.title;
+      }
+      if (updateDto.description !== undefined) {
+        moderationResult.description = updateDto.description;
+      }
+      if (updateDto.coverImage !== undefined) {
+        moderationResult.coverImage = updateDto.coverImage;
+      }
+      if (updateDto.chapters !== undefined) {
+        moderationResult.chapters = updateDto.chapters;
+      }
+
+      const updatedResult = await this.moderationResultRepository.save(moderationResult);
+
+      return plainToInstance(ModerationResultResponseDto, updatedResult, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.updateModerationResult');
       throw error;
     }
   }

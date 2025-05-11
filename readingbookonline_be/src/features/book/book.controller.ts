@@ -59,6 +59,7 @@ import { GetBookCategoryDetailDto } from './dto/get-book-category.dto';
 import { PatchBookDto } from './dto/update-book.dto';
 import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
 import { ChapterAccessStatus } from './entities/book-chapter.entity';
+import { CreateModerationResultDto, GetModerationResultDto, ModerationResultResponseDto, UpdateModerationResultDto } from './dto/moderation-result.dto';
 
 @ApiTags('book')
 @Controller('book')
@@ -494,5 +495,57 @@ export class BookController {
       updateBookStatusDto.accessStatusId,
       updateBookStatusDto.progressStatusId,
     );
+  }
+
+  @Post(':id/moderation')
+  @ApiOperation({
+    summary: 'Create a moderation result',
+    description: 'Creates a new moderation result for a book'
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'The moderation result has been successfully created',
+    type: ModerationResultResponseDto
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async createModerationResult(
+    @Body() createModerationResultDto: CreateModerationResultDto
+  ): Promise<ModerationResultResponseDto> {
+    return this.bookService.createModerationResult(createModerationResultDto);
+  }
+
+  @Get(':id/moderation')
+  @ApiOperation({
+    summary: 'Get moderation results for a book',
+    description: 'Retrieves moderation results for a specific book, filtered by model if provided'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the moderation results',
+    type: [ModerationResultResponseDto]
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getModerationResultsByBook(
+    @Param('id') id: number,
+    @Query('model') model?: string
+  ): Promise<ModerationResultResponseDto[]> {
+    return this.bookService.getModerationResultsByBook(id, model);
+  }
+
+  @Patch(':id/moderation')
+  @ApiOperation({
+    summary: 'Update a moderation result',
+    description: 'Updates a specific moderation result by book ID and model'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the updated moderation result',
+    type: ModerationResultResponseDto
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async updateModerationResult(
+    @Body() updateModerationResultDto: UpdateModerationResultDto
+  ): Promise<ModerationResultResponseDto> {
+    return this.bookService.updateModerationResult(updateModerationResultDto);
   }
 }

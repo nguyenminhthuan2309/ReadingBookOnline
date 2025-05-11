@@ -39,6 +39,8 @@ import { Book } from '@features/book/entities/book.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { LoginResponseDto } from './dto/login.dto';
+import { UserRecentSearch, SearchType } from './entities/user-recent-search.entity';
+import { RecentSearchResponseDto } from './dto/recent-search-response.dto';
 
 @Injectable()
 export class UserService {
@@ -61,6 +63,8 @@ export class UserService {
     private readonly bookRepository: Repository<Book>,
     @InjectRepository(UserSettings)
     private readonly userSettingsRepository: Repository<UserSettings>,
+    @InjectRepository(UserRecentSearch)
+    private readonly userRecentSearchRepository: Repository<UserRecentSearch>,
     private readonly dataBaseService: DatabaseService,
     private readonly mailerService: MailerService,
     private readonly loggerService: LoggerService,
@@ -526,22 +530,35 @@ export class UserService {
     }
   }
 
-  async searchUsersByName(search: string): Promise<UserPublicDto[]> {
+  async searchUsersByName(search: string, params: { page: number, limit: number }, userId?: number): Promise<PaginationResponseDto<UserPublicDto>> {
     try {
-      if (!search) return [];
+      const { page = 1, limit = 10 } = params;
+      if (!search) return {
+        totalItems: 0,
+        totalPages: 0,
+        data: [],
+      };
 
       const users = await this.userRepository
         .createQueryBuilder('user')
         .where(`unaccent(lower(user.name)) LIKE unaccent(lower(:search))`, {
           search: `%${search}%`,
         })
-        .andWhere('user.status_id = :statusId', { statusId: 1 })
-        .andWhere('user.role_id = :roleId', { roleId: 3 })
+        // .andWhere('user.status_id = :statusId', { statusId: 1 })
+        // .andWhere('user.role_id = :roleId', { roleId: 3 })
+        .take(limit)
+        .skip((page - 1) * limit)
         .getMany();
 
-      return plainToInstance(UserPublicDto, users, {
-        excludeExtraneousValues: true,
-      });
+      // Remove automatic search storing
+      
+      return {
+        totalItems: users.length,
+        totalPages: Math.ceil(users.length / limit),
+        data: plainToInstance(UserPublicDto, users, {
+          excludeExtraneousValues: true,
+        }),
+      };
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.searchUsersByName');
       throw error;
@@ -865,6 +882,87 @@ export class UserService {
       where: { role: { id: 2 } },
     });
     return [...admins.map((admin) => admin.id), ...managers.map((manager) => manager.id)];
+  }
+
+  async storeRecentSearch(
+    userId: number,
+    searchType: SearchType,
+    searchValue: string,
+    relatedId?: number,
+  ): Promise<boolean> {
+    try {
+      if (!userId || !searchValue) {
+        return false;
+      }
+
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      if (!user) {
+        return false;
+      }
+
+      // Check if this search already exists
+      const existingSearch = await this.userRecentSearchRepository.findOne({
+        where: {
+          user: { id: userId },
+          searchType,
+          searchValue,
+        },
+        order: { createdAt: 'DESC' },
+      });
+
+      // If it exists and was searched recently (within the past hour), don't create a duplicate
+      if (
+        existingSearch &&
+        new Date().getTime() - existingSearch.createdAt.getTime() < 60 * 60 * 1000
+      ) {
+        return true;
+      }
+
+      // Create new search record
+      const recentSearch = this.userRecentSearchRepository.create({
+        user,
+        searchType,
+        searchValue,
+        relatedId,
+      });
+
+      await this.userRecentSearchRepository.save(recentSearch);
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.storeRecentSearch');
+      return false;
+    }
+  }
+
+  async getRecentSearches(
+    userId: number,
+    searchType?: SearchType,
+  ): Promise<RecentSearchResponseDto[]> {
+    try {
+      if (!userId) {
+        return [];
+      }
+
+      const queryBuilder = this.userRecentSearchRepository
+        .createQueryBuilder('search')
+        .where('search.user_id = :userId', { userId });
+
+      if (searchType) {
+        queryBuilder.andWhere('search.searchType = :searchType', { searchType });
+      }
+
+      const searches = await queryBuilder
+        .orderBy('search.created_at', 'DESC')
+        .limit(5)
+        .getMany();
+
+      return plainToInstance(RecentSearchResponseDto, searches, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getRecentSearches');
+      return [];
+    }
   }
 }
 

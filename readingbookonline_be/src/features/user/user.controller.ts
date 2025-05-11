@@ -9,7 +9,7 @@ import {
   Patch,
   Param,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request as ExpressRequest } from 'express';
 import { UserService } from './user.service';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import {
@@ -18,7 +18,7 @@ import {
   UserPublicDto,
   UserResponseDto,
 } from './dto/get-user-response.dto';
-import { ApiBody, ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyResetPasswordDto } from './dto/verify-reset-password-dto';
 import { JwtAuthGuard } from '@core/auth/jwt-auth.guard';
@@ -35,6 +35,17 @@ import { UpdateSettingsDto } from './dto/user-setting.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { LoginResponseDto } from './dto/login.dto';
 import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
+import { SearchType } from './entities/user-recent-search.entity';
+import { RecentSearchResponseDto } from './dto/recent-search-response.dto';
+import { CreateRecentSearchDto } from './dto/create-recent-search.dto';
+
+// Define the interface extending Express Request with user property
+interface RequestWithUser extends ExpressRequest {
+  user: {
+    id: number;
+    [key: string]: any;
+  };
+}
 
 @Controller('user')
 export class UserController {
@@ -69,7 +80,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Lấy thông tin cá nhân' })
   @Get('/me')
-  async getProfile(@Req() req: Request): Promise<UserProfileResponseDto> {
+  async getProfile(@Req() req: ExpressRequest): Promise<UserProfileResponseDto> {
     return await this.userService.getProfile(req);
   }
 
@@ -77,7 +88,7 @@ export class UserController {
   @ApiOperation({ summary: 'Cập nhật thông tin người dùng' })
   @Patch()
   async updateUser(
-    @Req() req: Request,
+    @Req() req: ExpressRequest,
     @Body() body: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return await this.userService.updateUser(req, body);
@@ -86,7 +97,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Đổi mật khẩu' })
   @Patch('update-password')
-  async updatePassword(@Req() req: Request, @Body() body: UpdatePasswordDto) {
+  async updatePassword(@Req() req: ExpressRequest, @Body() body: UpdatePasswordDto) {
     return this.userService.updatePassword(req, body);
   }
 
@@ -134,7 +145,7 @@ export class UserController {
   @ApiBody({ type: updateFavoriteCategoriesDto })
   @Patch('favorite/categories')
   async updateFavorite(
-    @Req() req: Request,
+    @Req() req: ExpressRequest,
     @Body() body: updateFavoriteCategoriesDto,
   ) {
     const userId = (req as any).user?.id;
@@ -146,7 +157,7 @@ export class UserController {
     summary: 'Lấy danh sách thể loại sách yêu thích của người dùng',
   })
   @Get('favorite/categories')
-  async getFavoriteCategories(@Req() req: Request) {
+  async getFavoriteCategories(@Req() req: ExpressRequest) {
     const userId = (req as any).user?.id;
     return this.userService.getFavoriteCategories(userId);
   }
@@ -156,7 +167,7 @@ export class UserController {
     summary: 'Lấy setting của người dùng',
   })
   @Get('settings')
-  async getSettings(@Req() req: Request) {
+  async getSettings(@Req() req: ExpressRequest) {
     const userId = (req as any).user?.id;
     return this.userService.getSettings(userId);
   }
@@ -167,7 +178,7 @@ export class UserController {
   })
   @Patch('settings')
   async updateSettings(
-    @Req() req: Request,
+    @Req() req: ExpressRequest,
     @Body() updateSettingsDto: UpdateSettingsDto,
   ) {
     const userId = (req as any).user?.id;
@@ -175,11 +186,24 @@ export class UserController {
   }
 
   @Get('search')
+  @UseGuards(OptionalAuthGuard)
   @ApiOperation({
-    summary: 'Tìm kiếm người dùng theo tên',
+    summary: 'Search users by name',
+    description: 'Search for users by name with optional authentication to save search history',
   })
-  async searchUsers(@Query('search') search: string): Promise<UserPublicDto[]> {
-    return this.userService.searchUsersByName(search);
+  @ApiResponse({
+    status: 200,
+    description: 'Return matched users',
+    type: PaginationResponseDto,
+  })
+  async searchUsersByName(
+    @Query('search') search: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Req() req: ExpressRequest,
+  ): Promise<PaginationResponseDto<UserPublicDto>> {
+    const userId = (req as any).user?.id;
+    return this.userService.searchUsersByName(search, { page, limit }, userId);
   }
 
   @UseGuards(OptionalAuthGuard)
@@ -187,9 +211,52 @@ export class UserController {
   @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
   async getUserProfile(
     @Param('id') id: number,
-    @Req() req: any,
+    @Req() req: ExpressRequest,
   ): Promise<UserProfileDto | UserProfileResponseDto> {
     const userId = (req as any).user?.id;
     return await this.userService.getUserProfileById(id, userId);
+  }
+
+  @Get('recent-searches')
+  @ApiOperation({
+    summary: 'Get recent searches',
+    description: 'Get user recent searches',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Return recent searches',
+    type: [RecentSearchResponseDto],
+  })
+  @UseGuards(JwtAuthGuard)
+  async getRecentSearches(
+    @Req() req: RequestWithUser,
+    @Query('type') searchType?: SearchType,
+  ) {
+    const user = req.user;
+    return this.userService.getRecentSearches(user.id, searchType);
+  }
+
+  @Post('recent-searches')
+  @ApiOperation({
+    summary: 'Create recent search record',
+    description: 'Save a user search to their recent searches history'
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Recent search saved successfully',
+    type: Boolean
+  })
+  @UseGuards(JwtAuthGuard)
+  async createRecentSearch(
+    @Req() req: RequestWithUser,
+    @Body() createRecentSearchDto: CreateRecentSearchDto
+  ) {
+    const userId = req.user.id;
+    return this.userService.storeRecentSearch(
+      userId,
+      createRecentSearchDto.searchType,
+      createRecentSearchDto.searchValue,
+      createRecentSearchDto.relatedId
+    );
   }
 }
