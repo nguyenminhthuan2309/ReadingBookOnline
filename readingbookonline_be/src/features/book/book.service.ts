@@ -1091,7 +1091,7 @@ export class BookService {
       }
 
       const chaptersToInsert = dto.chapters.map((chapterDto, index) => {
-        if (chapterDto.chapter > 2) {
+        if (chapterDto.chapter > 3) {
           chapterDto.isLocked = true;
           chapterDto.price = 20;
         } else {
