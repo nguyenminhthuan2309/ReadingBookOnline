@@ -157,7 +157,6 @@ export class User {
   updatedAt: Date;
 
   @BeforeInsert()
-  @BeforeUpdate()
   async hashPassword() {
     if (this.password) {
       const salt = await bcrypt.genSalt(10);
