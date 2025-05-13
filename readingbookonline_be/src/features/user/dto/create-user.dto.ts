@@ -11,6 +11,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { GENDER_ENUM } from '../entities/user.entity';
+import { UserSettingsDto } from './user-setting.dto';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'iiiimanhiiii007@gmail.com', type: String })
@@ -85,6 +86,19 @@ export class CreateUserDto {
   @IsOptional()
   @IsString({ message: 'Instagram phải là chuỗi' })
   instagram?: string;
+
+  @ApiPropertyOptional({
+    example: {
+      language: 'en',
+      theme: 'light',
+      volume: 50,
+      readingMode: 'scroll',
+    },
+    type: UserSettingsDto,
+    description: 'Cài đặt của người dùng (optional)',
+  })
+  preferences: UserSettingsDto;
+
 
   @IsNumber()
   roleId: number = 3;

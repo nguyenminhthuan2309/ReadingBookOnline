@@ -2,6 +2,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { GENDER_ENUM } from '../entities/user.entity';
+import { UserSettingsDto } from './user-setting.dto';
+
 
 class RoleDto {
   @Expose()
@@ -133,13 +135,18 @@ export class UserResponseDto {
 }
 
 export class UserProfileResponseDto extends UserResponseDto {
+  
   @Expose()
   @IsNumber()
-  booksRead: number;
+  readingStats: {
+    booksRead: number;
+    chaptersRead: number;
+  };
 
   @Expose()
-  @IsNumber()
-  chaptersRead: number;
+  @IsOptional()
+  @Type(() => UserSettingsDto)
+  preferences?: UserSettingsDto;
 
   @IsOptional()
   @Expose()

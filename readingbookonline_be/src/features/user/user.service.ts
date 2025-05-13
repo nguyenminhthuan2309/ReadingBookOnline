@@ -6,12 +6,13 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateManagerDto, CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { DatabaseService } from '@core/database/database.service';
 import { instanceToPlain, plainToInstance } from 'class-transformer';
 import {
@@ -34,13 +35,17 @@ import { PaginationResponseDto } from '@shared/dto/common/pagnination/pagination
 import { UserFavorite } from './entities/user-favorite.entity';
 import { BookCategory } from '@features/book/entities/book-category.entity';
 import { UserSettings } from './entities/user-setting.entity';
-import { UpdateSettingsDto } from './dto/user-setting.dto';
+import { UpdateSettingsDto, UserSettingsDto } from './dto/user-setting.dto';
 import { Book } from '@features/book/entities/book.entity';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { LoginResponseDto } from './dto/login.dto';
 import { UserRecentSearch, SearchType } from './entities/user-recent-search.entity';
 import { RecentSearchResponseDto } from './dto/recent-search-response.dto';
+import { Activity, ACTIVITY_TYPE } from './entities/activity.entity';
+import { UserActivity } from './entities/user-activity.entity';
+import { ActivityStatus, ActivityStatusResponseDto } from './dto/activity-status.dto';
+import { Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -70,6 +75,10 @@ export class UserService {
     private readonly loggerService: LoggerService,
     private readonly cacheService: CacheService,
     private readonly jwtService: JwtService,
+    @InjectRepository(Activity)
+    private readonly activityRepository: Repository<Activity>,
+    @InjectRepository(UserActivity)
+    private readonly userActivityRepository: Repository<UserActivity>,
   ) {}
 
   private generateOTP(): string {
@@ -374,12 +383,22 @@ export class UserService {
         .where('readingHistory.user = :userId', { userId: id })
         .getCount();
 
+      const userSettings = await this.userSettingsRepository.findOne({
+        where: { user: { id } },
+      });
+
       const user = plainToInstance(UserProfileResponseDto, infoUser, {
         excludeExtraneousValues: true,
       });
+      const preferences = plainToInstance(UserSettingsDto, userSettings, {
+        excludeExtraneousValues: true,
+      });
 
-      user.booksRead = booksRead;
-      user.chaptersRead = chaptersRead;
+      user.readingStats = {
+        booksRead,
+        chaptersRead,
+      };
+      user.preferences = preferences;
 
       return user;
     } catch (error) {
@@ -419,6 +438,25 @@ export class UserService {
       if (body.twitter) user.twitter = body.twitter;
       if (body.instagram) user.instagram = body.instagram;
       if (body.gender) user.gender = body.gender;
+      
+      if (body.preferences) {
+        // Get the user settings
+        const userSettings = await this.userSettingsRepository.findOne({
+          where: { user: { id: userId } },
+        });
+
+        if (!userSettings) {
+          throw new NotFoundException('User settings not found');
+        }
+
+        // Update the user settings
+        if (body.preferences.language) userSettings.language = body.preferences.language;
+        if (body.preferences.theme) userSettings.theme = body.preferences.theme;
+        if (body.preferences.volume) userSettings.volume = body.preferences.volume;
+        if (body.preferences.readingMode) userSettings.readingMode = body.preferences.readingMode;
+
+        await this.userSettingsRepository.save(userSettings);
+      }
 
       await this.dataBaseService.update<User>(
         this.userRepository,
@@ -825,8 +863,10 @@ export class UserService {
           excludeExtraneousValues: true,
         });
 
-        userProfile.booksRead = booksRead;
-        userProfile.chaptersRead = chaptersRead;
+        userProfile.readingStats = {
+          booksRead,
+          chaptersRead,
+        };
         userProfile.books = books.map((book) => ({
           id: book.id,
           title: book.title,
@@ -963,6 +1003,411 @@ export class UserService {
       this.loggerService.err(error.message, 'UserService.getRecentSearches');
       return [];
     }
+  }
+
+  // Activities methods
+  async findAllActivities(): Promise<Activity[]> {
+    return this.activityRepository.find();
+  }
+
+  async findActivityByType(type: ACTIVITY_TYPE): Promise<Activity | null> {
+    return this.activityRepository.findOne({ where: { activityType: type } });
+  }
+
+  async createUserActivity(
+    user: User,
+    activityType: ACTIVITY_TYPE,
+    relatedEntityId?: number,
+  ): Promise<UserActivity> {
+    // Find the activity
+    const activity = await this.findActivityByType(activityType);
+    if (!activity) {
+      throw new Error(`Activity with type ${activityType} not found`);
+    }
+
+    // Get today's date (without time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+     // Create date range for today (to handle timezone issues)
+     const startOfToday = new Date(today);
+     startOfToday.setHours(0, 0, 0, 0);
+     
+     const endOfToday = new Date(today);
+     endOfToday.setHours(23, 59, 59, 999);
+
+    // Calculate earned points and streak
+    let earnedPoints = 0;
+    let currentStreak = 0;
+    
+    if (activity.streakBased) {
+      // For streak-based activities like login
+      // Check if there was an activity yesterday to determine streak
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      // Create date range for yesterday (to handle timezone issues)
+      const startOfYesterday = new Date(yesterday);
+      startOfYesterday.setHours(0, 0, 0, 0);
+      
+      const endOfYesterday = new Date(yesterday);
+      endOfYesterday.setHours(23, 59, 59, 999);
+      
+      const yesterdayActivity = await this.userActivityRepository.findOne({
+        where: {
+          user: { id: user.id },
+          activityType,
+          activityDate: Between(startOfYesterday, endOfYesterday),
+        },
+      });
+      
+      if (yesterdayActivity) {
+        // If there was activity yesterday, increase the streak
+        currentStreak = (yesterdayActivity.currentStreak || 0) + 1;
+      } else {
+        // Reset streak to 1 as there was no activity yesterday
+        currentStreak = 1;
+      }
+      
+      // Calculate points based on streak (limited by maxStreakPoint)
+      earnedPoints = currentStreak >= activity.maxStreakPoint ? activity.maxStreakPoint * activity.basePoint : currentStreak * activity.basePoint;
+
+    } else {
+      // For non-streak activities, check max_per_day limit
+      if (activity.maxPerDay) {
+        // Count activities of this type done today
+        let todayActivitiesCount = 0;
+        
+        if (relatedEntityId) {
+          todayActivitiesCount = await this.userActivityRepository.count({
+            where: {
+              user: { id: user.id },
+              activityType,
+              activityDate: Between(startOfToday, endOfToday),
+              relatedEntityId,
+            },
+          });
+        } else {
+          todayActivitiesCount = await this.userActivityRepository.count({
+            where: {
+              user: { id: user.id },
+              activityType,
+              activityDate: Between(startOfToday, endOfToday),
+            },
+          });
+        }
+        // If under the daily limit, award points
+        if (todayActivitiesCount < activity.maxPerDay) {
+          earnedPoints = activity.basePoint;
+        } else {
+          // User already reached the daily maximum for this activity
+          earnedPoints = 0;
+        }
+      } else {
+        // No daily limit, always award points
+        earnedPoints = activity.basePoint;
+      }
+    }
+
+    if (earnedPoints > 0) {
+
+      // Today activity
+      const earnedTodayCount = await this.userActivityRepository.count({
+        where: {
+          user: { id: user.id },
+          activityType,
+          activityDate: Between(startOfToday, endOfToday),
+          earnedPoint: MoreThan(0),
+        },
+      });
+
+      if (earnedTodayCount < activity.maxPerDay) {
+        await this.userRepository.createQueryBuilder()  
+          .update()
+          .set({
+            tokenBalance: () => `"token_balance" + ${earnedPoints}`,
+            tokenEarned: () => `"token_earned" + ${earnedPoints}`,
+          })
+          .where('id = :id', { id: user.id })
+          .execute();
+      } else {
+        // User already reached the daily maximum for this activity
+        earnedPoints = 0;
+      }
+     
+    }
+
+    // Create a new user activity record
+    const userActivity = this.userActivityRepository.create({
+      user,
+      activityType,
+      activityDate: today,
+      relatedEntityId,
+      currentStreak,
+      earnedPoint: earnedPoints,
+      activity,
+    });
+
+    return this.userActivityRepository.save(userActivity);
+  }
+
+  async getUserActivitiesByDate(userId: number, date: Date): Promise<UserActivity[]> {
+    return this.userActivityRepository.find({
+      where: {
+        user: { id: userId },
+        activityDate: date,
+      },
+      relations: ['activity'],
+    });
+  }
+
+  async getUserActivitiesByType(
+    userId: number,
+    activityType: ACTIVITY_TYPE,
+  ): Promise<UserActivity[]> {
+    return this.userActivityRepository.find({
+      where: {
+        user: { id: userId },
+        activityType,
+      },
+      relations: ['activity'],
+    });
+  }
+
+  async getUserAvailableActivities(userId: number): Promise<ActivityStatusResponseDto[]> {
+    // Get the user
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get today's date (without time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+        
+    // Get all activities
+    const activities = await this.activityRepository.find();
+    
+    // Get all user activities for today - use raw SQL date comparison
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const userActivities = await this.userActivityRepository.find({
+      where: {
+        user: { id: userId },
+        activityDate: Between(startOfDay, endOfDay)
+      },
+      relations: ['activity']
+    });
+
+    // Map to group activities by type
+    const activityMap = new Map<string, UserActivity[]>();
+    userActivities.forEach(userActivity => {
+      const type = userActivity.activityType;
+      if (!activityMap.has(type)) {
+        activityMap.set(type, []);
+      }
+      activityMap.get(type)?.push(userActivity);
+    });
+
+    // Prepare result
+    const result: ActivityStatusResponseDto[] = [];
+
+    // Process each activity
+    for (const activity of activities) {
+      const userActivityList = activityMap.get(activity.activityType) || [];
+      const earnedPoint = userActivityList.reduce((acc, curr) => acc + curr.earnedPoint, 0);
+      
+      let status: ActivityStatus;
+        let done = 0;
+        let total = 0;
+      if (activity.streakBased) {
+        // For streak-based activities like login
+        // Simply check if there's any activity today (we already filtered by today's date in the query)
+        if (userActivityList.length > 0) {
+          status = ActivityStatus.DONE;
+          done = userActivityList.length;
+          total = activity.maxPerDay;
+        } else {
+          status = ActivityStatus.NOT_STARTED;
+          done = 0;
+          total = activity.maxPerDay;
+        }
+      } else if (activity.maxPerDay) {
+        // For activities with daily limits
+        if (userActivityList.length >= activity.maxPerDay) {
+          status = ActivityStatus.DONE;
+          done = userActivityList.length;
+          total = activity.maxPerDay;
+        } else if (userActivityList.length > 0) {
+          status = ActivityStatus.IN_PROGRESS;
+          done = userActivityList.length;
+          total = activity.maxPerDay;
+        } else {
+          status = ActivityStatus.NOT_STARTED;
+          done = 0;
+          total = activity.maxPerDay;
+        }
+      } else {
+        // For one-time activities
+        if (userActivityList.length > 0) {
+          status = ActivityStatus.DONE;
+          done = userActivityList.length;
+          total = 1;
+        } else {
+          status = ActivityStatus.NOT_STARTED;
+          done = 0;
+          total = 1;
+        }
+      }
+
+      result.push({
+        id: activity.id,
+        name: activity.title,
+        type: activity.activityType,
+        earnedPoint,
+        status,
+        done,
+        total,
+      });
+    }
+
+    return result;
+  }
+
+  async getUserActivitiesByFilter(
+    options: {
+      userId?: number,
+      type?: ACTIVITY_TYPE,
+      date?: Date,
+      startDate?: Date,
+      endDate?: Date,
+      earnedPoint?: number,
+      isEarnedPoint?: boolean,
+    }
+  ): Promise<UserActivity[]> {
+    const { userId, type, date, startDate, endDate, earnedPoint, isEarnedPoint } = options;
+    
+    // Build query conditions
+    const whereConditions: any = {};
+    
+    if (userId) {
+      whereConditions.user = { id: userId };
+    }
+    
+    if (type) {
+      whereConditions.activityType = type;
+    }
+    
+    if (date) {
+      // For a specific date, create a date range for the entire day
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      whereConditions.activityDate = Between(startOfDay, endOfDay);
+    } else if (startDate && endDate) {
+      // For date ranges, ensure we include the full days
+      const startOfStartDate = new Date(startDate);
+      startOfStartDate.setHours(0, 0, 0, 0);
+      
+      const endOfEndDate = new Date(endDate);
+      endOfEndDate.setHours(23, 59, 59, 999);
+      
+      whereConditions.activityDate = Between(startOfStartDate, endOfEndDate);
+    } else if (startDate) {
+      const startOfStartDate = new Date(startDate);
+      startOfStartDate.setHours(0, 0, 0, 0);
+      whereConditions.activityDate = MoreThanOrEqual(startOfStartDate);
+    } else if (endDate) {
+      const endOfEndDate = new Date(endDate);
+      endOfEndDate.setHours(23, 59, 59, 999);
+      whereConditions.activityDate = LessThanOrEqual(endOfEndDate);
+    }
+    
+    if (earnedPoint !== undefined) {
+      whereConditions.earnedPoint = earnedPoint;
+    }
+
+    if (isEarnedPoint !== undefined) {
+      whereConditions.earnedPoint = isEarnedPoint ? MoreThan(0) : IsNull();
+    }
+    
+    // Execute query
+    return this.userActivityRepository.find({
+      where: whereConditions,
+      relations: ['activity', 'user'],
+      order: { activityDate: 'DESC', id: 'DESC' }
+    });
+  }
+
+  // Add this new method to handle all activities filtering logic
+  async getActivities(
+    user: any,
+    filterParams: {
+      type?: ACTIVITY_TYPE,
+      date?: string,
+      startDate?: string,
+      endDate?: string,
+      earnedPoint?: number,
+      isEarnedPoint?: boolean,
+      userId?: number,
+    }
+  ): Promise<UserActivity[] | Activity[]> {
+    const { type, date, startDate, endDate, earnedPoint, userId, isEarnedPoint } = filterParams;
+    
+    // If no filter parameters are provided, return all activities
+    if (!type && !date && !startDate && !endDate && !earnedPoint && !userId && !isEarnedPoint) {
+      return this.findAllActivities();
+    }
+    
+    // Handle filtering logic for user activities
+    const currentUserId = user.id;
+    let queryUserId = currentUserId;
+    
+    if (userId && userId !== currentUserId) {
+      // Check if user is admin before allowing to query other users
+      const isAdmin = user.role && user.role.id === 1;
+      if (!isAdmin) {
+        throw new ForbiddenException('You do not have permission to view other users\' activities');
+      }
+      queryUserId = userId;
+    }
+    
+    // Parse dates
+    let parsedDate: Date | undefined;
+    let parsedStartDate: Date | undefined;
+    let parsedEndDate: Date | undefined;
+    
+    if (date) {
+      parsedDate = new Date(date);
+      parsedDate.setHours(0, 0, 0, 0);
+    }
+    
+    if (startDate) {
+      parsedStartDate = new Date(startDate);
+      parsedStartDate.setHours(0, 0, 0, 0);
+    }
+    
+    if (endDate) {
+      parsedEndDate = new Date(endDate);
+      parsedEndDate.setHours(23, 59, 59, 999);  // End of day
+    }
+    
+    return this.getUserActivitiesByFilter({
+      userId: queryUserId,
+      type,
+      date: parsedDate,
+      startDate: parsedStartDate,
+      endDate: parsedEndDate,
+      earnedPoint,
+      isEarnedPoint,
+    });
   }
 }
 

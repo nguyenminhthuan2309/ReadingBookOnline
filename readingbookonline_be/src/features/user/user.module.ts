@@ -15,6 +15,9 @@ import { UserSettings } from './entities/user-setting.entity';
 import { Book } from '@features/book/entities/book.entity';
 import { BookReadingHistory } from '@features/book/entities/book-reading-history.entity';
 import { UserRecentSearch } from './entities/user-recent-search.entity';
+import { Activity } from './entities/activity.entity';
+import { UserActivity } from './entities/user-activity.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -28,6 +31,8 @@ import { UserRecentSearch } from './entities/user-recent-search.entity';
       BookCategory,
       UserSettings,
       UserRecentSearch,
+      Activity,
+      UserActivity,
     ]),
     forwardRef(() => BookModule),
     JwtModule,

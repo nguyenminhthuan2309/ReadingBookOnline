@@ -25,6 +25,7 @@ import { Notification } from '@features/notification/entities/notification.entit
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { Transaction } from '@features/transaction/entities/transaction.entity';
 import { UserFavorite } from './user-favorite.entity';
+import { UserActivity } from './user-activity.entity';
 
 export enum GENDER_ENUM {
   MALE = 'male',
@@ -145,6 +146,9 @@ export class User {
 
   @OneToMany(() => UserFavorite, (favorite) => favorite.user)
   favorites: UserFavorite[];
+
+  @OneToMany(() => UserActivity, (activity) => activity.user)
+  activities: UserActivity[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

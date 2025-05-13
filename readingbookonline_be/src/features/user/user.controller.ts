@@ -8,6 +8,8 @@ import {
   Query,
   Patch,
   Param,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { UserService } from './user.service';
@@ -38,6 +40,10 @@ import { OptionalAuthGuard } from '@core/auth/jwt-auth-optional.guard';
 import { SearchType } from './entities/user-recent-search.entity';
 import { RecentSearchResponseDto } from './dto/recent-search-response.dto';
 import { CreateRecentSearchDto } from './dto/create-recent-search.dto';
+import { Activity, ACTIVITY_TYPE } from './entities/activity.entity';
+import { UserActivity } from './entities/user-activity.entity';
+import { CreateUserActivityDto } from './dto/create-user-activity.dto';
+import { ActivityStatusResponseDto } from './dto/activity-status.dto';
 
 // Define the interface extending Express Request with user property
 interface RequestWithUser extends ExpressRequest {
@@ -206,8 +212,6 @@ export class UserController {
     return this.userService.searchUsersByName(search, { page, limit }, userId);
   }
 
-  
-
   @Get('recent-searches')
   @ApiOperation({
     summary: 'Get recent searches',
@@ -249,6 +253,52 @@ export class UserController {
       createRecentSearchDto.searchValue,
       createRecentSearchDto.relatedId
     );
+  }
+
+  // Activities endpoints
+  @UseGuards(JwtAuthGuard)
+  @Get('activities')
+  async getActivities(
+    @Request() req,
+    @Query('type') type?: ACTIVITY_TYPE,
+    @Query('date') date?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('earnedPoint') earnedPoint?: number,
+    @Query('isEarnedPoint') isEarnedPoint?: boolean,
+    @Query('userId') userId?: number,
+  ): Promise<UserActivity[] | Activity[]> {
+    return this.userService.getActivities(req.user, {
+      type,
+      date,
+      startDate,
+      endDate,
+      earnedPoint,
+      isEarnedPoint,
+      userId
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('activities')
+  async createUserActivity(
+    @Request() req,
+    @Body() createUserActivityDto: CreateUserActivityDto,
+  ): Promise<UserActivity> {
+    return this.userService.createUserActivity(
+      req.user,
+      createUserActivityDto.activityType,
+      createUserActivityDto.relatedEntityId
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('activities/available')
+  async getUserAvailableActivities(
+    @Request() req
+  ): Promise<ActivityStatusResponseDto[]> {
+    const userId = req.user.id;
+    return this.userService.getUserAvailableActivities(userId);
   }
 
   @UseGuards(OptionalAuthGuard)

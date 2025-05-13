@@ -17,6 +17,7 @@ export class UpdateUserDto extends PartialType(
     'facebook',
     'twitter',
     'instagram',
+    'preferences',
   ] as const),
 ) {}
 

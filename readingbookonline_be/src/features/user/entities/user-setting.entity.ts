@@ -36,10 +36,10 @@ export class UserSettings {
   @Column({
     name: 'reading_mode',
     type: 'enum',
-    enum: ['normal', 'flip'],
-    default: 'normal',
+    enum: ['scroll', 'flip'],
+    default: 'scroll',
   })
-  readingMode: 'normal' | 'flip';
+  readingMode: 'scroll' | 'flip';
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
