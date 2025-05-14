@@ -15,6 +15,7 @@ export enum ACTIVITY_TYPE {
   RATE_BOOK = 'rate_book',
   COMPLETE_BOOK = 'complete_book',
   READ_STREAK = 'read_streak',
+  COMMENT_CHAPTER = 'comment_chapter',
 }
 
 @Entity('activities')

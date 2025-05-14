@@ -166,24 +166,49 @@ export class TransactionService {
           transaction.status = TransactionStatus.SUCCESS;
           await this.transactionRepository.save(transaction);
 
-          const tokens = transaction.tokens;
+          let tokens = transaction.tokens;
+          let bonusTokens = 0;
+          let makeVip = false;
+          
+          // Apply bonus logic based on amount
+          const amount = transaction.amount;
+          if (amount === 100) {
+            bonusTokens = Math.floor(tokens * 0.1); // 10% bonus
+          } else if (amount === 200) {
+            bonusTokens = 20; // 20 tokens bonus
+          } else if (amount >= 500) {
+            makeVip = true; // Set VIP status
+          }
+          
+          const totalTokens = tokens + bonusTokens;
 
           await this.userRepository
             .createQueryBuilder()
             .update()
             .set({
-              tokenBalance: () => `"token_balance" + ${tokens}`,
-              tokenReceived: () => `"token_received" + ${tokens}`,
+              tokenBalance: () => `"token_balance" + ${totalTokens}`,
+              tokenReceived: () => `"token_received" + ${totalTokens}`,
               tokenPurchased: () => `"token_purchased" + ${tokens}`,
+              isVip: makeVip ? true : () => `"is_vip"`,
             })
             .where('id = :id', { id: transaction.user.id })
             .execute();
 
           await this.notificationGateway.sendDepositSuccessNotification(
             transaction.user.id,
-            tokens,
+            totalTokens,
             transaction.id,
           );
+
+          let bonusMessage = '';
+          if (bonusTokens > 0) {
+            bonusMessage = `<p><strong>Thưởng thêm:</strong> ${bonusTokens} điểm</p>`;
+          }
+          
+          let vipMessage = '';
+          if (makeVip) {
+            vipMessage = `<p><strong>Chúc mừng!</strong> Bạn đã được nâng cấp lên tài khoản VIP.</p>`;
+          }
 
           await this.mailerService.sendMail({
             to: transaction.user.email,
@@ -193,6 +218,9 @@ export class TransactionService {
               <h3>Xin chào ${transaction.user.name},</h3>
               <p>Cảm ơn bạn đã thực hiện giao dịch thành công!</p>
               <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+              <p><strong>Số điểm:</strong> ${tokens}</p>
+              ${bonusMessage}
+              ${vipMessage}
               <p>Số điểm của bạn đã được cập nhật thành công. Chúng tôi luôn sẵn sàng phục vụ bạn.</p>
               <p>Chúc bạn một ngày tuyệt vời!</p>
             `,
@@ -294,18 +322,43 @@ export class TransactionService {
 
           await this.transactionRepository.save(transaction);
 
-          const tokens = transaction.tokens;
+          let tokens = transaction.tokens;
+          let bonusTokens = 0;
+          let makeVip = false;
+          
+          // Apply bonus logic based on amount
+          const amount = transaction.amount;
+          if (amount === 100) {
+            bonusTokens = Math.floor(tokens * 0.1); // 10% bonus
+          } else if (amount === 200) {
+            bonusTokens = 20; // 20 tokens bonus
+          } else if (amount >= 500) {
+            makeVip = true; // Set VIP status
+          }
+          
+          const totalTokens = tokens + bonusTokens;
 
           await this.userRepository
             .createQueryBuilder()
             .update()
             .set({
-              tokenBalance: () => `"token_balance" + ${tokens}`,
-              tokenReceived: () => `"token_received" + ${tokens}`,
+              tokenBalance: () => `"token_balance" + ${totalTokens}`,
+              tokenReceived: () => `"token_received" + ${totalTokens}`,
               tokenPurchased: () => `"token_purchased" + ${tokens}`,
+              isVip: makeVip ? true : () => `"is_vip"`,
             })
             .where('id = :id', { id: transaction.user.id })
             .execute();
+
+          let bonusMessage = '';
+          if (bonusTokens > 0) {
+            bonusMessage = `<p><strong>Thưởng thêm:</strong> ${bonusTokens} điểm</p>`;
+          }
+          
+          let vipMessage = '';
+          if (makeVip) {
+            vipMessage = `<p><strong>Chúc mừng!</strong> Bạn đã được nâng cấp lên tài khoản VIP.</p>`;
+          }
 
           await this.mailerService.sendMail({
             to: transaction.user.email,
@@ -315,6 +368,9 @@ export class TransactionService {
               <h3>Xin chào ${transaction.user.name},</h3>
               <p>Cảm ơn bạn đã thực hiện giao dịch thành công!</p>
               <p><strong>Mã đơn hàng:</strong> ${transaction.id}</p>
+              <p><strong>Số điểm:</strong> ${tokens}</p>
+              ${bonusMessage}
+              ${vipMessage}
               <p>Số điểm của bạn đã được cập nhật thành công. Chúng tôi luôn sẵn sàng phục vụ bạn.</p>
               <p>Chúc bạn một ngày tuyệt vời!</p>
             `,

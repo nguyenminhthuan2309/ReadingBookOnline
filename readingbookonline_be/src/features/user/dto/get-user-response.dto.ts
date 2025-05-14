@@ -157,6 +157,10 @@ export class UserProfileResponseDto extends UserResponseDto {
     cover: string;
     createdAt: Date;
   }[];
+
+  @IsOptional()
+  @Expose()
+  isVip?: boolean;
 }
 
 export class GetUsersFilterDto {

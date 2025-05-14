@@ -77,6 +77,9 @@ export class User {
   @Column({ name: 'instagram', type: 'varchar', nullable: true })
   instagram: string;
 
+  @Column({ name: 'is_vip', type: 'boolean', default: false })
+  isVip: boolean;
+
   @Index('idx_user_role')
   @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: 'role_id' })
