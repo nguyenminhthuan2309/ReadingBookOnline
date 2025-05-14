@@ -8,6 +8,7 @@ import { ChatModule } from '@features/chat/chat.module';
 import { TrackerModule } from '@features/tracker/tracker.module';
 import { TransactionModule } from '@features/transaction/transaction.module';
 import { UserModule } from '@features/user/user.module';
+import { ActivitiesModule } from '@features/activities/activities.module';
 import { RateLimitMiddleware } from '@middleware/rate-limit.middleware';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -42,7 +43,7 @@ import { NotificationModule } from './features/notification/notification.module'
     TrackerModule,
     CloudinaryModule,
     BookNotificationModule,
-    TransactionModule,
+    ActivitiesModule,
     NotificationModule,
   ],
   controllers: [AppController],

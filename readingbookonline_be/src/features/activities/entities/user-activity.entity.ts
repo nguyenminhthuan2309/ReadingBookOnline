@@ -7,7 +7,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '@features/user/entities/user.entity';
 import { Activity, ACTIVITY_TYPE } from './activity.entity';
 
 @Entity('user_activities')
@@ -25,6 +25,7 @@ export class UserActivity {
     name: 'activity_type',
     type: 'enum',
     enum: ACTIVITY_TYPE,
+    nullable: false,
   })
   activityType: ACTIVITY_TYPE;
 

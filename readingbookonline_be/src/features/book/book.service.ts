@@ -241,7 +241,7 @@ export class BookService {
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
-        .leftJoinAndSelect('book.chapters', 'chapters')
+        .leftJoinAndSelect('book.chapters', 'chapters', 'chapters.chapterAccessStatus = :chapterAccessStatus', { chapterAccessStatus: ChapterAccessStatus.PUBLISHED })
         .leftJoinAndSelect('book.reviews', 'reviews');
 
       if (userId) {
@@ -536,7 +536,7 @@ export class BookService {
         .leftJoinAndSelect('book.progressStatus', 'progressStatus')
         .leftJoinAndSelect('book.bookCategoryRelations', 'bcr')
         .leftJoinAndSelect('bcr.category', 'category')
-        .leftJoinAndSelect('book.chapters', 'chapters')
+        .leftJoinAndSelect('book.chapters', 'chapters', 'chapters.chapterAccessStatus = :chapterAccessStatus', { chapterAccessStatus: ChapterAccessStatus.PUBLISHED })
         .where('book.id = :bookId', { bookId });
 
       const book = await qb.getOne();
@@ -1727,6 +1727,16 @@ export class BookService {
           ],
         });
 
+      if (!follows?.length) {
+        return {
+          totalItems: 0,
+          totalPages: 0,
+          data: [],
+        };
+      }
+
+      console.log('follows', follows);
+
       const books = follows.map((f) => f.book);
       const bookIds = books.map((book) => book.id);
 
@@ -2032,7 +2042,7 @@ export class BookService {
 
         if (!bookMap.has(book.id)) {
           const chapters = await this.bookChapterRepository.find({
-            where: { book: { id: book.id } },
+            where: { book: { id: book.id }, chapterAccessStatus: ChapterAccessStatus.PUBLISHED },
           });
           const totalPrice = chapters.reduce(
             (sum, chapter) => sum + Number(chapter.price || 0),
@@ -2652,7 +2662,7 @@ export class BookService {
           .leftJoinAndSelect('book.progressStatus', 'progressStatus')
           .leftJoinAndSelect('book.bookCategoryRelations', 'relation')
           .leftJoinAndSelect('relation.category', 'category')
-          .leftJoinAndSelect('book.chapters', 'chapters')
+          .leftJoinAndSelect('book.chapters', 'chapters', 'chapters.chapterAccessStatus = :chapterAccessStatus', { chapterAccessStatus: ChapterAccessStatus.PUBLISHED })
           .leftJoinAndSelect('book.reviews', 'reviews')
           .addSelect(
             (subQuery) =>

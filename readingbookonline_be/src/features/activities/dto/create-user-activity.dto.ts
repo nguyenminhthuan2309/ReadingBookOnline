@@ -1,5 +1,5 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
-import { ACTIVITY_TYPE } from '@features/activities/entities/activity.entity';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { ACTIVITY_TYPE } from '../entities/activity.entity';
 
 export class CreateUserActivityDto {
   @IsEnum(ACTIVITY_TYPE)

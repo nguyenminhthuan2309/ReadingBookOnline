@@ -1,4 +1,4 @@
-import { ACTIVITY_TYPE } from '../entities/activity.entity';
+import { ACTIVITY_TYPE } from '@features/activities/entities/activity.entity';
 
 export enum ActivityStatus {
   DONE = 'done',

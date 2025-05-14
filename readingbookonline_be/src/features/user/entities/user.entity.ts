@@ -25,7 +25,7 @@ import { Notification } from '@features/notification/entities/notification.entit
 import { ChapterPurchase } from '@features/transaction/entities/chapter-purchase.entity';
 import { Transaction } from '@features/transaction/entities/transaction.entity';
 import { UserFavorite } from './user-favorite.entity';
-import { UserActivity } from './user-activity.entity';
+import { UserActivity } from '@features/activities/entities/user-activity.entity';
 
 export enum GENDER_ENUM {
   MALE = 'male',

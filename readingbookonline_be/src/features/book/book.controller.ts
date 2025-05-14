@@ -479,7 +479,7 @@ export class BookController {
     return this.bookService.clearAllChapters(bookId);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cập nhật trạng thái của sách' })
   @Patch(':id/status')
   async updateBookStatus(
