@@ -385,6 +385,8 @@ export class TransactionService {
                 resultCode: momoResponse.resultCode,
                 message: momoResponse.message,
               },
+              orderId,
+              transactionId: transaction.id,
             },
             msg: 'Success',
           };
@@ -429,6 +431,7 @@ export class TransactionService {
             resultCode: momoResponse.resultCode,
             message: momoResponse.message,
           },
+          orderId,
         },
         msg: 'Success',
       };
