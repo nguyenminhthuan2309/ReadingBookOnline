@@ -3007,7 +3007,7 @@ export class BookService {
         bookId,
         originAuthorId,
         originCategoryIds,
-        1000,
+        limit,
         offset,
       ]);
 
