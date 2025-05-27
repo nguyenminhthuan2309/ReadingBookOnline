@@ -5,6 +5,9 @@ import { ActivitiesController } from './activities.controller';
 import { Activity } from './entities/activity.entity';
 import { UserActivity } from './entities/user-activity.entity';
 import { User } from '@features/user/entities/user.entity';
+import { Visit } from './entities/visit.entity';
+import { PageView } from './entities/page-view.entity';
+import { TrackerLogin } from './entities/tracker-login.entity';
 
 @Module({
   imports: [
@@ -12,6 +15,9 @@ import { User } from '@features/user/entities/user.entity';
       Activity,
       UserActivity,
       User,
+      Visit,
+      PageView,
+      TrackerLogin,
     ]),
   ],
   controllers: [ActivitiesController],

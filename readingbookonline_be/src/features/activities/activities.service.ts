@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, LessThanOrEqual, MoreThan, Repository } from 'typeorm';
 import { Activity, ACTIVITY_TYPE } from './entities/activity.entity';
@@ -6,6 +6,12 @@ import { UserActivity } from './entities/user-activity.entity';
 import { User } from '@features/user/entities/user.entity';
 import { ActivityDto, ActivityStatus, ActivityStatusResponseDto } from './dto/activity-status.dto';
 import { plainToInstance } from 'class-transformer';
+import { Visit } from './entities/visit.entity';
+import { PageView } from './entities/page-view.entity';
+import { CreateVisitDto } from './dto/create-visit.dto';
+import { UpdateVisitDto } from './dto/update-visit.dto';
+import { CreatePageViewDto } from './dto/create-page-view.dto';
+import { TimePeriod } from './dto/time-range.dto';
 
 @Injectable()
 export class ActivitiesService {
@@ -16,6 +22,10 @@ export class ActivitiesService {
     private readonly userActivityRepository: Repository<UserActivity>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Visit)
+    private readonly visitRepository: Repository<Visit>,
+    @InjectRepository(PageView)
+    private readonly pageViewRepository: Repository<PageView>,
   ) {}
 
   async findAllActivities(): Promise<Activity[]> {
@@ -370,5 +380,706 @@ export class ActivitiesService {
       earnedPoint,
       isEarnedPoint,
     });
+  }
+
+  // Visit tracking methods
+  async createVisit(createVisitDto: CreateVisitDto, userId?: number): Promise<Visit> {
+    const newVisit = new Visit();
+    newVisit.visitorId = createVisitDto.visitorId;
+    
+    if (userId) {
+      newVisit.userId = userId;
+    }
+    
+    if (createVisitDto.userAgent) {
+      newVisit.userAgent = createVisitDto.userAgent;
+    }
+    
+    if (createVisitDto.referrer) {
+      newVisit.referrer = createVisitDto.referrer;
+    }
+
+    return this.visitRepository.save(newVisit);
+  }
+
+  async endVisitSession(id: string): Promise<Visit> {
+    const visit = await this.visitRepository.findOne({ where: { id } });
+    
+    if (!visit) {
+      throw new NotFoundException(`Visit with ID ${id} not found`);
+    }
+
+    // If session is already ended, return the visit without changes
+    if (visit.endedAt) {
+      return visit;
+    }
+
+    // Set end time to current UTC time
+    const endedAt = new Date();
+    const startedAt = visit.startedAt;
+    
+    // Calculate duration in seconds
+    const durationInSeconds = Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000);
+    
+    // Update the visit
+    visit.endedAt = endedAt;
+    visit.duration = durationInSeconds > 0 ? durationInSeconds : 0;
+    
+    return this.visitRepository.save(visit);
+  }
+
+  async updateVisit(id: string, updateVisitDto: UpdateVisitDto): Promise<Visit> {
+    const visit = await this.visitRepository.findOne({ where: { id } });
+    
+    if (!visit) {
+      throw new NotFoundException(`Visit with ID ${id} not found`);
+    }
+
+    // Convert string dates to Date objects
+    const endedAt = new Date(updateVisitDto.endedAt);
+    const startedAt = visit.startedAt;
+    
+    // Calculate duration in seconds
+    const durationInSeconds = Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000);
+    
+    // Update the visit
+    visit.endedAt = endedAt;
+    visit.duration = durationInSeconds > 0 ? durationInSeconds : 0;
+    
+    return this.visitRepository.save(visit);
+  }
+
+  async getVisitById(id: string): Promise<Visit> {
+    const visit = await this.visitRepository.findOne({ 
+      where: { id },
+      relations: ['pageViews']
+    });
+    
+    if (!visit) {
+      throw new NotFoundException(`Visit with ID ${id} not found`);
+    }
+    
+    return visit;
+  }
+
+  async getVisitsByVisitorId(visitorId: string): Promise<Visit[]> {
+    return this.visitRepository.find({
+      where: { visitorId },
+      order: { startedAt: 'DESC' }
+    });
+  }
+
+  async getVisitsByUserId(userId: number): Promise<Visit[]> {
+    return this.visitRepository.find({
+      where: { userId },
+      order: { startedAt: 'DESC' }
+    });
+  }
+
+  // Page view tracking methods
+  async createPageView(createPageViewDto: CreatePageViewDto): Promise<PageView> {
+    // Check if visit exists
+    const visit = await this.visitRepository.findOne({ 
+      where: { id: createPageViewDto.visitId } 
+    });
+    
+    if (!visit) {
+      throw new NotFoundException(`Visit with ID ${createPageViewDto.visitId} not found`);
+    }
+    
+    const newPageView = new PageView();
+    newPageView.visitId = createPageViewDto.visitId;
+    newPageView.url = createPageViewDto.url;
+    
+    if (createPageViewDto.chapterId) {
+      newPageView.chapterId = createPageViewDto.chapterId;
+    }
+    
+    if (createPageViewDto.bookId) {
+      newPageView.bookId = createPageViewDto.bookId;
+    }
+    
+    return this.pageViewRepository.save(newPageView);
+  }
+
+  async getPageViewsByVisitId(visitId: string): Promise<PageView[]> {
+    return this.pageViewRepository.find({
+      where: { visitId },
+      order: { viewedAt: 'DESC' },
+      relations: ['book', 'chapter']
+    });
+  }
+
+  // Helper method to calculate date range based on period
+  private getDateRangeFromPeriod(period: TimePeriod, startDate?: string, endDate?: string): { startDate: Date, endDate: Date } {
+    const now = new Date();
+    let start: Date;
+    let end: Date = new Date(now);
+    
+    // Set end to end of current day
+    end.setHours(23, 59, 59, 999);
+    
+    switch (period) {
+      case TimePeriod.TODAY:
+        start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_WEEK:
+        start = new Date(now);
+        // Get the first day of the current week (Sunday = 0)
+        const dayOfWeek = start.getDay();
+        const diff = start.getDate() - dayOfWeek;
+        start.setDate(diff);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_MONTH:
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.LAST_MONTH:
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+        
+      case TimePeriod.LAST_3_MONTHS:
+        start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.LAST_6_MONTHS:
+        start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_YEAR:
+        start = new Date(now.getFullYear(), 0, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.CUSTOM:
+        if (!startDate || !endDate) {
+          throw new BadRequestException('Start date and end date are required for custom period');
+        }
+        
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        break;
+        
+      default:
+        throw new BadRequestException('Invalid time period');
+    }
+    
+    return { startDate: start, endDate: end };
+  }
+
+  // Get visits by time range
+  async getVisitsByTimeRange(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string,
+    userId?: number,
+    visitorId?: string
+  ): Promise<Visit[]> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    const queryBuilder = this.visitRepository.createQueryBuilder('visit')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .orderBy('visit.started_at', 'DESC');
+    
+    if (userId) {
+      queryBuilder.andWhere('visit.user_id = :userId', { userId });
+    }
+    
+    if (visitorId) {
+      queryBuilder.andWhere('visit.visitor_id = :visitorId', { visitorId });
+    }
+    
+    return queryBuilder.getMany();
+  }
+
+  // Get page views by time range
+  async getPageViewsByTimeRange(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string,
+    bookId?: number,
+    chapterId?: number,
+    visitId?: string
+  ): Promise<PageView[]> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    const queryBuilder = this.pageViewRepository.createQueryBuilder('pageView')
+      .leftJoinAndSelect('pageView.book', 'book')
+      .leftJoinAndSelect('pageView.chapter', 'chapter')
+      .where('pageView.viewed_at BETWEEN :start AND :end', { start, end })
+      .orderBy('pageView.viewed_at', 'DESC');
+    
+    if (bookId) {
+      queryBuilder.andWhere('pageView.book_id = :bookId', { bookId });
+    }
+    
+    if (chapterId) {
+      queryBuilder.andWhere('pageView.chapter_id = :chapterId', { chapterId });
+    }
+    
+    if (visitId) {
+      queryBuilder.andWhere('pageView.visit_id = :visitId', { visitId });
+    }
+    
+    return queryBuilder.getMany();
+  }
+
+  // Get visits statistics by time range
+  async getVisitStatsByTimeRange(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ totalVisits: number, uniqueVisitors: number, avgDuration: number }> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    // Get total visits
+    const totalVisits = await this.visitRepository.count({
+      where: {
+        startedAt: Between(start, end)
+      }
+    });
+    
+    // Get unique visitors count by distinct visitorId
+    const uniqueVisitors = await this.visitRepository
+      .createQueryBuilder('visit')
+      .select('COUNT(DISTINCT visit.visitor_id)', 'count')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .getRawOne();
+    
+    const uniqueVisitorsCount = uniqueVisitors?.count ? parseInt(uniqueVisitors.count) : 0;
+    
+    // Get average duration (only for visits with duration)
+    const avgDurationResult = await this.visitRepository
+      .createQueryBuilder('visit')
+      .select('AVG(visit.duration)', 'avgDuration')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .andWhere('visit.duration IS NOT NULL')
+      .getRawOne();
+
+    
+    const avgDuration = avgDurationResult?.avgDuration ? Math.round(avgDurationResult.avgDuration / 60) : 0;
+    
+    return {
+      totalVisits,
+      uniqueVisitors: uniqueVisitorsCount,
+      avgDuration
+    };
+  }
+
+  // Get page views statistics by time range
+  async getPageViewStatsByTimeRange(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ totalPageViews: number, uniqueBooks: number, uniqueChapters: number }> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    // Get total page views
+    const totalPageViews = await this.pageViewRepository.count({
+      where: {
+        viewedAt: Between(start, end)
+      }
+    });
+    
+    // Get unique books viewed count
+    const uniqueBooks = await this.pageViewRepository
+      .createQueryBuilder('pageView')
+      .select('pageView.book_id')
+      .where('pageView.viewed_at BETWEEN :start AND :end', { start, end })
+      .andWhere('pageView.book_id IS NOT NULL')
+      .distinct(true)
+      .getCount();
+    
+    // Get unique chapters viewed count
+    const uniqueChapters = await this.pageViewRepository
+      .createQueryBuilder('pageView')
+      .select('pageView.chapter_id')
+      .where('pageView.viewed_at BETWEEN :start AND :end', { start, end })
+      .andWhere('pageView.chapter_id IS NOT NULL')
+      .distinct(true)
+      .getCount();
+    
+    return {
+      totalPageViews,
+      uniqueBooks,
+      uniqueChapters
+    };
+  }
+
+  // Get bounce rate by time range
+  async getBounceRateByTimeRange(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ bounceRate: number, totalVisits: number, singlePageVisits: number }> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    // Get all visits in the time range
+    const totalVisits = await this.visitRepository.count({
+      where: {
+        startedAt: Between(start, end)
+      }
+    });
+    
+    // Get visits with their page view counts
+    const visitPageViewCounts = await this.visitRepository
+      .createQueryBuilder('visit')
+      .leftJoin('visit.pageViews', 'pageView')
+      .select('visit.id', 'visitId')
+      .addSelect('COUNT(pageView.id)', 'pageViewCount')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .groupBy('visit.id')
+      .getRawMany();
+    
+    // Count visits with exactly one page view (bounce visits)
+    const singlePageVisits = visitPageViewCounts.filter(
+      visit => parseInt(visit.pageViewCount) === 1
+    ).length;
+    
+    // Calculate bounce rate as percentage
+    const bounceRate = totalVisits > 0 ? Math.round((singlePageVisits / totalVisits) * 100 * 100) / 100 : 0;
+    
+    return {
+      bounceRate,
+      totalVisits,
+      singlePageVisits
+    };
+  }
+
+  // Helper method to generate time intervals based on period
+  private generateTimeIntervals(period: TimePeriod, startDate: Date, endDate: Date): Date[] {
+    const intervals: Date[] = [];
+    const current = new Date(startDate);
+    
+    switch (period) {
+      case TimePeriod.TODAY:
+        // Generate 24 hour intervals (every 2 hours for readability)
+        for (let hour = 0; hour < 24; hour += 2) {
+          const intervalStart = new Date(current);
+          intervalStart.setHours(hour, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_WEEK:
+        // Generate 7 daily intervals
+        for (let day = 0; day < 7; day++) {
+          const intervalStart = new Date(current);
+          intervalStart.setDate(current.getDate() + day);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_MONTH:
+      case TimePeriod.LAST_MONTH:
+        // Generate daily intervals for the month
+        while (current <= endDate) {
+          const intervalStart = new Date(current);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+          current.setDate(current.getDate() + 1);
+        }
+        break;
+        
+      case TimePeriod.LAST_3_MONTHS:
+        // Generate monthly intervals for 3 months
+        for (let month = 0; month < 3; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.LAST_6_MONTHS:
+        // Generate monthly intervals for 6 months
+        for (let month = 0; month < 6; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_YEAR:
+        // Generate monthly intervals for 12 months
+        for (let month = 0; month < 12; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.CUSTOM:
+        // Calculate the difference in days
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 30) {
+          // Generate daily intervals for periods <= 30 days
+          while (current <= endDate) {
+            const intervalStart = new Date(current);
+            intervalStart.setHours(0, 0, 0, 0);
+            intervals.push(intervalStart);
+            current.setDate(current.getDate() + 1);
+          }
+        } else {
+          // Generate monthly intervals for periods > 30 days
+          const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+          
+          const currentMonth = new Date(startMonth);
+          while (currentMonth <= endMonth) {
+            intervals.push(new Date(currentMonth));
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+          }
+        }
+        break;
+    }
+    
+    return intervals;
+  }
+
+  // Get combined visit statistics with chart data and overview
+  async getVisitStatisticsWithChart(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
+    chart: Array<{
+      period: string;
+      totalVisits: number;
+      uniqueVisitors: number;
+      avgDuration: number;
+      bounceRate: number;
+    }>;
+    overview: {
+      totalVisits: number;
+      uniqueVisitors: number;
+      avgDuration: number;
+      bounceRate: number;
+    };
+  }> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    // Generate time intervals based on period
+    const intervals = this.generateTimeIntervals(period, start, end);
+    
+    // Generate chart data for each interval
+    const chartData = await Promise.all(intervals.map(async (intervalStart) => {
+      let intervalEnd: Date;
+      
+      // Calculate the difference in days for custom periods
+      let isCustomDaily = false;
+      if (period === TimePeriod.CUSTOM) {
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        isCustomDaily = diffDays <= 30;
+      }
+      
+      switch (period) {
+        case TimePeriod.TODAY:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setHours(intervalStart.getHours() + 2, 0, 0, 0);
+          break;
+          
+        case TimePeriod.THIS_WEEK:
+        case TimePeriod.THIS_MONTH:
+        case TimePeriod.LAST_MONTH:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setDate(intervalStart.getDate() + 1);
+          intervalEnd.setMilliseconds(-1);
+          break;
+          
+        case TimePeriod.LAST_3_MONTHS:
+        case TimePeriod.LAST_6_MONTHS:
+        case TimePeriod.THIS_YEAR:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setMonth(intervalStart.getMonth() + 1);
+          intervalEnd.setMilliseconds(-1);
+          break;
+          
+        case TimePeriod.CUSTOM:
+          if (isCustomDaily) {
+            // Daily intervals
+            intervalEnd = new Date(intervalStart);
+            intervalEnd.setDate(intervalStart.getDate() + 1);
+            intervalEnd.setMilliseconds(-1);
+          } else {
+            // Monthly intervals
+            intervalEnd = new Date(intervalStart);
+            intervalEnd.setMonth(intervalStart.getMonth() + 1);
+            intervalEnd.setMilliseconds(-1);
+          }
+          break;
+          
+        default:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setDate(intervalStart.getDate() + 1);
+          intervalEnd.setMilliseconds(-1);
+      }
+      
+      // Get visits for this interval
+      const intervalVisits = await this.visitRepository.count({
+        where: {
+          startedAt: Between(intervalStart, intervalEnd)
+        }
+      });
+      
+      // Get unique visitors for this interval
+      const uniqueVisitors = await this.visitRepository
+        .createQueryBuilder('visit')
+        .select('COUNT(DISTINCT visit.visitor_id)', 'count')
+        .where('visit.started_at BETWEEN :start AND :end', { 
+          start: intervalStart, 
+          end: intervalEnd 
+        })
+        .getRawOne();
+
+        const uniqueVisitorsCount = uniqueVisitors?.count ? parseInt(uniqueVisitors.count) : 0;
+      
+      // Get average duration for this interval
+      const avgDurationResult = await this.visitRepository
+        .createQueryBuilder('visit')
+        .select('AVG(visit.duration)', 'avgDuration')
+        .where('visit.started_at BETWEEN :start AND :end', { 
+          start: intervalStart, 
+          end: intervalEnd 
+        })
+        .andWhere('visit.duration IS NOT NULL')
+        .getRawOne();
+      
+      const avgDuration = avgDurationResult?.avgDuration ? Math.round(avgDurationResult.avgDuration) : 0;
+      
+      // Calculate bounce rate for this interval
+      const visitPageViewCounts = await this.visitRepository
+        .createQueryBuilder('visit')
+        .leftJoin('visit.pageViews', 'pageView')
+        .select('visit.id', 'visitId')
+        .addSelect('COUNT(pageView.id)', 'pageViewCount')
+        .where('visit.started_at BETWEEN :start AND :end', { 
+          start: intervalStart, 
+          end: intervalEnd 
+        })
+        .groupBy('visit.id')
+        .getRawMany();
+      
+      const singlePageVisits = visitPageViewCounts.filter(
+        visit => parseInt(visit.pageViewCount) === 1
+      ).length;
+      
+      const bounceRate = intervalVisits > 0 ? Math.round((singlePageVisits / intervalVisits) * 100 * 100) / 100 : 0;
+      
+      // Format period label
+      let periodLabel: string;
+      switch (period) {
+        case TimePeriod.TODAY:
+          periodLabel = `${intervalStart.getHours()}h`;
+          break;
+        case TimePeriod.THIS_WEEK:
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          periodLabel = dayNames[intervalStart.getDay()];
+          break;
+        case TimePeriod.THIS_MONTH:
+        case TimePeriod.LAST_MONTH:
+          periodLabel = intervalStart.getDate().toString();
+          break;
+        case TimePeriod.LAST_3_MONTHS:
+        case TimePeriod.LAST_6_MONTHS:
+        case TimePeriod.THIS_YEAR:
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          periodLabel = monthNames[intervalStart.getMonth()];
+          break;
+        case TimePeriod.CUSTOM:
+          if (isCustomDaily) {
+            // Show day number for daily intervals
+            periodLabel = intervalStart.getDate().toString();
+          } else {
+            // Show month name for monthly intervals
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            periodLabel = monthNames[intervalStart.getMonth()];
+          }
+          break;
+        default:
+          periodLabel = intervalStart.toISOString().split('T')[0];
+      }
+      
+      return {
+        period: periodLabel,
+        totalVisits: intervalVisits,
+        uniqueVisitors: uniqueVisitorsCount,
+        avgDuration,
+        bounceRate
+      };
+    }));
+    
+    // Calculate overview statistics for the entire period
+    const totalVisits = await this.visitRepository.count({
+      where: {
+        startedAt: Between(start, end)
+      }
+    });
+    
+    const uniqueVisitors = await this.visitRepository
+      .createQueryBuilder('visit')
+      .select('visit.visitor_id')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .distinct(true)
+      .getCount();
+    
+    const overallAvgDurationResult = await this.visitRepository
+      .createQueryBuilder('visit')
+      .select('AVG(visit.duration)', 'avgDuration')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .andWhere('visit.duration IS NOT NULL')
+      .getRawOne();
+    
+    const overallAvgDuration = overallAvgDurationResult?.avgDuration ? Math.round(overallAvgDurationResult.avgDuration) : 0;
+    
+    // Calculate overall bounce rate
+    const overallVisitPageViewCounts = await this.visitRepository
+      .createQueryBuilder('visit')
+      .leftJoin('visit.pageViews', 'pageView')
+      .select('visit.id', 'visitId')
+      .addSelect('COUNT(pageView.id)', 'pageViewCount')
+      .where('visit.started_at BETWEEN :start AND :end', { start, end })
+      .groupBy('visit.id')
+      .getRawMany();
+    
+    const overallSinglePageVisits = overallVisitPageViewCounts.filter(
+      visit => parseInt(visit.pageViewCount) === 1
+    ).length;
+    
+    const overallBounceRate = totalVisits > 0 ? Math.round((overallSinglePageVisits / totalVisits) * 100 * 100) / 100 : 0;
+    
+    return {
+      chart: chartData,
+      overview: {
+        totalVisits,
+        uniqueVisitors,
+        avgDuration: overallAvgDuration,
+        bounceRate: overallBounceRate
+      }
+    };
   }
 } 

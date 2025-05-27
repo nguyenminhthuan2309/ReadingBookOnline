@@ -44,6 +44,7 @@ import { Activity, ACTIVITY_TYPE } from '@features/activities/entities/activity.
 import { UserActivity } from '@features/activities/entities/user-activity.entity';
 import { CreateUserActivityDto } from './dto/create-user-activity.dto';
 import { ActivityStatusResponseDto } from './dto/activity-status.dto';
+import { TimeRangeDto } from '@features/activities/dto/time-range.dto';
 
 // Define the interface extending Express Request with user property
 interface RequestWithUser extends ExpressRequest {
@@ -255,6 +256,18 @@ export class UserController {
     );
   }
 
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Get user registration statistics' })
+  @Get('statistics')
+  async getUserStatistics(@Query() query: TimeRangeDto) {
+    return this.userService.getUserStatisticsWithChart(
+      query.period,
+      query.startDate,
+      query.endDate
+    );
+  }
+
   @UseGuards(OptionalAuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Lấy thông tin người dùng theo ID' })
@@ -265,4 +278,5 @@ export class UserController {
     const userId = (req as any).user?.id;
     return await this.userService.getUserProfileById(id, userId);
   }
+
 }

@@ -60,6 +60,7 @@ import { PatchBookDto } from './dto/update-book.dto';
 import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
 import { ChapterAccessStatus } from './entities/book-chapter.entity';
 import { CreateModerationResultDto, GetModerationResultDto, ModerationResultResponseDto, UpdateModerationResultDto } from './dto/moderation-result.dto';
+import { TimeRangeDto } from '@features/activities/dto/time-range.dto';
 
 @ApiTags('book')
 @Controller('book')
@@ -383,6 +384,17 @@ export class BookController {
     return this.bookService.getRecommendedBooks(userId, params);
   }
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Get book creation statistics' })
+  @Get('statistics')
+  async getBookStatistics(@Query() query: TimeRangeDto) {
+    return this.bookService.getBookStatisticsWithChart(
+      query.period,
+      query.startDate,
+      query.endDate
+    );
+  }
+
   @Get('migrate-embedded-column-book')
   @ApiOperation({ summary: 'Migrate embedded column book' })
   async migrateAddEmbeddingColumn(): Promise<Boolean> {
@@ -548,4 +560,6 @@ export class BookController {
   ): Promise<ModerationResultResponseDto> {
     return this.bookService.updateModerationResult(updateModerationResultDto);
   }
+
+ 
 }

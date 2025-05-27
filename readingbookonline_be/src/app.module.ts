@@ -5,7 +5,6 @@ import { BookNotificationModule } from '@core/gateway/book-notification.module';
 import { DatabaseModule } from '@database/database.module';
 import { BookModule } from '@features/book/book.module';
 import { ChatModule } from '@features/chat/chat.module';
-import { TrackerModule } from '@features/tracker/tracker.module';
 import { TransactionModule } from '@features/transaction/transaction.module';
 import { UserModule } from '@features/user/user.module';
 import { ActivitiesModule } from '@features/activities/activities.module';
@@ -40,7 +39,6 @@ import { NotificationModule } from './features/notification/notification.module'
     UserModule,
     BookModule,
     TransactionModule,
-    TrackerModule,
     CloudinaryModule,
     BookNotificationModule,
     ActivitiesModule,

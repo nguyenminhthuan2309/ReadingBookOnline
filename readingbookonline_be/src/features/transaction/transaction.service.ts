@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import axios from 'axios';
 import { Transaction, TransactionStatus } from './entities/transaction.entity';
 import { LoggerService } from '@core/logger/logger.service';
@@ -30,6 +30,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { log } from 'console';
 import { NotificationGateway } from '@core/gateway/notification.gateway';
 import { NotificationType } from '@features/notification/entities/notification.entity';
+import { TimePeriod } from '@features/activities/dto/time-range.dto';
 @Injectable()
 export class TransactionService {
   private readonly momoAccessKey = MomoConfig.accessKey;
@@ -811,5 +812,411 @@ export class TransactionService {
     } catch (error) {
       throw error;
     }
+  }
+
+  // Helper method to calculate date range based on period (same as activities service)
+  private getDateRangeFromPeriod(period: TimePeriod, startDate?: string, endDate?: string): { startDate: Date, endDate: Date } {
+    const now = new Date();
+    let start: Date;
+    let end: Date = new Date(now);
+    
+    // Set end to end of current day
+    end.setHours(23, 59, 59, 999);
+    
+    switch (period) {
+      case TimePeriod.TODAY:
+        start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_WEEK:
+        start = new Date(now);
+        // Get the first day of the current week (Sunday = 0)
+        const dayOfWeek = start.getDay();
+        const diff = start.getDate() - dayOfWeek;
+        start.setDate(diff);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_MONTH:
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.LAST_MONTH:
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        start.setHours(0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+        
+      case TimePeriod.LAST_3_MONTHS:
+        start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.LAST_6_MONTHS:
+        start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.THIS_YEAR:
+        start = new Date(now.getFullYear(), 0, 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+        
+      case TimePeriod.CUSTOM:
+        if (!startDate || !endDate) {
+          throw new BadRequestException('Start date and end date are required for custom period');
+        }
+        
+        start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        
+        end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        break;
+        
+      default:
+        throw new BadRequestException('Invalid time period');
+    }
+    
+    return { startDate: start, endDate: end };
+  }
+
+  // Helper method to generate time intervals based on period
+  private generateTimeIntervals(period: TimePeriod, startDate: Date, endDate: Date): Date[] {
+    const intervals: Date[] = [];
+    const current = new Date(startDate);
+    
+    switch (period) {
+      case TimePeriod.TODAY:
+        // Generate 24 hour intervals (every 2 hours for readability)
+        for (let hour = 0; hour < 24; hour += 2) {
+          const intervalStart = new Date(current);
+          intervalStart.setHours(hour, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_WEEK:
+        // Generate 7 daily intervals
+        for (let day = 0; day < 7; day++) {
+          const intervalStart = new Date(current);
+          intervalStart.setDate(current.getDate() + day);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_MONTH:
+      case TimePeriod.LAST_MONTH:
+        // Generate daily intervals for the month
+        while (current <= endDate) {
+          const intervalStart = new Date(current);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+          current.setDate(current.getDate() + 1);
+        }
+        break;
+        
+      case TimePeriod.LAST_3_MONTHS:
+        // Generate monthly intervals for 3 months
+        for (let month = 0; month < 3; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.LAST_6_MONTHS:
+        // Generate monthly intervals for 6 months
+        for (let month = 0; month < 6; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.THIS_YEAR:
+        // Generate monthly intervals for 12 months
+        for (let month = 0; month < 12; month++) {
+          const intervalStart = new Date(startDate);
+          intervalStart.setMonth(startDate.getMonth() + month);
+          intervalStart.setDate(1);
+          intervalStart.setHours(0, 0, 0, 0);
+          intervals.push(intervalStart);
+        }
+        break;
+        
+      case TimePeriod.CUSTOM:
+        // Calculate the difference in days
+        const diffTime = endDate.getTime() - startDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 30) {
+          // Generate daily intervals for periods <= 30 days
+          while (current <= endDate) {
+            const intervalStart = new Date(current);
+            intervalStart.setHours(0, 0, 0, 0);
+            intervals.push(intervalStart);
+            current.setDate(current.getDate() + 1);
+          }
+        } else {
+          // Generate monthly intervals for periods > 30 days
+          const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+          const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+          
+          const currentMonth = new Date(startMonth);
+          while (currentMonth <= endMonth) {
+            intervals.push(new Date(currentMonth));
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+          }
+        }
+        break;
+    }
+    
+    return intervals;
+  }
+
+  // Get transaction statistics with chart data and overview
+  async getTransactionStatisticsWithChart(
+    period: TimePeriod,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{
+    chart: Array<{
+      period: string;
+      totalTransactions: number;
+      successfulTransactions: number;
+      failedTransactions: number;
+      totalDeposit: number;
+      totalPurchased: number;
+      averageDepositVolume: number;
+    }>;
+    overview: {
+      totalTransactions: number;
+      successfulTransactions: number;
+      failedTransactions: number;
+      totalDeposit: number;
+      totalPurchased: number;
+      averageDepositVolume: number;
+    };
+  }> {
+    const { startDate: start, endDate: end } = this.getDateRangeFromPeriod(period, startDate, endDate);
+    
+    // Generate time intervals based on period
+    const intervals = this.generateTimeIntervals(period, start, end);
+    
+    // Calculate the difference in days for custom periods
+    let isCustomDaily = false;
+    if (period === TimePeriod.CUSTOM) {
+      const diffTime = end.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      isCustomDaily = diffDays <= 30;
+    }
+    
+    // Generate chart data for each interval
+    const chartData = await Promise.all(intervals.map(async (intervalStart) => {
+      let intervalEnd: Date;
+      
+      switch (period) {
+        case TimePeriod.TODAY:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setHours(intervalStart.getHours() + 2, 0, 0, 0);
+          break;
+          
+        case TimePeriod.THIS_WEEK:
+        case TimePeriod.THIS_MONTH:
+        case TimePeriod.LAST_MONTH:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setDate(intervalStart.getDate() + 1);
+          intervalEnd.setMilliseconds(-1);
+          break;
+          
+        case TimePeriod.LAST_3_MONTHS:
+        case TimePeriod.LAST_6_MONTHS:
+        case TimePeriod.THIS_YEAR:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setMonth(intervalStart.getMonth() + 1);
+          intervalEnd.setMilliseconds(-1);
+          break;
+          
+        case TimePeriod.CUSTOM:
+          if (isCustomDaily) {
+            // Daily intervals
+            intervalEnd = new Date(intervalStart);
+            intervalEnd.setDate(intervalStart.getDate() + 1);
+            intervalEnd.setMilliseconds(-1);
+          } else {
+            // Monthly intervals
+            intervalEnd = new Date(intervalStart);
+            intervalEnd.setMonth(intervalStart.getMonth() + 1);
+            intervalEnd.setMilliseconds(-1);
+          }
+          break;
+          
+        default:
+          intervalEnd = new Date(intervalStart);
+          intervalEnd.setDate(intervalStart.getDate() + 1);
+          intervalEnd.setMilliseconds(-1);
+      }
+      
+      // Get total transactions in this interval
+      const totalTransactions = await this.transactionRepository.count({
+        where: {
+          createdAt: Between(intervalStart, intervalEnd)
+        }
+      });
+      
+      // Get successful transactions in this interval
+      const successfulTransactions = await this.transactionRepository.count({
+        where: {
+          createdAt: Between(intervalStart, intervalEnd),
+          status: TransactionStatus.SUCCESS
+        }
+      });
+      
+      // Get failed transactions in this interval
+      const failedTransactions = await this.transactionRepository.count({
+        where: {
+          createdAt: Between(intervalStart, intervalEnd),
+          status: TransactionStatus.FAILED
+        }
+      });
+      
+      // Get total deposit amount in this interval (successful transactions only)
+      const depositResult = await this.transactionRepository
+        .createQueryBuilder('transaction')
+        .select('SUM(transaction.amount)', 'totalDeposit')
+        .where('transaction.created_at BETWEEN :start AND :end', { 
+          start: intervalStart, 
+          end: intervalEnd 
+        })
+        .andWhere('transaction.status = :status', { status: TransactionStatus.SUCCESS })
+        .getRawOne();
+      
+      const totalDeposit = depositResult?.totalDeposit ? parseFloat(depositResult.totalDeposit) : 0;
+      
+      // Get total purchased amount in this interval (chapter purchases)
+      const purchaseResult = await this.chapterPurchaseRepository
+        .createQueryBuilder('purchase')
+        .select('SUM(purchase.price)', 'totalPurchased')
+        .where('purchase.created_at BETWEEN :start AND :end', { 
+          start: intervalStart, 
+          end: intervalEnd 
+        })
+        .getRawOne();
+      
+      const totalPurchased = purchaseResult?.totalPurchased ? parseFloat(purchaseResult.totalPurchased) : 0;
+      
+      // Calculate average deposit volume
+      const averageDepositVolume = successfulTransactions > 0 ? totalDeposit / successfulTransactions : 0;
+      
+      // Format period label
+      let periodLabel: string;
+      switch (period) {
+        case TimePeriod.TODAY:
+          periodLabel = `${intervalStart.getHours()}h`;
+          break;
+        case TimePeriod.THIS_WEEK:
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          periodLabel = dayNames[intervalStart.getDay()];
+          break;
+        case TimePeriod.THIS_MONTH:
+        case TimePeriod.LAST_MONTH:
+          periodLabel = intervalStart.getDate().toString();
+          break;
+        case TimePeriod.LAST_3_MONTHS:
+        case TimePeriod.LAST_6_MONTHS:
+        case TimePeriod.THIS_YEAR:
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          periodLabel = monthNames[intervalStart.getMonth()];
+          break;
+        case TimePeriod.CUSTOM:
+          if (isCustomDaily) {
+            // Show day number for daily intervals
+            periodLabel = intervalStart.getDate().toString();
+          } else {
+            // Show month name for monthly intervals
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            periodLabel = monthNames[intervalStart.getMonth()];
+          }
+          break;
+        default:
+          periodLabel = intervalStart.toISOString().split('T')[0];
+      }
+      
+      return {
+        period: periodLabel,
+        totalTransactions,
+        successfulTransactions,
+        failedTransactions,
+        totalDeposit: Math.round(totalDeposit * 100) / 100, // Round to 2 decimal places
+        totalPurchased: Math.round(totalPurchased * 100) / 100,
+        averageDepositVolume: Math.round(averageDepositVolume * 100) / 100,
+      };
+    }));
+    
+    // Calculate overview statistics for the entire period
+    const totalTransactions = await this.transactionRepository.count({
+      where: {
+        createdAt: Between(start, end)
+      }
+    });
+    
+    const successfulTransactions = await this.transactionRepository.count({
+      where: {
+        createdAt: Between(start, end),
+        status: TransactionStatus.SUCCESS
+      }
+    });
+    
+    const failedTransactions = await this.transactionRepository.count({
+      where: {
+        createdAt: Between(start, end),
+        status: TransactionStatus.FAILED
+      }
+    });
+    
+    // Get total deposit amount for the entire period (successful transactions only)
+    const overallDepositResult = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('SUM(transaction.amount)', 'totalDeposit')
+      .where('transaction.created_at BETWEEN :start AND :end', { start, end })
+      .andWhere('transaction.status = :status', { status: TransactionStatus.SUCCESS })
+      .getRawOne();
+    
+    const totalDeposit = overallDepositResult?.totalDeposit ? parseFloat(overallDepositResult.totalDeposit) : 0;
+    
+    // Get total purchased amount for the entire period (chapter purchases)
+    const overallPurchaseResult = await this.chapterPurchaseRepository
+      .createQueryBuilder('purchase')
+      .select('SUM(purchase.price)', 'totalPurchased')
+      .where('purchase.created_at BETWEEN :start AND :end', { start, end })
+      .getRawOne();
+    
+    const totalPurchased = overallPurchaseResult?.totalPurchased ? parseFloat(overallPurchaseResult.totalPurchased) : 0;
+    
+    // Calculate overall average deposit volume
+    const averageDepositVolume = successfulTransactions > 0 ? totalDeposit / successfulTransactions : 0;
+    
+    return {
+      chart: chartData,
+      overview: {
+        totalTransactions,
+        successfulTransactions,
+        failedTransactions,
+        totalDeposit: Math.round(totalDeposit * 100) / 100,
+        totalPurchased: Math.round(totalPurchased * 100) / 100,
+        averageDepositVolume: Math.round(averageDepositVolume * 100) / 100,
+      }
+    };
   }
 }

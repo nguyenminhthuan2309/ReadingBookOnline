@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('login_tracker')
-export class LoginTracker {
+@Entity('tracker_login')
+export class TrackerLogin {
   @PrimaryGeneratedColumn({ name: 'id', type: 'int' })
   id: number;
 
@@ -22,4 +22,4 @@ export class LoginTracker {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
-}
+} 

@@ -21,6 +21,7 @@ import {
   GetAdminChapterPurchasesDto,
   GetUserChapterPurchasesDto,
 } from './dto/admin-book-purchase.dto';
+import { TimeRangeDto } from '@features/activities/dto/time-range.dto';
 
 @Controller('transaction')
 export class TransactionController {
@@ -204,5 +205,16 @@ export class TransactionController {
       bookId,
       chapterId,
     });
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiOperation({ summary: 'Get transaction statistics' })
+  @Get('statistics')
+  async getTransactionStatistics(@Query() query: TimeRangeDto) {
+    return this.transactionService.getTransactionStatisticsWithChart(
+      query.period,
+      query.startDate,
+      query.endDate
+    );
   }
 }
