@@ -2942,13 +2942,13 @@ export class BookService {
 
       const originBookQuery = `
       SELECT 
-        author.id AS originAuthorId,
+        author.id AS "originAuthorId",
         ARRAY(
           SELECT category.id 
           FROM book_category_relation bcr
           JOIN book_category category ON category.id = bcr.category_id
           WHERE bcr.book_id = $1
-        ) AS originCategoryIds
+        ) AS "originCategoryIds"
       FROM book book
       LEFT JOIN "user" author ON author.id = book.author_id
       WHERE book.id = $1`;
@@ -2964,7 +2964,7 @@ export class BookService {
 
       const booksQuery = `
       SELECT 
-        DISTINCT ON (book.id) book.*, 
+        book.*, 
         author.id AS author_id,
         author.name AS author_name,
         author.avatar AS author_avatar,
@@ -2975,36 +2975,44 @@ export class BookService {
         access_status.description AS access_status_description,
         progress_status.id AS progress_status_id,
         progress_status.name AS progress_status_name,
-        progress_status.description AS progress_status_description
+        progress_status.description AS progress_status_description,
+        CASE
+          WHEN author.id = $2 AND EXISTS (
+            SELECT 1 FROM book_category_relation bcr 
+            WHERE bcr.book_id = book.id 
+            AND bcr.category_id = ANY($3)
+          ) THEN 0
+          WHEN author.id = $2 THEN 1
+          WHEN EXISTS (
+            SELECT 1 FROM book_category_relation bcr 
+            WHERE bcr.book_id = book.id 
+            AND bcr.category_id = ANY($3)
+          ) THEN 2
+          ELSE 3
+        END AS priority,
+        COALESCE((SELECT AVG(rating) FROM book_review WHERE book_id = book.id), 0) AS avg_rating
       FROM book book
       LEFT JOIN "user" author ON author.id = book.author_id
       LEFT JOIN book_type ON book_type.id = book.book_type_id
       LEFT JOIN book_access_status access_status ON access_status.id = book.access_status_id
       LEFT JOIN book_progress_status progress_status ON progress_status.id = book.progress_status_id
-      LEFT JOIN book_category_relation bcr ON bcr.book_id = book.id
-      LEFT JOIN book_category category ON category.id = bcr.category_id
       WHERE book.id != $1 AND book.access_status_id = 1
-      ORDER BY
-        book.id,
-        CASE
-          WHEN author.id = $2 AND category.id = ANY($3) THEN 0
-          WHEN author.id = $2 THEN 1
-          WHEN category.id = ANY($3) THEN 2
-          ELSE 3
-        END,
-        COALESCE((SELECT AVG(rating) FROM book_review WHERE book_id = book.id), 0) DESC,
-        book.id DESC
+      ORDER BY 
+        priority ASC,
+        avg_rating DESC,
+        book.created_at DESC
       LIMIT $4 OFFSET $5`;
 
       const books: Book[] = await this.bookRepository.query(booksQuery, [
         bookId,
         originAuthorId,
         originCategoryIds,
-        limit,
+        1000,
         offset,
       ]);
 
-      const bookIds = books.map((b) => b.id);
+      
+      const bookIds = books.map((b) => b.id);   
 
       const categoriesQuery = `
       SELECT
