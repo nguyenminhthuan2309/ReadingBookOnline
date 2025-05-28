@@ -329,12 +329,12 @@ export class TransactionService {
           
           // Apply bonus logic based on amount
           const amount = transaction.amount;
-          if (amount === 100) {
-            bonusTokens = Math.floor(tokens * 0.1); // 10% bonus
-          } else if (amount === 200) {
-            bonusTokens = 20; // 20 tokens bonus
-          } else if (amount >= 500) {
-            makeVip = true; // Set VIP status
+          if (amount >= 100000 && amount < 200000) {
+            bonusTokens = 10;
+          } else if (amount >= 200000 && amount < 500000) {
+            bonusTokens = 20;
+          } else if (amount >= 500000) {
+            makeVip = true;
           }
           
           const totalTokens = tokens + bonusTokens;
