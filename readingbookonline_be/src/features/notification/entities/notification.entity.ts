@@ -18,6 +18,7 @@ export enum NotificationType {
   CHAPTER_COMMENT = 'CHAPTER_COMMENT',
   TX_SUCCESS = 'TX_SUCCESS',
   TX_FAILED = 'TX_FAILED',
+  POINTS_EARNED = 'POINTS_EARNED',
 }
 
 @Entity('notifications')

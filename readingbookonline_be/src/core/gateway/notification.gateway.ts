@@ -427,4 +427,31 @@ export class NotificationGateway
     
     this.loggerService.info('Sent new chapter notification to followers');
   }
+
+  // Points earned notification
+  async sendPointsEarnedNotification(userId: number, points: number, activityTitle: string, activityType: string) {
+    const notificationData = {
+      type: NotificationType.POINTS_EARNED,
+      points,
+      activityTitle,
+      activityType
+    };
+
+    // Create database notification
+    const notificationDto: CreateNotificationDto = {
+      userId,
+      type: NotificationType.POINTS_EARNED,
+      title: 'Points Earned!',
+      message: `You earned ${points} points for ${activityTitle}`,
+      data: { points, activityTitle, activityType }
+    };
+    
+    // Save to database first
+    await this.notificationService.create(notificationDto);
+    
+    // Then send via socket.io
+    this.server.to(`user-${userId}`).emit('points_earned', notificationData);
+    
+    this.loggerService.info('Sent points earned notification');
+  }
 } 

@@ -48,6 +48,7 @@ import { UserActivity } from '@features/activities/entities/user-activity.entity
 import { ActivityStatus, ActivityStatusResponseDto } from './dto/activity-status.dto';
 import { MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { TimePeriod } from '@features/activities/dto/time-range.dto';
+import { UserBalanceDto } from './dto/user-balance.dto';
 
 @Injectable()
 export class UserService {
@@ -823,6 +824,36 @@ export class UserService {
       return this.userSettingsRepository.save(settings);
     } catch (error) {
       this.loggerService.err(error.message, 'UserService.updateSettings');
+      throw error;
+    }
+  }
+
+  async getBalance(userId: number): Promise<UserBalanceDto> {
+    try {
+      const user = await this.dataBaseService.findOne<User>(
+        this.userRepository,
+        {
+          where: { id: userId },
+          select: [
+            'tokenBalance',
+            'tokenSpent',
+            'tokenReceived',
+            'tokenPurchased',
+            'tokenWithdrawn',
+            'tokenEarned',
+          ],
+        },
+      );
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      return plainToInstance(UserBalanceDto, user, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      this.loggerService.err(error.message, 'UserService.getBalance');
       throw error;
     }
   }

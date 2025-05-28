@@ -12,6 +12,7 @@ import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
 import { CreatePageViewDto } from './dto/create-page-view.dto';
 import { TimePeriod } from './dto/time-range.dto';
+import { NotificationGateway } from '@core/gateway/notification.gateway';
 
 @Injectable()
 export class ActivitiesService {
@@ -26,6 +27,7 @@ export class ActivitiesService {
     private readonly visitRepository: Repository<Visit>,
     @InjectRepository(PageView)
     private readonly pageViewRepository: Repository<PageView>,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async findAllActivities(): Promise<Activity[]> {
@@ -97,6 +99,15 @@ export class ActivitiesService {
   async getUserAvailableActivities(userId: number): Promise<ActivityStatusResponseDto[]> {
     // Get all activities
     const activities = await this.activityRepository.find();
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    
+    // Filter out comment_chapter activity for non-VIP users
+    const filteredActivities = activities.filter(activity => {
+      if (activity.activityType === ACTIVITY_TYPE.COMMENT_CHAPTER && !user?.isVip) {
+        return false;
+      }
+      return true;
+    });
     
     // Get today's date (without time)
     const today = new Date();
@@ -112,7 +123,7 @@ export class ActivitiesService {
     // Process each activity
     const result: ActivityStatusResponseDto[] = [];
     
-    for (const activity of activities) {
+    for (const activity of filteredActivities) {
       // Check user's history with this activity
       const userActivities = await this.userActivityRepository.find({
         where: {
@@ -265,10 +276,15 @@ export class ActivitiesService {
         }
         // If under the daily limit, award points
         if (todayActivitiesCount < activity.maxPerDay) {
-            if (activity.activityType !== ACTIVITY_TYPE.COMMENT_CHAPTER || user.isVip) {
+            if (activity.activityType === ACTIVITY_TYPE.COMMENT_CHAPTER) {
+              const freshUser = await this.userRepository.findOne({ where: { id: user.id } });
+              if (freshUser?.isVip) {
                 earnedPoints = activity.basePoint;
-            } else {
+              } else {
                 earnedPoints = 0;
+              }
+            } else {
+              earnedPoints = activity.basePoint;
             }
         } else {
           // User already reached the daily maximum for this activity
@@ -316,7 +332,19 @@ export class ActivitiesService {
       activity,
     });
 
-    return this.userActivityRepository.save(userActivity);
+    const savedUserActivity = await this.userActivityRepository.save(userActivity);
+
+    // Send notification if points were earned
+    if (earnedPoints > 0) {
+      await this.notificationGateway.sendPointsEarnedNotification(
+        user.id,
+        earnedPoints,
+        activity.title,
+        activityType
+      );
+    }
+
+    return savedUserActivity;
   }
 
   async getActivities(

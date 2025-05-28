@@ -8,6 +8,7 @@ import { User } from '@features/user/entities/user.entity';
 import { Visit } from './entities/visit.entity';
 import { PageView } from './entities/page-view.entity';
 import { TrackerLogin } from './entities/tracker-login.entity';
+import { NotificationGatewayModule } from '@core/gateway/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TrackerLogin } from './entities/tracker-login.entity';
       PageView,
       TrackerLogin,
     ]),
+    NotificationGatewayModule,
   ],
   controllers: [ActivitiesController],
   providers: [ActivitiesService],

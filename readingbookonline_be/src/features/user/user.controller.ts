@@ -45,6 +45,7 @@ import { UserActivity } from '@features/activities/entities/user-activity.entity
 import { CreateUserActivityDto } from './dto/create-user-activity.dto';
 import { ActivityStatusResponseDto } from './dto/activity-status.dto';
 import { TimeRangeDto } from '@features/activities/dto/time-range.dto';
+import { UserBalanceDto } from './dto/user-balance.dto';
 
 // Define the interface extending Express Request with user property
 interface RequestWithUser extends ExpressRequest {
@@ -190,6 +191,21 @@ export class UserController {
   ) {
     const userId = (req as any).user?.id;
     return this.userService.updateSettings(userId, updateSettingsDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Lấy thông tin số dư của người dùng',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Return user balance information',
+    type: UserBalanceDto,
+  })
+  @Get('balance')
+  async getBalance(@Req() req: ExpressRequest): Promise<UserBalanceDto> {
+    const userId = (req as any).user?.id;
+    return this.userService.getBalance(userId);
   }
 
   @Get('search')
