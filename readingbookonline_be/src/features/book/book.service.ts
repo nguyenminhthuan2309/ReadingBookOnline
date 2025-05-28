@@ -2179,7 +2179,7 @@ export class BookService {
         throw new NotFoundException('Không tìm thấy sách này');
       }
       
-      if (book.accessStatus.id === accessStatusId || book.progressStatus.id === progressStatusId) {
+      if (book.accessStatus.id === accessStatusId && book.progressStatus.id === progressStatusId) {
         return true;
       }
 
@@ -3267,6 +3267,7 @@ export class BookService {
           },
           categories: categories || [],
           createdAt: book.created_at,
+          updatedAt: book.updated_at,
           readingHistory: {
             lastReadChapterId: readingHistory?.lastReadChapterId || 0,
             lastReadChapterNumber: readingHistory?.lastReadChapterNumber || 0,

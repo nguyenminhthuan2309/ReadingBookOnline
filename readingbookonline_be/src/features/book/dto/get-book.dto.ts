@@ -126,6 +126,10 @@ export class GetListBookDto {
   @Expose()
   createdAt: Date;
 
+  @IsNotEmpty()
+  @Expose()
+  updatedAt: Date;
+
   @IsOptional()
   @Expose()
   moderated: string;
