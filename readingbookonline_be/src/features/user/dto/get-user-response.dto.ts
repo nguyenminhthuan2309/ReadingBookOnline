@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { GENDER_ENUM } from '../entities/user.entity';
 import { UserSettingsDto } from './user-setting.dto';
 
@@ -132,6 +132,11 @@ export class UserResponseDto {
   @IsOptional()
   @IsDate()
   updateAt?: Date;
+
+  @Expose()
+  @IsOptional()
+  @IsBoolean()
+  isVip?: boolean;
 }
 
 export class UserProfileResponseDto extends UserResponseDto {
