@@ -1306,8 +1306,6 @@ export class BookService {
         throw new NotFoundException('Chapter not found');
       }
 
-      console.log('user', user);
-
       if (
         user &&
         user.id &&
@@ -1341,6 +1339,7 @@ export class BookService {
             createdAt: chapter.createdAt,
             updatedAt: chapter.updatedAt,
             moderated: chapter.moderated || null,
+            chapterAccessStatus: chapter.chapterAccessStatus,
           } as unknown as BookChapter;
 
           return plainToInstance(GetBookChapterDto, summaryChapter, {
