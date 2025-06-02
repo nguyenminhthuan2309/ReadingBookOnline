@@ -1306,14 +1306,15 @@ export class BookService {
         throw new NotFoundException('Chapter not found');
       }
 
+      console.log('user', user);
+
       if (
         user &&
         user.id &&
         chapter.book &&
         chapter.book.author &&
         chapter.book.author.id === user.id &&
-        user?.role?.id !== 1 &&
-        user?.role?.id !== 2
+        (user?.role?.id === 1 || user?.role?.id === 2)
       ) {
         chapter.isLocked = false;
       } else if (chapter.isLocked) {
