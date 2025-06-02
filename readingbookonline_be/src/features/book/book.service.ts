@@ -652,7 +652,7 @@ export class BookService {
       const chapters = filteredChapters
         .sort((a, b) => a.chapter - b.chapter)
         .map((chapter) => {
-          if (user?.id && book.author.id === user.id) {
+          if (user?.id && book.author.id === user.id || user?.role?.id === 1 || user?.role?.id === 2) {
             return { ...chapter, isLocked: false };
           } else if (chapter.isLocked && !purchasedChapterIds.has(chapter.id)) {
             return {
