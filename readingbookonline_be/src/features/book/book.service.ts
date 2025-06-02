@@ -1311,7 +1311,9 @@ export class BookService {
         user.id &&
         chapter.book &&
         chapter.book.author &&
-        chapter.book.author.id === user.id
+        chapter.book.author.id === user.id &&
+        user?.role?.id !== 1 &&
+        user?.role?.id !== 2
       ) {
         chapter.isLocked = false;
       } else if (chapter.isLocked) {
