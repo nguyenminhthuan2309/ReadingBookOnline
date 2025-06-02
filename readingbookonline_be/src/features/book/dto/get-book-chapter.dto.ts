@@ -57,4 +57,8 @@ export class GetBookChapterDto {
   @IsOptional()
   @Expose()
   moderated: string;
+
+  @IsOptional()
+  @Expose()
+  chapterAccessStatus: string;
 }
