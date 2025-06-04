@@ -61,6 +61,7 @@ import { PatchBookChapterDto } from './dto/update-book-chapter.dto';
 import { ChapterAccessStatus } from './entities/book-chapter.entity';
 import { CreateModerationResultDto, GetModerationResultDto, ModerationResultResponseDto, UpdateModerationResultDto } from './dto/moderation-result.dto';
 import { TimeRangeDto } from '@features/activities/dto/time-range.dto';
+import { RejectBookDto } from './dto/reject-book.dto';
 
 @ApiTags('book')
 @Controller('book')
@@ -561,5 +562,21 @@ export class BookController {
     return this.bookService.updateModerationResult(updateModerationResultDto);
   }
 
- 
+  @Post(':id/reject')
+  @ApiOperation({
+    summary: 'Reject a book',
+    description: 'Rejects a specific book'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The book has been successfully rejected',
+    type: Boolean
+  })
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async rejectBook(
+    @Param('id') id: number,
+    @Body() rejectBookDto: RejectBookDto
+  ): Promise<boolean> {
+    return this.bookService.rejectBook(id, rejectBookDto.reason);
+  }
 }

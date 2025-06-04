@@ -85,7 +85,6 @@ export class BookService {
   private readonly openAIKey = openAIConfig.openAIKey;
   private readonly redisBookTtl = bookConfig.redisBookTtl;
   private readonly adminMail = 'iiiimanhiiii007@gmail.com';
-  private readonly privateBookStatus = 2;
 
   constructor(
     @InjectRepository(Book)
@@ -3903,5 +3902,69 @@ export class BookService {
         })),
       }
     };
+  }
+
+  async rejectBook(
+    bookId: number,
+    reason: string,
+  ): Promise<boolean> {
+    try {
+      const book = await this.bookRepository.findOne({
+        where: { id: bookId },
+        relations: ['author', 'accessStatus', 'chapters'],
+      });
+
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+
+      // Check if book has any published chapters
+      const publishedChapters = book.chapters.filter(
+        chapter => chapter.chapterAccessStatus === ChapterAccessStatus.PUBLISHED
+      );
+
+      if (publishedChapters.length === 0) {
+        // No published chapters - set book to private and all chapters to draft
+        book.accessStatus = { id: 2 } as any;
+        
+        // Update all chapters to draft status
+        for (const chapter of book.chapters) {
+          chapter.chapterAccessStatus = ChapterAccessStatus.DRAFT;
+          await this.bookChapterRepository.save(chapter);
+        }
+      } else {
+        // Has published chapters - keep book published and change only pending chapters to draft
+        book.accessStatus = { id: 1 } as any; // Published status
+        
+        // Update only pending review chapters to draft
+        const pendingChapters = book.chapters.filter(
+          chapter => chapter.chapterAccessStatus === ChapterAccessStatus.PENDING_REVIEW
+        );
+        
+        for (const chapter of pendingChapters) {
+          chapter.chapterAccessStatus = ChapterAccessStatus.DRAFT;
+          await this.bookChapterRepository.save(chapter);
+        }
+      }
+
+      // Save the book with updated access status
+      await this.bookRepository.save(book);
+
+      // Send notification to book author with the rejection reason
+      this.notificationGateway.sendBookRejectionNotification(
+        book.id,
+        book.title,
+        book.author.id,
+        reason
+      );
+
+      // Clear cache
+      await this.cacheService.deletePattern('books:*');
+
+      return true;
+    } catch (error) {
+      this.loggerService.err(error.message, 'BookService.rejectBook');
+      throw error;
+    }
   }
 }
