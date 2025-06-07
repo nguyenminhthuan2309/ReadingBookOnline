@@ -469,6 +469,36 @@ export class BookService {
         followedBookIds = new Set(follows.map((f) => f.book.id));
       }
 
+      // Fetch moderation results for books with access status id 4 (pending review)
+      const booksWithPendingReview = books.filter(book => book.accessStatus.id === 4);
+      const moderationResultsMap = new Map<number, any[]>();
+      
+      if (booksWithPendingReview.length > 0) {
+        const bookIds = booksWithPendingReview.map(book => book.id);
+        const moderationResults = await this.moderationResultRepository.find({
+          where: { book: { id: In(bookIds) } },
+          relations: ['book'],
+          order: { createdAt: 'DESC' },
+        });
+
+        // Group moderation results by book id
+        moderationResults.forEach(result => {
+          const bookId = result.book.id;
+          if (!moderationResultsMap.has(bookId)) {
+            moderationResultsMap.set(bookId, []);
+          }
+          moderationResultsMap.get(bookId)!.push({
+            id: result.id,
+            title: result.title,
+            description: result.description,
+            coverImage: result.coverImage,
+            chapters: result.chapters,
+            model: result.model,
+            createdAt: result.createdAt,
+          });
+        });
+      }
+
       books.forEach((book) => {
         book['isFollowed'] = followedBookIds.has(book.id);
 
@@ -491,6 +521,11 @@ export class BookService {
         const readingProgress = readingHistoriesMap.get(book.id);
         if (readingProgress) {
           book['readingProgress'] = readingProgress;
+        }
+
+        // Add moderation results if book has access status id 4
+        if (book.accessStatus.id === 4) {
+          book['moderation'] = moderationResultsMap.get(book.id) || [];
         }
       });
 

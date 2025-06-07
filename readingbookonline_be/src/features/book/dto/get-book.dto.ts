@@ -137,6 +137,10 @@ export class GetListBookDto {
   @IsOptional()
   @Expose()
   ageRating: number;
+
+  @IsOptional()
+  @Expose()
+  moderation?: any[];
 }
 
 export class GetBookDto {
